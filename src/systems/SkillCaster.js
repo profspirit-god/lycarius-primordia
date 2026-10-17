@@ -39,11 +39,31 @@ export class SkillCaster {
       origin: this.owner.getCastOrigin(),
     };
   }
+  /** Toggle skills (shields, auras): one press switches on, the next switches off. */
+  _toggle(s, world, mana) {
+    const sk = s.skill;
+    if (!this.owner.wantsToggle?.(s, world)) return;
+    const ctx = this._ctx(s, world);
+    if (sk.isActive(this.owner)) {
+      sk.onDeactivate(ctx);
+      s.cooldown = sk.cooldown;
+    } else if (s.cooldown <= 0) {
+      if (!sk.canStart(mana)) this.owner.lowManaFlash = 0.4;
+      else {
+        sk.onActivate(ctx);
+        s.cooldown = sk.cooldown;
+      }
+    }
+  }
   update(dt, world) {
     const mana = this.owner.vitals.mana;
     for (const s of this.slots) {
       const sk = s.skill;
       s.cooldown = Math.max(0, s.cooldown - dt);
+      if (sk.toggle) {
+        this._toggle(s, world, mana);
+        continue;
+      }
       const held = this.owner.wantsCast(s, world);
       if (!s.charging) {
         if (!held || s.cooldown > 0 || this.charging) continue;

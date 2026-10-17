@@ -139,6 +139,46 @@ export class WorldScene extends Scene {
     ctx.fillRect(0, 0, w, h);
   }
 
+  /** One skill slot: icon, cooldown, dim when unaffordable, bar (charge, or shield points for toggles), key hint. */
+  drawSlot(ctx, x, y, s, p, v) {
+    const sk = s.skill,
+      on = !!sk.toggle && sk.isActive(p),
+      cd = s.cooldown / sk.cooldown,
+      cx = x + 34;
+    ctx.fillStyle = "rgba(12,14,20,.8)";
+    ctx.strokeStyle = s.charging || on ? "#ffb15a" : "rgba(242,196,109,.4)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x, y, 68, 68, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = "34px serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(sk.icon, cx, y + 45);
+    if (cd > 0) {
+      ctx.fillStyle = "rgba(0,0,0,.6)";
+      ctx.fillRect(x + 2, y + 2 + 64 * (1 - cd), 64, 64 * cd);
+    }
+    if (!s.charging && !on && !sk.canStart(v.mana)) {
+      ctx.fillStyle = "rgba(20,40,120,.55)";
+      ctx.fillRect(x + 2, y + 2, 64, 64);
+    }
+    const frac = sk.toggle ? (on ? p.shield.points / p.shield.maxPoints : 0) : s.charge;
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(x, y + 76, 68, 7);
+    ctx.fillStyle = "#ff8a3a";
+    ctx.fillRect(x, y + 76, 68 * frac, 7);
+    ctx.font = "11px Georgia, serif";
+    ctx.fillStyle = "#b9a77f";
+    ctx.fillText(sk.name.toUpperCase(), cx, y + 99);
+    if (sk.hint) {
+      ctx.font = "10px Georgia, serif";
+      ctx.fillStyle = "rgba(234,223,200,.7)";
+      ctx.fillText(sk.hint, cx, y + 12);
+    }
+  }
+
   drawHud(ctx, w, h) {
     const p = this.player,
       v = p.vitals,
@@ -149,7 +189,7 @@ export class WorldScene extends Scene {
     ctx.font = "13px Georgia, serif";
     ctx.fillStyle = "rgba(234,223,200,.85)";
     ctx.fillText(
-      "WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge, release to cast  ·  Esc pause",
+      "WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge fireball  ·  RMB / E flame shield (press again to drop)  ·  Esc pause",
       18,
       26,
     );
@@ -181,6 +221,15 @@ export class WorldScene extends Scene {
       96,
     );
 
+    // flame shield points
+    if (p.shield) {
+      const sh = p.shield;
+      drawBar(ctx, 18, 108, 240, 12, sh.points / sh.maxPoints, "#ff9a3c");
+      ctx.font = "12px Georgia, serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`SHIELD ${Math.ceil(sh.points)} / ${sh.maxPoints}   (-${sh.upkeep} MP/s)`, 24, 118);
+    }
+
     // dummy panel
     ctx.fillStyle = "rgba(12,14,20,.72)";
     ctx.strokeStyle = "rgba(242,196,109,.35)";
@@ -208,36 +257,11 @@ export class WorldScene extends Scene {
       120,
     );
 
-    // skill slot
-    const x = w / 2 - 34,
-      y = h - 100,
-      cd = s.cooldown / s.skill.cooldown;
-    ctx.fillStyle = "rgba(12,14,20,.8)";
-    ctx.strokeStyle = s.charging ? "#ffb15a" : "rgba(242,196,109,.4)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x, y, 68, 68, 12);
-    ctx.fill();
-    ctx.stroke();
-    ctx.font = "34px serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(s.skill.icon, w / 2, y + 45);
-    if (cd > 0) {
-      ctx.fillStyle = "rgba(0,0,0,.6)";
-      ctx.fillRect(x + 2, y + 2 + 64 * (1 - cd), 64, 64 * cd);
-    }
-    if (!s.charging && !s.skill.canStart(v.mana)) {
-      ctx.fillStyle = "rgba(20,40,120,.55)";
-      ctx.fillRect(x + 2, y + 2, 64, 64);
-    }
-    ctx.fillStyle = "rgba(255,255,255,.12)";
-    ctx.fillRect(x, y + 76, 68, 7);
-    ctx.fillStyle = "#ff8a3a";
-    ctx.fillRect(x, y + 76, 68 * s.charge, 7);
-    ctx.font = "11px Georgia, serif";
-    ctx.fillStyle = "#b9a77f";
-    ctx.fillText(s.skill.name.toUpperCase(), w / 2, y + 99);
+    // skill slots
+    const slots = p.caster.slots,
+      gap = 78,
+      x0 = w / 2 - (slots.length * gap - 10) / 2;
+    slots.forEach((sl, i) => this.drawSlot(ctx, x0 + i * gap, h - 100, sl, p, v));
 
     if (p.downed) {
       // death overlay
