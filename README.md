@@ -1,14 +1,14 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.4.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.5.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
-This repository currently holds the **combat MVP**: one class, one skill, a training dummy that can fight back, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
+This repository currently holds the **combat MVP**: one class with three skills, a burn status effect, a training dummy that can fight back, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
 
 ---
 
-## 1. What is in V1.4.0.00
+## 1. What is in V1.5.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,8 @@ This repository currently holds the **combat MVP**: one class, one skill, a trai
 | Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), dummy attacks toggle, dummy movement mode. Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
-| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage                   |
+| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn |
+| Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
 | Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), HUD bars, death and respawn                                                             |
 | Mana cost      | Scales with charge: 5 at minimum charge up to 20 at full charge                                                                        |
 | Dummy          | Passive mode: infinite health. Hostile mode: uses the player's stats, fights back, can be defeated                                     |
@@ -91,6 +92,40 @@ Press `Right Mouse` or `E` to raise, press again to drop. Rules:
 
 Example: shield at 50, fireball deals 20 → shield 30. Next fireball deals 40 → shield breaks, you take 10.
 
+### Burn
+
+A body hit from Fireball can ignite the target (`StatusSystem`). Burn works on the player and on the dummy.
+
+| Rule            | Value                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Ignite chance   | 20% at minimum charge up to 50% at full charge, rolled once per body hit. A hit fully soaked by a Flame Shield does not roll |
+| Duration        | Random 5 to 10 seconds, rolled per ignition                                                                        |
+| Damage          | 8 per second, applied as one tick every second (so 5 to 10 ticks)                                                  |
+| Re-ignite       | Refreshes the timer (and keeps the higher damage); burns never stack                                               |
+| Ends early      | When the target is downed, or when a Burn Resistance ward nullifies it                                             |
+| Tick feedback   | Burn sound, the body flashes and lights up, an orange damage number, a burst of sparks. The dummy counts burn damage in Total damage and DPS, not in Hits |
+| Visuals         | Fire particles rise from the body and a flickering light follows it. In the last 1.2 seconds the fire shrinks and thins out, then a puff of smoke drifts off |
+| Flame Shield    | Unchanged: it absorbs raw fireball damage first. Burn can only start from the part that reaches the body           |
+
+### Burn Resistance
+
+Self-only buff with a cast time. **Hold `Q`** until the circle completes; releasing early cancels for free (no mana, no cooldown). Holding on after it completes does not recast.
+
+| Rule                 | Value                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Cast                 | 1.2 s hold, 25 mana paid when the cast completes (you need 25 mana to start). Movement slows to 55% while casting |
+| While casting        | Red-orange magic circle under the caster, rising and spiralling motes, the body tints red-orange and glows, light grows |
+| Duration             | 30 seconds. The glow flickers in the last 4 seconds                                                           |
+| Fire skill damage    | Reduced by 30% (Fireball hits on the body, after any Flame Shield absorption). Never below 1                  |
+| Burn damage          | Burn ticks do 50% damage (8 becomes 4) while the ward is up, including a burn that was already running         |
+| Burn ignites         | 50% chance the ward **nullifies** it: no burn (a running burn is snuffed too), the ward is consumed, and a toast shows a burn icon being slashed in two above the target. Otherwise the burn starts, with reduced ticks, and the ward stays |
+| While active         | Red-orange glow on the body, embers rising, and a trail of glowing particles behind you while you move        |
+| Ending               | Expiry, being nullified-and-spent, or being downed. The glow fades over 0.9 s and leaves hanging embers behind |
+| Recast               | Casting again while active refreshes the 30 s timer (full cost)                                               |
+| HUD                  | Third skill slot with the time-left bar, a time-left bar under the mana bar, and a BURNING line with time left and damage per second |
+
+Example: ward up, a fireball hits for 20 → you take 14. It ignites you: half the time the burn is nullified and the ward is gone; otherwise you burn for 4 per second and keep the ward.
+
 ### Dummy movement
 
 Set in **Settings → Dummy movement** (applies when you press Start). Works with both passive and hostile dummies.
@@ -131,6 +166,10 @@ All sounds are synthesized at runtime with the Web Audio API. Nothing to downloa
 | Dud             | Not enough mana to start a charge                                                    |
 | Death / respawn | Falling tone / rising three-note chime                                               |
 | Menu tick       | Any menu button                                                                      |
+| Ignite          | A target catches fire; low fwoomp with a few crackles                                |
+| Burn tick       | Every burn damage tick; short sizzle and pop                                         |
+| Burn nullified  | A ward snuffs a burn; metallic slash, then the fire hissing out                      |
+| Ward up / down  | Burn Resistance completes (rising shimmer) / expires or ends (falling tone)          |
 
 Other behaviour:
 
@@ -160,6 +199,7 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Hold `Left Mouse` or `Space` | Charge Fireball |
 | Release                      | Cast            |
 | `Right Mouse` or `E`         | Raise / drop Flame Shield |
+| Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
 | `Esc`                        | Pause menu      |
 
 ---
@@ -216,10 +256,11 @@ src/
   scenes/                     MenuScene, SettingsScene, ExitScene, WorldScene
   entities/                   Entity (base), Player, TrainingDummy
   classes/                    ClassRegistry, Mage (data only)
-  skills/                     SkillRegistry, Fireball, FlameShield (definitions), FireballProjectile, FlameShieldEffect
-  systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera,
-                              DamageNumbers, HitEffects, AudioSystem
-  render/                     drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle
+  skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
+                              FireballProjectile, FlameShieldEffect, BurnWardEffect
+  systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects,
+                              StatusSystem, BurnFx, Toasts, AudioSystem
+  render/                     drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
 ```
 
 ### Core concepts
@@ -228,6 +269,8 @@ src/
 - **Event-driven combat.** A projectile only emits `hit`; a skill release emits `cast`. `HitEffects` (visuals), `AudioSystem` (sound) and the target's `onHit` (reaction) respond independently. Later systems (quests, threat, combat log, networking) can subscribe without touching the projectile.
 - **Data-driven content.** A class lists stats, skill ids and key bindings. A skill is an object with `cooldown`, `chargeTime`, `minCharge`, optional `manaCost`, `canStart`, `maxAffordableCharge`, and the hooks `onChargeStart`, `onCharging`, `onRelease`.
 - **Any entity can cast.** `SkillCaster` works with any owner that provides `vitals`, `aim`, `getCastOrigin()`, `wantsCast(slot, world)` and `applyImpulse()`. The player reads the keyboard; the hostile dummy reads its AI. Future enemies and NPCs reuse this.
+- **Status effects.** Burn lives on `entity.burn` and is run by `StatusSystem`; a ward lives on `entity.ward`. Ignition is an offer carried by the `hit` event (`burn: { chance, duration, dps }`), so any future skill can burn by adding that field. `StatusSystem` emits `burn` events (`ignite`, `tick`, `nullify`, `end`); the skill emits `ward` events (`up`, `down`). `BurnFx`, `Toasts` and `AudioSystem` react to them. Entities take burn damage through `onDot(e)`.
+- **Cast-time and self skills.** `autoRelease: true` fires a skill the moment its charge fills; `self: true` marks skills that only target the caster (AI casters skip them, the player draws an aura instead of the charge orb); `palette` recolours the magic circle.
 - **Reusable vitals.** `Vitals` holds health, mana, regeneration and damage/spend helpers.
 - **Scene factory.** `game.register(name, factory)` and `game.goto(name, params)`.
 - **Audio is a listener, not a caller.** Combat code never plays sounds; `AudioSystem` reads events and entity state. `AudioEngine` can be swapped for real sound files without touching gameplay code.
@@ -283,12 +326,14 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.3.0.00)
+## 6. Known limitations (V1.5.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
 - Single-player only; the networking layer is planned (see `ROADMAP.md`).
 - Changing the **Dummy attacks** setting takes effect the next time you press Start.
+- The hostile dummy never casts Burn Resistance (or Flame Shield) yet; only the player can use the defensive skills.
+- Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`.
 
 See **[ROADMAP.md](ROADMAP.md)** for what comes next and **[CHANGELOG.md](CHANGELOG.md)** for history.
