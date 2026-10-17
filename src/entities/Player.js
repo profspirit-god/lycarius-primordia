@@ -3,6 +3,8 @@ import { SkillCaster } from "../systems/SkillCaster.js";
 import { Vitals } from "../systems/Vitals.js";
 import { drawCylinder } from "../render/drawCylinder.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
+import { drawAura } from "../render/drawAura.js";
+import { WARD_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
 
@@ -63,7 +65,15 @@ export class Player extends Entity {
     );
     if (this.vitals.dead) this.down();
   }
+  /** Damage over time (burn tick): no knock-back, no hit-stop, just a flash. */
+  onDot(e) {
+    this.vitals.damage(e.damage);
+    this.flash = 0.55;
+    if (this.vitals.dead) this.down();
+  }
   down() {
+    this.burn = null;
+    this.ward?.deactivate("downed");
     this.downed = true;
     this.downedTimer = RESPAWN_TIME;
     this.hittable = false;
@@ -144,9 +154,12 @@ export class Player extends Entity {
     const bob = Math.sin(this.t * 14) * 1.6 * moving;
     const charge = this.caster.chargeLevel;
     if (this.downed) ctx.globalAlpha = 0.3;
-    if (this.caster.charging) {
+    const casting = this.caster.chargingSkill;
+    if (casting) {
       // magic circle on the ground; runes light up with the charge
-      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + charge * 22, this.t, charge);
+      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + charge * 22, this.t, charge, {
+        palette: casting.palette,
+      });
     }
     const top = drawCylinder(ctx, {
       x: this.x,
@@ -155,6 +168,9 @@ export class Player extends Entity {
       h: this.height + bob,
       color: this.cls.color,
       flash: this.flash * 0.6,
+      tint: casting?.self
+        ? { c: casting.palette.main, a: charge * 0.5 }
+        : this.ward ? { c: WARD_CIRCLE.main, a: 0.45 * this.ward.level() } : null, // glows red-orange while casting / warded
       lean: [-c * this.kick * 8, -s * this.kick * 4 + moving * 1.5],
     });
     ctx.fillStyle = "#ffe9b0"; // facing marker
@@ -167,7 +183,9 @@ export class Player extends Entity {
       TAU,
     );
     ctx.fill();
-    if (this.caster.charging) drawChargeOrb(ctx, this.getCastOrigin(), charge, this.aim);
+    if (casting?.self)
+      drawAura(ctx, this.x, this.y, this.height, this.radius, charge * 0.9, this.t, casting.palette);
+    else if (casting) drawChargeOrb(ctx, this.getCastOrigin(), charge, this.aim);
     ctx.globalAlpha = 1;
   }
 }

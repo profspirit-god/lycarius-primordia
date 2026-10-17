@@ -1,6 +1,9 @@
 import { lerp, lerpColor, rgba, TAU } from "../core/math.js";
 import { Settings } from "../core/Settings.js";
 
+/** Raw quality multiplier (0.35 / 0.7 / 1). For per-second emit rates that accumulate fractions. */
+export const quality = () => Settings.get("particleQuality");
+
 /** Scale a particle count by the user's quality setting (never below 1). Shared by all effects. */
 export const scaled = (count) =>
   Math.max(1, Math.round(count * Settings.get("particleQuality")));
