@@ -42,6 +42,7 @@ export class WorldScene extends Scene {
     this.dummy = this.spawn(
       new TrainingDummy(340, 0, {
         attack: Settings.get("dummyAttacks"),
+        move: Settings.get("dummyMovement"),
         cls: ClassRegistry.get(this.classId),
       }),
     );

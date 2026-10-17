@@ -8,13 +8,18 @@ import { drawChargeOrb } from "../render/drawChargeOrb.js";
 import { rand, TAU } from "../core/math.js";
 
 const RESPAWN_TIME = 3;
+const MOVE_SPEED = 130; // max walking speed (px/s)
+const PATROL_AMP = 260; // patrol line half-length
+const PATROL_RATE = 0.5; // rad/s along the sin path
+const ORBIT_R = 340; // strafe radius around the player
+const ORBIT_RATE = 0.35; // rad/s around the player
 
 /**
  * Passive mode: infinite health, never attacks.
  * Attack mode (Settings > Dummy attacks): uses the player's class stats, casts the class skills at the player, can be defeated.
  */
 export class TrainingDummy extends Entity {
-  constructor(x, y, { attack = false, cls = null } = {}) {
+  constructor(x, y, { attack = false, cls = null, move = "off" } = {}) {
     super();
     Object.assign(this, {
       x,
@@ -25,6 +30,13 @@ export class TrainingDummy extends Entity {
       solid: true,
     });
     this.home = { x, y };
+    this.move = move; // "off" | "patrol" | "strafe"
+    this.vx = 0;
+    this.vy = 0;
+    this.pathT = 0;
+    this.orbitA = 0;
+    this.orbitDir = 1;
+    this.orbitTimer = rand(3, 6);
     this.attack = attack && !!cls;
     this.cls = cls;
     this.vitals = this.attack ? new Vitals(cls.stats) : null;
@@ -100,6 +112,8 @@ export class TrainingDummy extends Entity {
     this.y = this.home.y;
     this.knock.x = 0;
     this.knock.y = 0;
+    this.vx = 0;
+    this.vy = 0;
     this.downed = false;
     this.hittable = true;
     this.solid = true;
@@ -110,6 +124,33 @@ export class TrainingDummy extends Entity {
     const now = performance.now();
     this.log = this.log.filter((l) => now - l.t < 5000);
     return Math.round(this.log.reduce((a, l) => a + l.d, 0) / 5);
+  }
+
+  /** Steer toward the movement-mode target point; velocity eases so direction changes look weighty. */
+  steer(dt, world) {
+    let tx = this.home.x,
+      ty = this.home.y;
+    const p = world.player;
+    if (this.move === "patrol") {
+      this.pathT += dt * PATROL_RATE;
+      ty += Math.sin(this.pathT) * PATROL_AMP;
+    } else if (this.move === "strafe" && !p.downed) {
+      this.orbitTimer -= dt;
+      if (this.orbitTimer <= 0) {
+        this.orbitDir = -this.orbitDir;
+        this.orbitTimer = rand(3, 6);
+      }
+      this.orbitA += this.orbitDir * ORBIT_RATE * dt;
+      tx = p.x + Math.cos(this.orbitA) * ORBIT_R;
+      ty = p.y + Math.sin(this.orbitA) * ORBIT_R;
+    }
+    const dx = tx - this.x,
+      dy = ty - this.y,
+      d = Math.hypot(dx, dy) || 1,
+      sp = Math.min(MOVE_SPEED, d * 3); // slow down on arrival
+    const k = 1 - Math.exp(-4 * dt);
+    this.vx += ((dx / d) * sp - this.vx) * k;
+    this.vy += ((dy / d) * sp - this.vy) * k;
   }
 
   /** Simple AI: lead the target, charge to a random level, release, wait, repeat. */
@@ -187,9 +228,19 @@ export class TrainingDummy extends Entity {
     this.knock.x *= kd;
     this.knock.y *= kd;
     this.kick *= Math.exp(-6 * dt);
-    const home = 1 - Math.exp(-1.5 * dt);
-    this.x += this.knock.x * dt + (this.home.x - this.x) * home;
-    this.y += this.knock.y * dt + (this.home.y - this.y) * home;
+    if (this.move === "off") {
+      const home = 1 - Math.exp(-1.5 * dt);
+      this.x += this.knock.x * dt + (this.home.x - this.x) * home;
+      this.y += this.knock.y * dt + (this.home.y - this.y) * home;
+    } else {
+      if (this.freeze <= 0) this.steer(dt, world);
+      else {
+        this.vx = 0;
+        this.vy = 0;
+      }
+      this.x += (this.vx + this.knock.x) * dt;
+      this.y += (this.vy + this.knock.y) * dt;
+    }
 
     if (this.glow > 0) {
       // the dummy emits light after a hit
@@ -210,8 +261,8 @@ export class TrainingDummy extends Entity {
     const c = Math.cos(this.aim),
       s = Math.sin(this.aim);
     const lean = [
-      this.lx + Math.sin(this.sway) * 2 - (this.attack ? c * this.kick * 8 : 0),
-      this.ly - (this.attack ? s * this.kick * 4 : 0),
+      this.lx + Math.sin(this.sway) * 2 + this.vx * 0.03 - (this.attack ? c * this.kick * 8 : 0),
+      this.ly + this.vy * 0.015 - (this.attack ? s * this.kick * 4 : 0),
     ];
     if (this.downed) ctx.globalAlpha = 0.3;
     const top = drawCylinder(ctx, {

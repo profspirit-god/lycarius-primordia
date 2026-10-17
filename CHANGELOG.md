@@ -2,6 +2,19 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.3.0.00 — Moving dummy
+
+### Added
+
+- Setting **Dummy movement** (Stationary, Patrol, Strafe), applied on Start. Persisted in `localStorage` as `dummyMovement`.
+- Patrol: the dummy follows a sine path along a 520 px line through its home point.
+- Strafe: the dummy circles the player at 340 px and reverses direction every 3 to 6 seconds. Works in both passive and hostile mode.
+- The dummy leans into its direction of travel. Movement pauses during hit-freeze and hit knock-back still applies.
+
+### Changed
+
+- The home-spring that pulls the dummy back to its start point now applies only in Stationary mode. In moving modes the steering target replaces it.
+
 ## V1.2.0.01 — Cleanup
 
 ### Changed

@@ -22,6 +22,12 @@ export class SettingsScene extends Scene {
       <div class="row"><label>Show debug (FPS)</label><input type="checkbox" data-k="showDebug" ${s.showDebug ? "checked" : ""}></div>
       <div class="row"><label>Dummy attacks</label><input type="checkbox" data-k="dummyAttacks" ${s.dummyAttacks ? "checked" : ""}></div>
       <div class="note">On: the dummy uses the player's stats (50 HP, 100 mana, same regen), fights back, and can be defeated.</div>
+      <div class="row"><label>Dummy movement</label>
+        <select data-k="dummyMovement">
+          <option value="off" ${s.dummyMovement === "off" ? "selected" : ""}>Stationary</option>
+          <option value="patrol" ${s.dummyMovement === "patrol" ? "selected" : ""}>Patrol</option>
+          <option value="strafe" ${s.dummyMovement === "strafe" ? "selected" : ""}>Strafe (circles you)</option></select></div>
+      <div class="note">Applies when you press Start. Patrol walks a line; Strafe circles the player at range and reverses at random.</div>
       <button class="btn" data-a="reset">Reset to defaults</button>
       <button class="btn" data-a="back">Back</button>`;
     el.addEventListener("input", (e) => {
