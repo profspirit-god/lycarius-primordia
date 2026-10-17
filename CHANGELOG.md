@@ -2,6 +2,25 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.4.0.00 — Magic circle casting and Flame Shield
+
+### Added
+
+- **Magic circle casting.** While charging Fireball, a rune circle forms under the caster and a second circle hovers in front of the caster facing the aim direction. Runes light up one by one as the charge rises, the outer ring sweeps with the charge, triangles and rings counter-rotate, rune motes lift off the ground, and the circle discharges in a ring of sparks on release. The hostile dummy uses the same visuals.
+- **Flame Shield** skill (new Mage skill): a flame arc (115 degrees, 56 px from the caster) that follows the aim direction. Press `Right Mouse` or `E` to raise, press again to drop.
+  - 50 shield points. Damage below the points is absorbed and subtracted. Damage equal to the points breaks the shield with nothing passing through. Greater damage breaks the shield and the remainder continues, shrinking the projectile, and hits the body.
+  - Costs 10 mana to cast and 5 mana per second to maintain. The shield collapses when mana runs out or the caster is downed.
+  - One shield per caster. Shots from behind are not blocked, and your own shots pass through.
+  - HUD: second skill slot, shield point bar under the mana bar, absorbed damage shown as amber numbers.
+  - Procedural sounds for raise, hit, break and drop (`GameAudio.shieldUp / shieldHit / shieldBreak / shieldDown`).
+- **Toggle skills** in the skill system: `SkillDef.toggle` with `isActive`, `onActivate`, `onDeactivate`; casters may implement `wantsToggle`.
+- New `shield` event on the world bus, new `ShieldEvent` and `SkillDef` fields in `src/types.js`.
+
+### Changed
+
+- `FireballProjectile` rolls its damage once (`roll()`), so a shield and the body see the same number.
+- The HUD draws every skill slot of the class instead of only the first.
+
 ## V1.3.0.00 — Moving dummy
 
 ### Added

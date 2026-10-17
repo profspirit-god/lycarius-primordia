@@ -61,10 +61,10 @@ src/
   scenes/            Menu, Settings, Exit, World
   entities/          Entity base, Player, TrainingDummy
   classes/           ClassRegistry + class data (Mage)
-  skills/            SkillRegistry + skill defs + projectiles
+  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect)
   systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, AudioSystem
   audio/             AudioEngine (procedural Web Audio, no asset files)
-  render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb
+  render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle
 ```
 
 Rules:
@@ -161,6 +161,8 @@ Rules: no emoji in code or commits. Don't compress code identifiers or user-faci
 - `Lights` with `once:true` live one frame; re-add every update. Timed lights expire by `life`.
 - `drawGround.js` uses a local `const n` for tile noise; unrelated to the `n` particle helper. Leave it.
 - Hit-stop scales entity `dt` to 8% and particle `dt` to 40%; code that must keep real time uses the raw `dt`.
+- Toggle skills (`toggle:true`): caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)` (Player has it, dummy does not). Shield state lives on `owner.shield`.
+- Projectiles ask entities with `isShield` via `blocks()`/`absorb()` before the body check. Any new projectile must do the same.
 - Aim reads the cursor at body height (`AIM_Z = 32`) so shots land where the sprite looks.
 
 ## 8. Roadmap pointer
