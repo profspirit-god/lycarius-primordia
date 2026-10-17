@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.2.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.2.0.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -102,7 +102,8 @@ src/
   audio/
     AudioEngine               (procedural sounds)
   main.js                     bootstrap: settings, scenes, start loop
-  config.js                   game name, edition, VERSION
+  config.js
+  types.js                    JSDoc contracts (skills, classes, casters, events)                   game name, edition, VERSION
   content/index.js            ONE manifest where skills + classes are registered
   core/
     Game.js                   canvas, loop, scene switching
@@ -134,6 +135,7 @@ src/
 1. Create `src/skills/MySkill.js` exporting a definition (copy `Fireball.js`).
 2. Register it in `src/content/index.js`.
 3. Add its id to a class's `skills` and `bindings`.
+4. Annotate it with /\*_ @type {import('../types.js').SkillDef} _/ for autocomplete.
 
 **A new class** — copy `src/classes/Mage.js`, change stats / skills, register in `content/index.js`, and pass `{ classId }` to the `world` scene.
 
