@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.0.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.1.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of *Lycarius MMORPG*, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -20,6 +20,8 @@ This repository currently holds the **MVP**: the combat feel of a single class, 
 | Dummy | Training dummy with infinite health, plus a stats panel (total damage, hits, last hit, 5s DPS) |
 | Damage counter | Numbers pop up, arc and **fall with gravity**, then fade. Crits are larger and orange |
 | Map | Infinite placeholder ground (deterministic noise + grass tufts) |
+| Vitals | Health 50 (0.1/s regen), mana 100 (1/s regen), mana-cost fireball, death/respawn |
+| Dummy mode | Settings toggle: passive (∞ HP) or hostile (uses player stats) |
 
 ### Fireball effect checklist
 
