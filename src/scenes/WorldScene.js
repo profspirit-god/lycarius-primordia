@@ -11,6 +11,7 @@ import { DamageNumbers } from '../systems/DamageNumbers.js';
 import { HitEffects } from '../systems/HitEffects.js';
 import { drawGround } from '../render/drawGround.js';
 import { VERSION_LABEL } from '../config.js';
+import { drawBar } from '../render/drawBar.js';
 
 /**
  * The playable world. Acts as the `world` object handed to entities and skills:
@@ -29,7 +30,7 @@ export class WorldScene extends Scene {
 
     this.hitEffects = new HitEffects(this);
     this.player = this.spawn(new Player(ClassRegistry.get(this.classId)));
-    this.dummy = this.spawn(new TrainingDummy(340, 0));
+    this.dummy = this.spawn(new TrainingDummy(340, 0, { attack: Settings.get('dummyAttacks'), cls: ClassRegistry.get(this.classId) }));
     this.camera.x = this.player.x; this.camera.y = this.player.y;
     this.buildPauseMenu();
   }
@@ -94,27 +95,48 @@ export class WorldScene extends Scene {
   }
 
   drawHud(ctx, w, h) {
+    const p = this.player, v = p.vitals, s = p.caster.slots[0], d = this.dummy;
     ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'; ctx.font = '13px Georgia, serif'; ctx.fillStyle = 'rgba(234,223,200,.85)';
     ctx.fillText('WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge, release to cast  ·  Esc pause', 18, 26);
     if (Settings.get('showDebug')) ctx.fillText(`${VERSION_LABEL}  ·  ${Math.round(this.fps)} FPS  ·  ${this.particles.list.length} particles`, 18, 46);
 
-    const d = this.dummy; // dummy stats panel
+    // player vitals
+    const cost = s.charging ? s.skill.manaCost(s.charge) : 0;
+    drawBar(ctx, 18, 60, 240, 16, v.hp / v.maxHp, '#d93b3b');
+    drawBar(ctx, 18, 84, 240, 16, v.mana / v.maxMana, '#3b82f6', { border: p.lowManaFlash > 0 ? '#ff4040' : undefined });
+    if (cost > 0) { // preview of the mana this cast will consume
+      const x0 = 18 + 240 * Math.max(0, v.mana - cost) / v.maxMana;
+      ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(x0, 84, 240 * Math.min(cost, v.mana) / v.maxMana, 16);
+    }
+    ctx.font = '12px Georgia, serif'; ctx.fillStyle = '#fff';
+    ctx.fillText(`HP ${v.hp.toFixed(1)} / ${v.maxHp}`, 24, 72);
+    ctx.fillText(`MP ${Math.floor(v.mana)} / ${v.maxMana}${cost > 0 ? `   (-${cost})` : ''}`, 24, 96);
+
+    // dummy panel
     ctx.fillStyle = 'rgba(12,14,20,.72)'; ctx.strokeStyle = 'rgba(242,196,109,.35)';
-    ctx.beginPath(); ctx.roundRect(w - 238, 16, 222, 96, 10); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(w - 238, 16, 222, 126, 10); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#f2c46d'; ctx.font = 'bold 13px Georgia, serif'; ctx.fillText('TRAINING DUMMY', w - 224, 38);
     ctx.fillStyle = '#eadfc8'; ctx.font = '13px Georgia, serif';
     ctx.fillText(`Total damage: ${d.totalDamage.toLocaleString()}`, w - 224, 60);
     ctx.fillText(`Hits: ${d.hits}   Last: ${d.lastHit}`, w - 224, 80);
     ctx.fillText(`DPS (5s): ${d.dps()}`, w - 224, 100);
+    ctx.fillText(d.attack ? `Hostile · HP ${d.vitals.hp.toFixed(1)} / ${d.vitals.maxHp}` : 'Passive · HP ∞', w - 224, 120);
 
-    const s = this.player.caster.slots[0]; // skill slot
+    // skill slot
     const x = w / 2 - 34, y = h - 100, cd = s.cooldown / s.skill.cooldown;
     ctx.fillStyle = 'rgba(12,14,20,.8)'; ctx.strokeStyle = s.charging ? '#ffb15a' : 'rgba(242,196,109,.4)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.roundRect(x, y, 68, 68, 12); ctx.fill(); ctx.stroke();
     ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(s.skill.icon, w / 2, y + 45);
     if (cd > 0) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x + 2, y + 2 + 64 * (1 - cd), 64, 64 * cd); }
+    if (!s.charging && !s.skill.canStart(v.mana)) { ctx.fillStyle = 'rgba(20,40,120,.55)'; ctx.fillRect(x + 2, y + 2, 64, 64); }
     ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x, y + 76, 68, 7);
     ctx.fillStyle = '#ff8a3a'; ctx.fillRect(x, y + 76, 68 * s.charge, 7);
     ctx.font = '11px Georgia, serif'; ctx.fillStyle = '#b9a77f'; ctx.fillText(s.skill.name.toUpperCase(), w / 2, y + 99);
+
+    if (p.downed) { // death overlay
+      ctx.fillStyle = 'rgba(80,0,0,.35)'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 44px Georgia, serif'; ctx.fillText('YOU DIED', w / 2, h / 2 - 6);
+      ctx.fillStyle = '#eadfc8'; ctx.font = '16px Georgia, serif'; ctx.fillText(`Respawning in ${Math.ceil(p.downedTimer)}…`, w / 2, h / 2 + 24);
+    }
   }
 }

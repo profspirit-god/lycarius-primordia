@@ -20,7 +20,7 @@ export class HitEffects {
     w.hitstop(0.04 + 0.06 * charge);
     w.camera.addTrauma(0.22 + 0.45 * charge);
     w.damageNumbers.spawn(target.x, target.y - target.height - 8, String(e.damage), {
-      crit, color: crit ? '#ff7a3d' : '#ffe08a',
+      crit, color: target.damageColor ?? (crit ? '#ff7a3d' : '#ffe08a'),
     });
     this.frontSparks(e);
     this.backBurst(e, mid);
