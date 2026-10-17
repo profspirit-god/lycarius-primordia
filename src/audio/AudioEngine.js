@@ -4,7 +4,8 @@ import { clamp, rand } from "../core/math.js";
 /**
  * Procedural audio (Web Audio API). No asset files needed.
  * To use real sound files later, replace the bodies of the public methods
- * (ui, cast, impact, hurt, lowMana, down, respawn, chargeVoice, shieldUp, shieldHit, shieldBreak, shieldDown) and keep their signatures.
+ * (ui, cast, impact, hurt, lowMana, down, respawn, chargeVoice, shieldUp, shieldHit, shieldBreak, shieldDown,
+ * burnIgnite, burnTick, burnNullify, wardUp, wardDown) and keep their signatures.
  */
 class AudioEngine {
   constructor() {
@@ -207,6 +208,53 @@ class AudioEngine {
     const out = this._out(pan, vol);
     this._osc("sine", 440, 110, t, 0.4, out, 0.3);
     this._noise(t, 0.35, out, 0.3, { type: "lowpass", f0: 1800, f1: 200 });
+  }
+
+  burnIgnite(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._noise(t, 0.45, out, 0.55, { type: "bandpass", f0: 250, f1: 1800, q: 0.9 });
+    this._osc("sine", 90, 190, t, 0.3, out, 0.45);
+    for (let i = 0; i < 4; i++)
+      this._noise(t + rand(0.05, 0.35), 0.04, out, 0.14, { type: "highpass", f0: 3200, f1: 2200 });
+  }
+  /** One burn damage tick: a short sizzle with a pop. Plays once per second per burning target. */
+  burnTick(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._osc("triangle", 260, 85, t, 0.12, out, 0.4);
+    this._noise(t, 0.2, out, 0.4, { type: "highpass", f0: 3000, f1: 1500 });
+    for (let i = 0; i < 3; i++)
+      this._noise(t + rand(0.03, 0.18), 0.03, out, 0.2, { type: "highpass", f0: 3800, f1: 2800 });
+  }
+  /** Burn nullified: a quick metallic slash, then the fire hissing out. */
+  burnNullify(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._noise(t, 0.2, out, 0.5, { type: "bandpass", f0: 1200, f1: 6500, q: 3 });
+    this._osc("triangle", 1800, 3600, t, 0.14, out, 0.25);
+    this._osc("sine", 140, 55, t + 0.06, 0.25, out, 0.4);
+    this._noise(t + 0.1, 0.45, out, 0.35, { type: "highpass", f0: 4500, f1: 1500 });
+  }
+  wardUp(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._osc("sine", 330, 660, t, 0.5, out, 0.35);
+    this._osc("triangle", 495, 990, t + 0.05, 0.45, out, 0.2);
+    this._noise(t, 0.5, out, 0.35, { type: "bandpass", f0: 400, f1: 3000, q: 1.2 });
+    for (let i = 0; i < 5; i++)
+      this._noise(t + rand(0.05, 0.45), 0.04, out, 0.14, { type: "highpass", f0: 3200, f1: 2200 });
+  }
+  wardDown(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._osc("sine", 520, 130, t, 0.5, out, 0.28);
+    this._noise(t, 0.5, out, 0.25, { type: "lowpass", f0: 2500, f1: 200 });
   }
 
   /** Continuous charge hum. Returns { update(charge, pan, vol), stop() } or null if audio is locked. */

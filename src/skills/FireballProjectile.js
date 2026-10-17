@@ -4,9 +4,9 @@ import { clamp, dist, lerp, lerpColor, rand, rgba, TAU } from "../core/math.js";
 import { drawGlow } from "../render/drawGlow.js";
 
 export class FireballProjectile extends Entity {
-  constructor({ owner, x, y, z, angle, charge, damage = [8, 30] }) {
+  constructor({ owner, x, y, z, angle, charge, damage = [8, 30], burn = null }) {
     super();
-    Object.assign(this, { owner, x, y, z, charge, damageRange: damage });
+    Object.assign(this, { owner, x, y, z, charge, damageRange: damage, burnDef: burn });
     this.speed = lerp(520, 900, charge);
     this.radius = lerp(8, 19, charge);
     this.vx = Math.cos(angle) * this.speed;
@@ -110,7 +110,7 @@ export class FireballProjectile extends Entity {
   roll() {
     if (!this.rolled) {
       const crit = Math.random() < 0.12;
-      const damage =
+      const damage = Math.round(
         Math.round(
           lerp(
             this.damageRange[0],
@@ -118,8 +118,9 @@ export class FireballProjectile extends Entity {
             Math.pow(this.charge, 1.3),
           ),
         ) *
-        rand(0.9, 1.1) *
-        (crit ? 1.75 : 1);
+          rand(0.9, 1.1) *
+          (crit ? 1.75 : 1),
+      );
       this.rolled = { damage, crit };
     }
     return this.rolled;
@@ -140,13 +141,22 @@ export class FireballProjectile extends Entity {
   hit(target, world) {
     const len = Math.hypot(this.vx, this.vy) || 1,
       dir = { x: this.vx / len, y: this.vy / len };
-    const { damage, crit } = this.roll();
+    const rolled = this.roll(),
+      crit = rolled.crit,
+      damage = target.ward ? target.ward.resist(rolled.damage) : rolled.damage; // fire resistance
+    const bd = this.burnDef;
     this.dead = true;
     world.events.emit("hit", {
       source: this.owner,
       target,
       damage,
       crit,
+      resisted: rolled.damage - damage,
+      burn: bd && {
+        chance: lerp(bd.chance[0], bd.chance[1], this.charge),
+        duration: rand(bd.duration[0], bd.duration[1]),
+        dps: bd.dps,
+      },
       dir,
       charge: this.charge,
       x: this.x,

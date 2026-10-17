@@ -19,6 +19,10 @@ export class SkillCaster {
   get charging() {
     return this.slots.some((s) => s.charging);
   }
+  /** Skill of the slot being charged right now, or null. */
+  get chargingSkill() {
+    return this.slots.find((s) => s.charging)?.skill ?? null;
+  }
   get chargeLevel() {
     return Math.max(0, ...this.slots.map((s) => s.charge));
   }
@@ -27,6 +31,7 @@ export class SkillCaster {
       s.charging = false;
       s.charge = 0;
       s.t = 0;
+      s.latched = false;
     }
   }
   _ctx(s, world) {
@@ -66,6 +71,11 @@ export class SkillCaster {
       }
       const held = this.owner.wantsCast(s, world);
       if (!s.charging) {
+        if (s.latched) {
+          // an auto-released cast must not restart until the key is let go
+          if (!held) s.latched = false;
+          continue;
+        }
         if (!held || s.cooldown > 0 || this.charging) continue;
         if (sk.canStart && !sk.canStart(mana)) {
           this.owner.lowManaFlash = 0.4;
@@ -81,6 +91,15 @@ export class SkillCaster {
       const cap = sk.maxAffordableCharge ? sk.maxAffordableCharge(mana) : 1;
       s.charge = Math.min(1, s.t / sk.chargeTime, cap);
       const ctx = this._ctx(s, world);
+      if (held && sk.autoRelease && s.charge >= 1) {
+        // cast-time skills fire the moment the bar fills
+        s.charging = false;
+        s.latched = true;
+        sk.onRelease(ctx);
+        s.cooldown = sk.cooldown;
+        s.charge = 0;
+        continue;
+      }
       if (held) sk.onCharging?.(ctx, dt);
       else {
         s.charging = false;

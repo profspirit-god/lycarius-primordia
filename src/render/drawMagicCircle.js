@@ -8,6 +8,13 @@ export const FIRE_CIRCLE = {
   deep: [255, 90, 25],
 };
 
+/** Burn Resistance: red-orange. Also the colour of its toast and glow. */
+export const WARD_CIRCLE = {
+  main: [255, 92, 50],
+  core: [255, 165, 115],
+  deep: [200, 30, 20],
+};
+
 const RUNES = 12;
 
 // Pseudo-runes: 3 strokes between points of a 3x3 lattice, seeded per slot so they never change.
