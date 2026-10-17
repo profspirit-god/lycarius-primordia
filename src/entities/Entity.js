@@ -7,6 +7,11 @@
  *   solid    = true       -> blocks the player
  *   onHit(e: HitEvent)    -> reaction to damage (see src/types.js)
  *   damageColor           -> colour of damage numbers it receives
+ *   onDot(e)              -> reaction to damage over time (burn tick): { damage, kind, source }
+ *
+ * Status slots the world looks for (null when absent):
+ *   burn  -> running burn, owned by StatusSystem
+ *   ward  -> active BurnWardEffect (Burn Resistance)
  */
 export class Entity {
   constructor() {
@@ -18,6 +23,8 @@ export class Entity {
     this.dead = false;
     this.hittable = false;
     this.solid = false;
+    this.burn = null;
+    this.ward = null;
   }
   update(dt, world) {}
   draw(ctx, world) {}

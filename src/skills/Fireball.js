@@ -15,6 +15,8 @@ export const Fireball = {
   chargeTime: 1.3,
   minCharge: 0.12,
   damage: [8, 30], // [min, max] across the charge range
+  // Chance to set the target on fire on a body hit; chance scales with charge. dps is per second, ticks every 1 s.
+  burn: { chance: [0.2, 0.5], duration: [5, 10], dps: 8 },
 
   manaCost(charge) {
     return Math.ceil(lerp(MANA_MIN, MANA_MAX, charge) - 1e-6);
@@ -112,6 +114,7 @@ export const Fireball = {
         angle: aim,
         charge,
         damage: Fireball.damage,
+        burn: Fireball.burn,
       }),
     );
 

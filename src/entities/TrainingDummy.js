@@ -65,8 +65,8 @@ export class TrainingDummy extends Entity {
   }
 
   // --- caster interface -------------------------------------------------
-  wantsCast() {
-    return this.ai.cast;
+  wantsCast(slot) {
+    return this.ai.cast && !slot.skill.self; // the AI only fires attack skills for now
   }
   applyImpulse(x, y) {
     this.knock.x += x;
@@ -99,7 +99,20 @@ export class TrainingDummy extends Entity {
       if (this.vitals.dead) this.down();
     }
   }
+  /** Damage over time (burn tick): counts toward total damage and DPS, not toward hits. */
+  onDot(e) {
+    this.flash = 0.8;
+    this.glow = 1;
+    this.totalDamage += e.damage;
+    this.log.push({ t: performance.now(), d: e.damage });
+    if (this.attack) {
+      this.vitals.damage(e.damage);
+      if (this.vitals.dead) this.down();
+    }
+  }
   down() {
+    this.burn = null;
+    this.ward?.deactivate("downed");
     this.downed = true;
     this.downedTimer = RESPAWN_TIME;
     this.hittable = false;

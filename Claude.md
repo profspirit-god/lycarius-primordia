@@ -61,10 +61,10 @@ src/
   scenes/            Menu, Settings, Exit, World
   entities/          Entity base, Player, TrainingDummy
   classes/           ClassRegistry + class data (Mage)
-  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect)
-  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, AudioSystem
+  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect)
+  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem
   audio/             AudioEngine (procedural Web Audio, no asset files)
-  render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle
+  render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
 ```
 
 Rules:
@@ -164,6 +164,10 @@ Rules: no emoji in code or commits. Don't compress code identifiers or user-faci
 - Toggle skills (`toggle:true`): caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)` (Player has it, dummy does not). Shield state lives on `owner.shield`.
 - Projectiles ask entities with `isShield` via `blocks()`/`absorb()` before the body check. Any new projectile must do the same.
 - Aim reads the cursor at body height (`AIM_Z = 32`) so shots land where the sprite looks.
+- Status: burn lives on `entity.burn`, run by `StatusSystem`; ignition is an offer on the `hit` event (`burn: {chance, duration, dps}`). Create `StatusSystem` and `BurnFx` AFTER `HitEffects`; call `BurnFx.update` after `lights.update` (its lights are `once:true`). Entities that can burn implement `onDot(e)`.
+- Ward lives on `entity.ward` (`BurnWardEffect`). Projectiles call `target.ward.resist(dmg)` before emitting `hit`; any new fire projectile must do the same.
+- Cast-time skills: `autoRelease:true` fires when charge hits 1 and latches until the key is released. `self:true` skills are skipped by AI `wantsCast` and draw an aura instead of the charge orb. `Player.draw` reads `caster.chargingSkill`.
+- Damage is rounded in `FireballProjectile.roll()`. Keep new damage sources integer.
 
 ## 8. Roadmap pointer
 

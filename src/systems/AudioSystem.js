@@ -14,6 +14,8 @@ export class AudioSystem {
       world.events.on("hit", (e) => this.onHit(e)),
       world.events.on("cast", (e) => this.onCast(e)),
       world.events.on("shield", (e) => this.onShield(e)),
+      world.events.on("burn", (e) => this.onBurn(e)),
+      world.events.on("ward", (e) => this.onWard(e)),
     ];
   }
 
@@ -46,6 +48,21 @@ export class AudioSystem {
     else if (e.type === "hit") GameAudio.shieldHit(s.pan, s.vol);
     else if (e.type === "break") GameAudio.shieldBreak(s.pan, s.vol);
     else GameAudio.shieldDown(s.pan, s.vol);
+  }
+
+  /** 'burn' events: type is 'ignite' | 'tick' | 'nullify' | 'end' (silent). */
+  onBurn(e) {
+    const s = this.spatial(e.x, e.y);
+    if (e.type === "ignite") GameAudio.burnIgnite(s.pan, s.vol);
+    else if (e.type === "tick") GameAudio.burnTick(s.pan, s.vol);
+    else if (e.type === "nullify") GameAudio.burnNullify(s.pan, s.vol);
+  }
+
+  /** 'ward' events: 'up', or 'down' with a reason. A spent ward is covered by the nullify sound. */
+  onWard(e) {
+    const s = this.spatial(e.x, e.y);
+    if (e.type === "up") GameAudio.wardUp(s.pan, s.vol);
+    else if (e.reason !== "spent") GameAudio.wardDown(s.pan, s.vol);
   }
 
   casters() {

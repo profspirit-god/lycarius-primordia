@@ -2,12 +2,12 @@ import { lerpColor, rgba } from '../core/math.js';
 const shade = (c, f) => [c[0] * f, c[1] * f, c[2] * f];
 
 /** Characters are cylinders. `lean` shifts the top cap (px) for recoil / sway. Returns top-cap centre. */
-export function drawCylinder(ctx, { x, y, r, h, color, flash = 0, lean = [0, 0], squash = 0.5 }) {
+export function drawCylinder(ctx, { x, y, r, h, color, flash = 0, lean = [0, 0], squash = 0.5, tint = null }) {
   const tx = x + lean[0], ty = y - h + lean[1], ry = r * squash;
   ctx.fillStyle = 'rgba(0,0,0,.32)';
   ctx.beginPath(); ctx.ellipse(x, y, r * 1.2, ry * 1.2, 0, 0, Math.PI * 2); ctx.fill();
 
-  const c = lerpColor(color, [255, 255, 255], flash);
+  const c = lerpColor(tint ? lerpColor(color, tint.c, tint.a) : color, [255, 255, 255], flash); // tint: { c: rgb, a: 0..1 }
   const g = ctx.createLinearGradient(x - r, 0, x + r, 0);
   g.addColorStop(0, rgba(shade(c, 0.55))); g.addColorStop(0.45, rgba(c)); g.addColorStop(1, rgba(shade(c, 0.5)));
   ctx.fillStyle = g;

@@ -9,6 +9,9 @@ import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { Lights } from "../systems/Lights.js";
 import { DamageNumbers } from "../systems/DamageNumbers.js";
 import { HitEffects } from "../systems/HitEffects.js";
+import { StatusSystem } from "../systems/StatusSystem.js";
+import { BurnFx } from "../systems/BurnFx.js";
+import { Toasts } from "../systems/Toasts.js";
 import { drawGround } from "../render/drawGround.js";
 import { VERSION_LABEL } from "../config.js";
 import { drawBar } from "../render/drawBar.js";
@@ -32,12 +35,15 @@ export class WorldScene extends Scene {
     this.particles = new ParticleSystem();
     this.lights = new Lights();
     this.damageNumbers = new DamageNumbers();
+    this.toasts = new Toasts();
     this.entities = [];
     this.hitstopTimer = 0;
     this.paused = false;
     this.fps = 60;
 
     this.hitEffects = new HitEffects(this);
+    this.status = new StatusSystem(this); // after HitEffects: hit damage lands before ignition is rolled
+    this.burnFx = new BurnFx(this);
     this.player = this.spawn(new Player(ClassRegistry.get(this.classId)));
     this.dummy = this.spawn(
       new TrainingDummy(340, 0, {
@@ -55,6 +61,8 @@ export class WorldScene extends Scene {
   exit() {
     this.audio.dispose();
     this.hitEffects.dispose();
+    this.status.dispose();
+    this.burnFx.dispose();
   }
 
   spawn(e) {
@@ -102,8 +110,11 @@ export class WorldScene extends Scene {
     const list = this.entities.slice();
     for (const e of list) e.update(edt, this);
     this.entities = this.entities.filter((e) => !e.dead);
+    this.status.update(edt);
+    this.burnFx.update(edt); // after lights.update: its one-frame lights must survive to render
     this.particles.update(pdt);
     this.damageNumbers.update(dt);
+    this.toasts.update(dt);
     this.camera.update(dt, this.player);
     this.audio.update(dt);
   }
@@ -119,6 +130,7 @@ export class WorldScene extends Scene {
     this.particles.render(ctx);
     this.lights.render(ctx);
     this.damageNumbers.render(ctx);
+    this.toasts.render(ctx);
     ctx.restore();
     this.drawVignette(ctx, w, h);
     this.drawHud(ctx, w, h);
@@ -139,10 +151,10 @@ export class WorldScene extends Scene {
     ctx.fillRect(0, 0, w, h);
   }
 
-  /** One skill slot: icon, cooldown, dim when unaffordable, bar (charge, or shield points for toggles), key hint. */
+  /** One skill slot: icon, cooldown, dim when unaffordable, bar (charge, shield points, or ward time left), key hint. */
   drawSlot(ctx, x, y, s, p, v) {
     const sk = s.skill,
-      on = !!sk.toggle && sk.isActive(p),
+      on = !!sk.isActive?.(p),
       cd = s.cooldown / sk.cooldown,
       cx = x + 34;
     ctx.fillStyle = "rgba(12,14,20,.8)";
@@ -164,14 +176,19 @@ export class WorldScene extends Scene {
       ctx.fillStyle = "rgba(20,40,120,.55)";
       ctx.fillRect(x + 2, y + 2, 64, 64);
     }
-    const frac = sk.toggle ? (on ? p.shield.points / p.shield.maxPoints : 0) : s.charge;
+    const frac = sk.toggle
+      ? on ? p.shield.points / p.shield.maxPoints : 0
+      : on ? p.ward.life / p.ward.maxLife : s.charge;
     ctx.fillStyle = "rgba(255,255,255,.12)";
     ctx.fillRect(x, y + 76, 68, 7);
     ctx.fillStyle = "#ff8a3a";
     ctx.fillRect(x, y + 76, 68 * frac, 7);
+    const label = sk.name.toUpperCase();
     ctx.font = "11px Georgia, serif";
+    const lw = ctx.measureText(label).width;
+    if (lw > 86) ctx.font = `${Math.floor((11 * 86) / lw)}px Georgia, serif`; // long names shrink to fit
     ctx.fillStyle = "#b9a77f";
-    ctx.fillText(sk.name.toUpperCase(), cx, y + 99);
+    ctx.fillText(label, cx, y + 99);
     if (sk.hint) {
       ctx.font = "10px Georgia, serif";
       ctx.fillStyle = "rgba(234,223,200,.7)";
@@ -189,7 +206,7 @@ export class WorldScene extends Scene {
     ctx.font = "13px Georgia, serif";
     ctx.fillStyle = "rgba(234,223,200,.85)";
     ctx.fillText(
-      "WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge fireball  ·  RMB / E flame shield (press again to drop)  ·  Esc pause",
+      "WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge fireball  ·  RMB / E flame shield (press again to drop)  ·  Hold Q burn resistance  ·  Esc pause",
       18,
       26,
     );
@@ -230,6 +247,22 @@ export class WorldScene extends Scene {
       ctx.fillText(`SHIELD ${Math.ceil(sh.points)} / ${sh.maxPoints}   (-${sh.upkeep} MP/s)`, 24, 118);
     }
 
+    // burn resistance time left, burn time left
+    let sy = p.shield ? 128 : 108;
+    if (p.ward) {
+      drawBar(ctx, 18, sy, 240, 12, p.ward.life / p.ward.maxLife, "#ff5a32");
+      ctx.font = "12px Georgia, serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`BURN RESISTANCE ${Math.ceil(p.ward.life)}s`, 24, sy + 10);
+      sy += 20;
+    }
+    if (p.burn) {
+      const b = p.burn;
+      ctx.font = "bold 13px Georgia, serif";
+      ctx.fillStyle = "#ff8a2a";
+      ctx.fillText(`BURNING  ${Math.max(0, b.dur - b.t).toFixed(1)}s  (${(b.dps * (p.ward ? 1 - p.ward.burnReduction : 1)).toFixed(0)}/s)`, 18, sy + 12);
+    }
+
     // dummy panel
     ctx.fillStyle = "rgba(12,14,20,.72)";
     ctx.strokeStyle = "rgba(242,196,109,.35)";
@@ -259,7 +292,7 @@ export class WorldScene extends Scene {
 
     // skill slots
     const slots = p.caster.slots,
-      gap = 78,
+      gap = 92,
       x0 = w / 2 - (slots.length * gap - 10) / 2;
     slots.forEach((sl, i) => this.drawSlot(ctx, x0 + i * gap, h - 100, sl, p, v));
 

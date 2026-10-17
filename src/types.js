@@ -43,6 +43,9 @@
  * @property {(slot: object, world: object) => boolean} wantsCast   True while the owner is holding the skill.
  * @property {(slot: object, world: object) => boolean} [wantsToggle] True on the frame a toggle skill key is pressed. Omit for casters that never toggle.
  * @property {object|null} [shield]                   Active FlameShieldEffect, if the owner has raised one.
+ * @property {object|null} [burn]                     Running burn { t, dur, dps, ticks, fx, source }, owned by StatusSystem.
+ * @property {object|null} [ward]                     Active BurnWardEffect, if the owner has cast Burn Resistance.
+ * @property {(e: { damage: number, kind: string, source: object }) => void} [onDot]  Damage over time (burn tick).
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
  */
 
@@ -74,6 +77,9 @@
  * @property {(ctx: SkillContext) => void} onRelease
  * @property {string} [hint]                          Key hint shown on the HUD slot.
  * @property {boolean} [toggle]                       Toggle skill: press on, press off. Needs isActive, onActivate, onDeactivate.
+ * @property {boolean} [self]                         Targets the caster only. AI casters skip it; Player draws an aura instead of the charge orb.
+ * @property {boolean} [autoRelease]                  Cast-time skill: fires the moment charge hits 1 (hold until the bar fills; releasing early cancels).
+ * @property {object} [palette]                       Magic circle colours (see drawMagicCircle.js). Defaults to the fire palette.
  * @property {(owner: CasterOwner) => boolean} [isActive]
  * @property {(ctx: SkillContext) => void} [onActivate]
  * @property {(ctx: SkillContext) => void} [onDeactivate]
@@ -91,6 +97,8 @@
  * @property {number} x
  * @property {number} y
  * @property {number} z                               Impact point.
+ * @property {number} [resisted]                      Damage removed by the target's ward (damage is already reduced).
+ * @property {{ chance: number, duration: number, dps: number }} [burn]  Ignition offer: StatusSystem rolls `chance`.
  */
 
 /**
@@ -112,6 +120,28 @@
  * @property {number} [absorbed]                      Damage the shield soaked ('hit', 'break').
  * @property {number} [passed]                        Damage that went through ('break').
  * @property {string} [reason]                        'manual' | 'starved' | 'downed' ('down').
+ */
+
+/**
+ * Emitted on world.events as 'burn' by StatusSystem.
+ * @typedef {Object} BurnEvent
+ * @property {'ignite'|'tick'|'nullify'|'end'} type   'nullify' = a ward snuffed the burn. 'end' = it burned out.
+ * @property {object} target
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z                               Body height point.
+ * @property {number} [damage]                        Tick damage ('tick').
+ */
+
+/**
+ * Emitted on world.events as 'ward' by BurnResistance / BurnWardEffect.
+ * @typedef {Object} WardEvent
+ * @property {'up'|'down'} type
+ * @property {CasterOwner} owner
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {string} [reason]                        'expired' | 'spent' | 'downed' ('down').
  */
 
 export {};
