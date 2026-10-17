@@ -2,6 +2,44 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.3.0.00 — Moving dummy
+
+### Added
+
+- Setting **Dummy movement** (Stationary, Patrol, Strafe), applied on Start. Persisted in `localStorage` as `dummyMovement`.
+- Patrol: the dummy follows a sine path along a 520 px line through its home point.
+- Strafe: the dummy circles the player at 340 px and reverses direction every 3 to 6 seconds. Works in both passive and hostile mode.
+- The dummy leans into its direction of travel. Movement pauses during hit-freeze and hit knock-back still applies.
+
+### Changed
+
+- The home-spring that pulls the dummy back to its start point now applies only in Stationary mode. In moving modes the steering target replaces it.
+
+## V1.2.0.01 — Cleanup
+
+### Changed
+
+- Particle-count helper (`scaled`) now lives in `ParticleSystem.js`; removed three duplicate copies.
+
+### Removed
+
+- Unused `rgba` import in `Lights.js`, unused `mid` parameter in `HitEffects.shockwaves`, redundant `this.game` assignment in `WorldScene`.
+
+### Added
+
+- `src/types.js`: JSDoc contracts for skills, classes, casters, hit and cast events.
+- Type annotations on `Fireball`, `Mage`, `Entity`, `SkillCaster`, `HitEffects.onHit`.
+
+## V1.2.0.00 — Audio
+
+### Added
+
+- Procedural audio engine (Web Audio API): charge hum, cast whoosh, impact, hurt, no-mana dud, death, respawn, menu click.
+- Positional audio: distance attenuation and stereo pan for the hostile dummy.
+- Master volume setting is now functional, with a preview sound.
+- `AudioSystem` bridges game events to sounds; new `cast` event emitted on skill release.
+- Audio mutes when the tab is hidden and the charge hum stops on pause.
+
 ## V1.0.0.00 — Primordia MVP
 
 ### Added

@@ -1,0 +1,97 @@
+/**
+ * Shared JSDoc contracts. No runtime code: VS Code reads these for autocomplete and hover docs.
+ * Reference them from any file with:  @type {import('../types.js').SkillDef}
+ */
+
+/**
+ * Point in the pseudo-3D world. (x, y) is on the ground plane, z is height above it.
+ * @typedef {{ x: number, y: number, z: number }} Origin3
+ */
+
+/**
+ * @typedef {Object} ClassStats
+ * @property {number} speed      Walk speed in px/s.
+ * @property {number} radius     Collision radius.
+ * @property {number} height     Cylinder height.
+ * @property {number} maxHp
+ * @property {number} maxMana
+ * @property {number} hpRegen    Per second.
+ * @property {number} manaRegen  Per second.
+ */
+
+/**
+ * Class definition: pure data, registered in src/content/index.js.
+ * @typedef {Object} ClassDef
+ * @property {string} id
+ * @property {string} name
+ * @property {number[]} color                         RGB, 0-255.
+ * @property {ClassStats} stats
+ * @property {string[]} skills                        Skill ids from SkillRegistry.
+ * @property {Object<string, string[]>} bindings      skillId -> input codes (e.g. 'Mouse0', 'Space').
+ */
+
+/**
+ * Anything that can cast skills through SkillCaster (player, hostile dummy, future enemies).
+ * @typedef {Object} CasterOwner
+ * @property {import('./systems/Vitals.js').Vitals} vitals
+ * @property {number} aim                             Aim angle in radians.
+ * @property {number} x
+ * @property {number} y
+ * @property {number} kick                            Recoil lean amount (decays on its own).
+ * @property {number} lowManaFlash                    Set > 0 when a cast is refused for lack of mana.
+ * @property {() => Origin3} getCastOrigin
+ * @property {(slot: object, world: object) => boolean} wantsCast   True while the owner is holding the skill.
+ * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
+ */
+
+/**
+ * Context handed to every skill hook.
+ * @typedef {Object} SkillContext
+ * @property {CasterOwner} owner
+ * @property {object} world                           The active WorldScene.
+ * @property {SkillDef} skill
+ * @property {number} charge                          0..1
+ * @property {number} aim
+ * @property {Origin3} origin
+ */
+
+/**
+ * Skill definition: registered in src/content/index.js, referenced by id from a class.
+ * @typedef {Object} SkillDef
+ * @property {string} id
+ * @property {string} name
+ * @property {string} icon
+ * @property {number} cooldown                        Seconds.
+ * @property {number} chargeTime                      Seconds to reach full charge.
+ * @property {number} minCharge                       0..1; releasing below this cancels the cast.
+ * @property {(charge: number) => number} [manaCost]
+ * @property {(mana: number) => boolean} [canStart]
+ * @property {(mana: number) => number} [maxAffordableCharge]
+ * @property {(ctx: SkillContext) => void} [onChargeStart]
+ * @property {(ctx: SkillContext, dt: number) => void} [onCharging]
+ * @property {(ctx: SkillContext) => void} onRelease
+ */
+
+/**
+ * Emitted on world.events as 'hit' by anything that deals damage.
+ * @typedef {Object} HitEvent
+ * @property {object} source                          The attacker.
+ * @property {object} target                          Must have hittable=true; may implement onHit(e).
+ * @property {number} damage
+ * @property {boolean} crit
+ * @property {{ x: number, y: number }} dir           Unit vector of travel.
+ * @property {number} charge                          0..1
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z                               Impact point.
+ */
+
+/**
+ * Emitted on world.events as 'cast' when a skill is released.
+ * @typedef {Object} CastEvent
+ * @property {CasterOwner} owner
+ * @property {number} charge
+ * @property {SkillDef} skill
+ */
+
+export {};

@@ -1,9 +1,8 @@
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 
 /**
- * Generic hold-to-charge caster. The owner supplies:
- *   owner.vitals, owner.aim, owner.getCastOrigin(), owner.wantsCast(slot, world)
- * Skill definition: { chargeTime, minCharge, cooldown, canStart?, maxAffordableCharge?, onChargeStart?, onCharging?, onRelease }
+ * Generic hold-to-charge caster. Works with any owner that satisfies
+ * `CasterOwner` and any skill that satisfies `SkillDef` (see src/types.js).
  */
 export class SkillCaster {
   constructor(owner, skillIds, bindings) {
