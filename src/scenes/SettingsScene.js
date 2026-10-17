@@ -19,6 +19,8 @@ export class SettingsScene extends Scene {
       <div class="row"><label>Screen shake</label><input type="checkbox" data-k="screenShake" ${s.screenShake ? 'checked' : ''}></div>
       <div class="row"><label>Damage numbers</label><input type="checkbox" data-k="damageNumbers" ${s.damageNumbers ? 'checked' : ''}></div>
       <div class="row"><label>Show debug (FPS)</label><input type="checkbox" data-k="showDebug" ${s.showDebug ? 'checked' : ''}></div>
+      <div class="row"><label>Dummy attacks</label><input type="checkbox" data-k="dummyAttacks" ${s.dummyAttacks ? 'checked' : ''}></div>
+      <div class="note">On: the dummy uses the player's stats (50 HP, 100 mana, same regen), fights back, and can be defeated.</div>
       <button class="btn" data-a="reset">Reset to defaults</button>
       <button class="btn" data-a="back">Back</button>`;
     el.addEventListener('input', (e) => {
