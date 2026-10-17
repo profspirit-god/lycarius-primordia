@@ -6,9 +6,9 @@ import { drawGlow } from '../render/drawGlow.js';
 const n = (v) => Math.max(1, Math.round(v * Settings.get('particleQuality')));
 
 export class FireballProjectile extends Entity {
-  constructor({ owner, x, y, z, angle, charge }) {
+    constructor({ owner, x, y, z, angle, charge, damage = [8, 30] }) {
     super();
-    Object.assign(this, { owner, x, y, z, charge });
+    Object.assign(this, { owner, x, y, z, charge, damageRange: damage });
     this.speed = lerp(520, 900, charge);
     this.radius = lerp(8, 19, charge);
     this.vx = Math.cos(angle) * this.speed; this.vy = Math.sin(angle) * this.speed;
@@ -55,7 +55,7 @@ export class FireballProjectile extends Entity {
   hit(target, world) {
     const len = Math.hypot(this.vx, this.vy) || 1, dir = { x: this.vx / len, y: this.vy / len };
     const crit = Math.random() < 0.12;
-    const damage = Math.round(lerp(15, 110, Math.pow(this.charge, 1.3)) * rand(0.9, 1.1) * (crit ? 1.75 : 1));
+    const damage = Math.round(lerp(this.damageRange[0], this.damageRange[1], Math.pow(this.charge, 1.3))) * rand(0.9, 1.1) * (crit ? 1.75 : 1);
     this.dead = true;
     world.events.emit('hit', { source: this.owner, target, damage, crit, dir, charge: this.charge, x: this.x, y: this.y, z: this.z });
   }
