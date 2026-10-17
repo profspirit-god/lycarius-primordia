@@ -1,0 +1,79 @@
+import { GameAudio } from "../audio/AudioEngine.js";
+import { clamp } from "../core/math.js";
+
+/**
+ * Bridges game events to sounds. Combat code never calls audio directly,
+ * it just emits events ('hit', 'cast') and flips state (charging, downed, lowManaFlash).
+ */
+export class AudioSystem {
+  constructor(world) {
+    this.world = world;
+    this.voices = new Map(); // caster owner -> charge voice
+    this.prev = new Map(); // owner -> last frame state for edge detection
+    this.offs = [
+      world.events.on("hit", (e) => this.onHit(e)),
+      world.events.on("cast", (e) => this.onCast(e)),
+    ];
+  }
+
+  /** Distance volume + stereo pan relative to the listener (the player). */
+  spatial(x, y) {
+    const p = this.world.player,
+      dx = x - p.x,
+      dy = y - p.y,
+      d = Math.hypot(dx, dy);
+    return {
+      pan: clamp(dx / 700, -1, 1) * 0.8,
+      vol: clamp(1 - d / 1100, 0.12, 1),
+    };
+  }
+
+  onHit(e) {
+    const s = this.spatial(e.target.x, e.target.y);
+    if (e.target === this.world.player) GameAudio.hurt(e.charge, s.pan, s.vol);
+    else GameAudio.impact(e.charge, e.crit, s.pan, s.vol);
+  }
+  onCast(e) {
+    const s = this.spatial(e.owner.x, e.owner.y);
+    GameAudio.cast(e.charge, s.pan, s.vol);
+  }
+
+  casters() {
+    const w = this.world;
+    return w.dummy.attack ? [w.player, w.dummy] : [w.player];
+  }
+
+  update() {
+    for (const o of this.casters()) {
+      const c = o.caster,
+        s = this.spatial(o.x, o.y);
+      let v = this.voices.get(o);
+      if (c.charging) {
+        if (!v) {
+          v = GameAudio.chargeVoice();
+          if (v) this.voices.set(o, v);
+        }
+        v?.update(c.chargeLevel, s.pan, s.vol);
+      } else if (v) {
+        v.stop();
+        this.voices.delete(o);
+      }
+
+      const st = this.prev.get(o) ?? { low: 0, downed: false };
+      if (o.lowManaFlash > 0.35 && st.low <= 0.35)
+        GameAudio.lowMana(s.pan, s.vol);
+      if (o.downed && !st.downed) GameAudio.down(s.pan, s.vol);
+      if (!o.downed && st.downed) GameAudio.respawn(s.pan, s.vol);
+      this.prev.set(o, { low: o.lowManaFlash, downed: o.downed });
+    }
+  }
+
+  silence() {
+    for (const v of this.voices.values()) v.stop();
+    this.voices.clear();
+  }
+  dispose() {
+    this.silence();
+    this.offs.forEach((off) => off());
+  }
+}
