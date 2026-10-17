@@ -2,7 +2,9 @@
 import { SkillRegistry } from '../skills/SkillRegistry.js';
 import { ClassRegistry } from '../classes/ClassRegistry.js';
 import { Fireball } from '../skills/Fireball.js';
+import { FlameShield } from '../skills/FlameShield.js';
 import { Mage } from '../classes/Mage.js';
 
 SkillRegistry.register(Fireball);
+SkillRegistry.register(FlameShield);
 ClassRegistry.register(Mage);

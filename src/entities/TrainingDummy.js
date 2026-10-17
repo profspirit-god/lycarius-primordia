@@ -5,6 +5,7 @@ import { drawCylinder } from "../render/drawCylinder.js";
 import { drawGlow } from "../render/drawGlow.js";
 import { drawBar } from "../render/drawBar.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
+import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { rand, TAU } from "../core/math.js";
 
 const RESPAWN_TIME = 3;
@@ -265,6 +266,8 @@ export class TrainingDummy extends Entity {
       this.ly + this.vy * 0.015 - (this.attack ? s * this.kick * 4 : 0),
     ];
     if (this.downed) ctx.globalAlpha = 0.3;
+    if (this.attack && this.caster.charging)
+      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + this.caster.chargeLevel * 22, performance.now() / 1000, this.caster.chargeLevel);
     const top = drawCylinder(ctx, {
       x: this.x,
       y: this.y,
@@ -306,7 +309,7 @@ export class TrainingDummy extends Entity {
       );
       ctx.fill();
       if (this.caster.charging)
-        drawChargeOrb(ctx, this.getCastOrigin(), this.caster.chargeLevel);
+        drawChargeOrb(ctx, this.getCastOrigin(), this.caster.chargeLevel, this.aim);
     }
     if (this.glow > 0) {
       ctx.globalCompositeOperation = "lighter";

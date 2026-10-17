@@ -3,6 +3,7 @@ import { SkillCaster } from "../systems/SkillCaster.js";
 import { Vitals } from "../systems/Vitals.js";
 import { drawCylinder } from "../render/drawCylinder.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
+import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
 
 const AIM_Z = 32; // cursor is read at body height so shots land where the sprite visually is
@@ -26,6 +27,7 @@ export class Player extends Entity {
     this.home = { x: 0, y: 0 };
     this.vitals = new Vitals(cls.stats);
     this.caster = new SkillCaster(this, cls.skills, cls.bindings);
+    this.shield = null; // active FlameShieldEffect, if any
     this.flash = 0;
     this.lowManaFlash = 0;
     this.downed = false;
@@ -46,6 +48,11 @@ export class Player extends Entity {
     return !this.downed && slot.keys.some((k) => world.input.isDown(k));
   }
 
+  /** Toggle skills fire on the key press, not while held. */
+  wantsToggle(slot, world) {
+    return !this.downed && slot.keys.some((k) => world.input.wasPressed(k));
+  }
+
   /** Called by HitEffects when something hits the player. */
   onHit(e) {
     this.vitals.damage(e.damage);
@@ -62,6 +69,7 @@ export class Player extends Entity {
     this.hittable = false;
     this.solid = false;
     this.caster.cancel();
+    this.shield?.deactivate("downed");
     this.vx = 0;
     this.vy = 0;
   }
@@ -137,20 +145,8 @@ export class Player extends Entity {
     const charge = this.caster.chargeLevel;
     if (this.downed) ctx.globalAlpha = 0.3;
     if (this.caster.charging) {
-      // charge ring on the ground
-      ctx.strokeStyle = `rgba(255,170,70,${0.4 + charge * 0.5})`;
-      ctx.lineWidth = 2 + charge * 3;
-      ctx.beginPath();
-      ctx.ellipse(
-        this.x,
-        this.y,
-        this.radius + 14,
-        (this.radius + 14) * 0.5,
-        0,
-        -Math.PI / 2,
-        -Math.PI / 2 + TAU * charge,
-      );
-      ctx.stroke();
+      // magic circle on the ground; runes light up with the charge
+      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + charge * 22, this.t, charge);
     }
     const top = drawCylinder(ctx, {
       x: this.x,
@@ -171,7 +167,7 @@ export class Player extends Entity {
       TAU,
     );
     ctx.fill();
-    if (this.caster.charging) drawChargeOrb(ctx, this.getCastOrigin(), charge);
+    if (this.caster.charging) drawChargeOrb(ctx, this.getCastOrigin(), charge, this.aim);
     ctx.globalAlpha = 1;
   }
 }

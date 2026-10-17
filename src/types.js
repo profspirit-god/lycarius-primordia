@@ -41,6 +41,8 @@
  * @property {number} lowManaFlash                    Set > 0 when a cast is refused for lack of mana.
  * @property {() => Origin3} getCastOrigin
  * @property {(slot: object, world: object) => boolean} wantsCast   True while the owner is holding the skill.
+ * @property {(slot: object, world: object) => boolean} [wantsToggle] True on the frame a toggle skill key is pressed. Omit for casters that never toggle.
+ * @property {object|null} [shield]                   Active FlameShieldEffect, if the owner has raised one.
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
  */
 
@@ -70,6 +72,11 @@
  * @property {(ctx: SkillContext) => void} [onChargeStart]
  * @property {(ctx: SkillContext, dt: number) => void} [onCharging]
  * @property {(ctx: SkillContext) => void} onRelease
+ * @property {string} [hint]                          Key hint shown on the HUD slot.
+ * @property {boolean} [toggle]                       Toggle skill: press on, press off. Needs isActive, onActivate, onDeactivate.
+ * @property {(owner: CasterOwner) => boolean} [isActive]
+ * @property {(ctx: SkillContext) => void} [onActivate]
+ * @property {(ctx: SkillContext) => void} [onDeactivate]
  */
 
 /**
@@ -92,6 +99,19 @@
  * @property {CasterOwner} owner
  * @property {number} charge
  * @property {SkillDef} skill
+ */
+
+/**
+ * Emitted on world.events as 'shield' by FlameShield / FlameShieldEffect.
+ * @typedef {Object} ShieldEvent
+ * @property {'up'|'hit'|'break'|'down'} type
+ * @property {CasterOwner} owner
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} [absorbed]                      Damage the shield soaked ('hit', 'break').
+ * @property {number} [passed]                        Damage that went through ('break').
+ * @property {string} [reason]                        'manual' | 'starved' | 'downed' ('down').
  */
 
 export {};
