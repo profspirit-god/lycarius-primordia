@@ -26,7 +26,6 @@ export class WorldScene extends Scene {
 
   enter(game) {
     super.enter(game);
-    this.game = game;
     this.input = game.input;
     this.events = new EventBus();
     this.camera = new Camera();
@@ -82,6 +81,7 @@ export class WorldScene extends Scene {
     this.paused = p;
     this.pauseEl.style.display = p ? "" : "none";
     if (p) this.player.caster.cancel();
+    if (p) this.audio.silence();
   }
 
   update(dt) {
@@ -104,6 +104,7 @@ export class WorldScene extends Scene {
     this.particles.update(pdt);
     this.damageNumbers.update(dt);
     this.camera.update(dt, this.player);
+    this.audio.update(dt);
   }
 
   render(ctx, w, h) {

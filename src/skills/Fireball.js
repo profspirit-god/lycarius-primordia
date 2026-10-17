@@ -1,12 +1,11 @@
 import { FireballProjectile } from "./FireballProjectile.js";
-import { Settings } from "../core/Settings.js";
+import { scaled as n } from "../systems/ParticleSystem.js";
 import { clamp, lerp, rand, TAU } from "../core/math.js";
-
-const n = (v) => Math.max(1, Math.round(v * Settings.get("particleQuality")));
 const MANA_MIN = 5; // cost at minimum charge
 const MANA_MAX = 20; // cost at full charge
 
 /** Skill definition. Charge 0..1 scales size, speed, damage, recoil and mana cost. */
+/** @type {import('../types.js').SkillDef} */
 export const Fireball = {
   id: "fireball",
   name: "Fireball",
