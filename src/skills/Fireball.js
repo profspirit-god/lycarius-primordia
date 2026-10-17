@@ -82,6 +82,7 @@ export const Fireball = {
 
   onRelease({ owner, world, charge, aim, origin }) {
     owner.vitals.spend(Fireball.manaCost(charge));
+    world.events.emit("cast", { owner, charge, skill: Fireball });
     const dx = Math.cos(aim),
       dy = Math.sin(aim);
     world.spawn(
