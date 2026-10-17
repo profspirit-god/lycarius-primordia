@@ -4,7 +4,7 @@ import { clamp, rand } from "../core/math.js";
 /**
  * Procedural audio (Web Audio API). No asset files needed.
  * To use real sound files later, replace the bodies of the public methods
- * (ui, cast, impact, hurt, lowMana, down, respawn, chargeVoice) and keep their signatures.
+ * (ui, cast, impact, hurt, lowMana, down, respawn, chargeVoice, shieldUp, shieldHit, shieldBreak, shieldDown) and keep their signatures.
  */
 class AudioEngine {
   constructor() {
@@ -171,6 +171,42 @@ class AudioEngine {
     [392, 523, 659].forEach((f, i) =>
       this._osc("sine", f, f, t + i * 0.09, 0.28, out, 0.25),
     );
+  }
+
+  shieldUp(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._noise(t, 0.55, out, 0.45, { type: "bandpass", f0: 300, f1: 2200, q: 1.2 });
+    this._osc("sine", 220, 440, t, 0.4, out, 0.35);
+    this._osc("triangle", 330, 660, t + 0.06, 0.35, out, 0.2);
+    for (let i = 0; i < 4; i++)
+      this._noise(t + rand(0.05, 0.4), 0.04, out, 0.15, { type: "highpass", f0: 3200, f1: 2200 });
+  }
+  shieldHit(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._osc("triangle", 720, 280, t, 0.16, out, 0.35);
+    this._osc("sine", 130, 60, t, 0.2, out, 0.6);
+    this._noise(t, 0.22, out, 0.5, { type: "bandpass", f0: 2600, f1: 600, q: 1.5 });
+  }
+  shieldBreak(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._noise(t, 0.55, out, 0.7, { type: "lowpass", f0: 4500, f1: 200 });
+    this._osc("sawtooth", 420, 60, t, 0.45, out, 0.28);
+    this._osc("sine", 150, 40, t, 0.4, out, 0.7);
+    for (let i = 0; i < 7; i++)
+      this._noise(t + rand(0.02, 0.35), 0.05, out, 0.2, { type: "highpass", f0: 3500, f1: 2500 });
+  }
+  shieldDown(pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol);
+    this._osc("sine", 440, 110, t, 0.4, out, 0.3);
+    this._noise(t, 0.35, out, 0.3, { type: "lowpass", f0: 1800, f1: 200 });
   }
 
   /** Continuous charge hum. Returns { update(charge, pan, vol), stop() } or null if audio is locked. */

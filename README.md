@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.3.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.4.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class, one skill, a trai
 
 ---
 
-## 1. What is in V1.3.0.00
+## 1. What is in V1.4.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ This repository currently holds the **combat MVP**: one class, one skill, a trai
 | Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), dummy attacks toggle, dummy movement mode. Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
-| Skill          | **Fireball** (the only skill): hold to charge, release to cast                                                                         |
+| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage                   |
 | Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), HUD bars, death and respawn                                                             |
 | Mana cost      | Scales with charge: 5 at minimum charge up to 20 at full charge                                                                        |
 | Dummy          | Passive mode: infinite health. Hostile mode: uses the player's stats, fights back, can be defeated                                     |
@@ -59,6 +59,37 @@ Set in **Settings → Dummy attacks** (applies when you press Start).
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Off (default) | Passive training dummy with infinite health. Tracks total damage, hits, last hit and 5-second DPS                                                                                                                                       |
 | On            | The dummy takes the player class's stats (50 HP, 100 mana, same regen), leads its target, charges to a random level and fires fireballs at you. A hit staggers it and cancels its cast. It can be defeated and respawns after 3 seconds |
+
+### Magic circle casting
+
+Holding Fireball builds two circles, both drawn procedurally (`src/render/drawMagicCircle.js`):
+
+| Circle        | Where                                  | Behaviour                                                                                                 |
+| ------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Ground circle | Under the caster                       | Outer ring sweeps with the charge, runes light one by one (2 at start, 12 at full), rings and triangles counter-rotate. Rune motes rise from it |
+| Casting circle | In front of the caster, facing the aim | The orb forms inside it. Thin when you aim sideways, a full circle when you aim toward or away from the camera |
+
+On release the ground circle discharges as a ring of sparks and a shockwave. The hostile dummy uses the same circles.
+
+### Flame Shield
+
+Press `Right Mouse` or `E` to raise, press again to drop. Rules:
+
+| Rule                     | Value                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| Shield points            | 50                                                                                          |
+| Cast cost                | 10 mana (you need at least 10 mana to cast)                                                 |
+| Upkeep                   | 5 mana per second while raised (mana regeneration of 1/s still applies)                     |
+| Shape                    | 115 degree arc, 56 px from the caster, 60 px high, follows the aim with a slight lag        |
+| Limit                    | One shield per caster. After raising or dropping it, 0.6 s before it can be raised again    |
+| Damage below the points  | Fully absorbed; the points drop by that amount                                              |
+| Damage equal to points   | Fully absorbed; the shield breaks                                                           |
+| Damage above the points  | The shield breaks and the **remainder** hits you (the fireball shrinks as it flies through) |
+| Mana runs out            | The shield collapses                                                                        |
+| Caster is downed         | The shield drops                                                                            |
+| From behind / your shots | Not blocked. Your own fireballs pass through your shield                                    |
+
+Example: shield at 50, fireball deals 20 → shield 30. Next fireball deals 40 → shield breaks, you take 10.
 
 ### Dummy movement
 
@@ -128,6 +159,7 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Mouse                        | Aim             |
 | Hold `Left Mouse` or `Space` | Charge Fireball |
 | Release                      | Cast            |
+| `Right Mouse` or `E`         | Raise / drop Flame Shield |
 | `Esc`                        | Pause menu      |
 
 ---
@@ -184,10 +216,10 @@ src/
   scenes/                     MenuScene, SettingsScene, ExitScene, WorldScene
   entities/                   Entity (base), Player, TrainingDummy
   classes/                    ClassRegistry, Mage (data only)
-  skills/                     SkillRegistry, Fireball (definition), FireballProjectile
+  skills/                     SkillRegistry, Fireball, FlameShield (definitions), FireballProjectile, FlameShieldEffect
   systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera,
                               DamageNumbers, HitEffects, AudioSystem
-  render/                     drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb
+  render/                     drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle
 ```
 
 ### Core concepts

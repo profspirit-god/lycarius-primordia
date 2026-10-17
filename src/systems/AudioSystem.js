@@ -13,6 +13,7 @@ export class AudioSystem {
     this.offs = [
       world.events.on("hit", (e) => this.onHit(e)),
       world.events.on("cast", (e) => this.onCast(e)),
+      world.events.on("shield", (e) => this.onShield(e)),
     ];
   }
 
@@ -36,6 +37,15 @@ export class AudioSystem {
   onCast(e) {
     const s = this.spatial(e.owner.x, e.owner.y);
     GameAudio.cast(e.charge, s.pan, s.vol);
+  }
+
+  /** 'shield' events: type is 'up' | 'hit' | 'break' | 'down'. */
+  onShield(e) {
+    const s = this.spatial(e.x, e.y);
+    if (e.type === "up") GameAudio.shieldUp(s.pan, s.vol);
+    else if (e.type === "hit") GameAudio.shieldHit(s.pan, s.vol);
+    else if (e.type === "break") GameAudio.shieldBreak(s.pan, s.vol);
+    else GameAudio.shieldDown(s.pan, s.vol);
   }
 
   casters() {

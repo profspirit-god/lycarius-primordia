@@ -1,6 +1,6 @@
 import { Entity } from "../entities/Entity.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
-import { dist, lerp, lerpColor, rand, rgba, TAU } from "../core/math.js";
+import { clamp, dist, lerp, lerpColor, rand, rgba, TAU } from "../core/math.js";
 import { drawGlow } from "../render/drawGlow.js";
 
 export class FireballProjectile extends Entity {
@@ -15,6 +15,7 @@ export class FireballProjectile extends Entity {
     this.travelled = 0;
     this.trail = [];
     this.t = 0;
+    this.rolled = null; // damage is rolled once, so a shield and the body see the same number
   }
 
   update(dt, world) {
@@ -87,6 +88,14 @@ export class FireballProjectile extends Entity {
 
   checkHit(world) {
     for (const e of world.entities) {
+      // flame shields first: the arc is in front of the body it protects
+      if (!e.isShield || e.owner === this.owner) continue;
+      if (e.blocks(this.x, this.y, this.z, this.radius)) {
+        this.hitShield(e);
+        return;
+      }
+    }
+    for (const e of world.entities) {
       if (!e.hittable || e.dead || e === this.owner) continue;
       if (
         dist(this.x, this.y, e.x, e.y) < this.radius + e.radius &&
@@ -98,20 +107,40 @@ export class FireballProjectile extends Entity {
     }
   }
 
+  roll() {
+    if (!this.rolled) {
+      const crit = Math.random() < 0.12;
+      const damage =
+        Math.round(
+          lerp(
+            this.damageRange[0],
+            this.damageRange[1],
+            Math.pow(this.charge, 1.3),
+          ),
+        ) *
+        rand(0.9, 1.1) *
+        (crit ? 1.75 : 1);
+      this.rolled = { damage, crit };
+    }
+    return this.rolled;
+  }
+
+  /** The shield soaks what it can. Leftover damage keeps flying (smaller) toward the body. */
+  hitShield(shield) {
+    const r = this.roll(),
+      left = shield.absorb(r.damage, this);
+    if (left <= 0) {
+      this.dead = true;
+      return;
+    }
+    this.rolled = { damage: left, crit: r.crit };
+    this.radius *= clamp(0.55 + 0.45 * (left / r.damage), 0.55, 1);
+  }
+
   hit(target, world) {
     const len = Math.hypot(this.vx, this.vy) || 1,
       dir = { x: this.vx / len, y: this.vy / len };
-    const crit = Math.random() < 0.12;
-    const damage =
-      Math.round(
-        lerp(
-          this.damageRange[0],
-          this.damageRange[1],
-          Math.pow(this.charge, 1.3),
-        ),
-      ) *
-      rand(0.9, 1.1) *
-      (crit ? 1.75 : 1);
+    const { damage, crit } = this.roll();
     this.dead = true;
     world.events.emit("hit", {
       source: this.owner,

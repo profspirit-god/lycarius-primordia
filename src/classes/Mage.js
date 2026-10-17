@@ -13,6 +13,6 @@ export const Mage = {
     hpRegen: 0.1,
     manaRegen: 1,
   },
-  skills: ["fireball"],
-  bindings: { fireball: ["Mouse0", "Space"] },
+  skills: ["fireball", "flameShield"],
+  bindings: { fireball: ["Mouse0", "Space"], flameShield: ["Mouse2", "KeyE"] },
 };
