@@ -1,4 +1,5 @@
 /** Class definition = pure data. Add Warrior/Rogue later by copying this shape. */
+/** @type {import('../types.js').ClassDef} */
 export const Mage = {
   id: "mage",
   name: "Mage",
