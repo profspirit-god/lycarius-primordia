@@ -3,6 +3,7 @@ import { ParticleSystem } from '../systems/ParticleSystem.js';
 import { rand } from '../core/math.js';
 import { GAME_NAME, EDITION, VERSION_LABEL } from '../config.js';
 
+/** Title menu: Play, Creator Support, Exit. Everything else lives in the Home scene. */
 export class MenuScene extends Scene {
   enter(game) {
     super.enter(game);
@@ -12,16 +13,13 @@ export class MenuScene extends Scene {
     el.innerHTML = `
       <h1 class="title">LYCARIUS</h1>
       <div class="subtitle">${GAME_NAME.replace('Lycarius ', '')} · ${EDITION}</div>
-      <button class="btn" data-a="campaign">Campaign</button>
-      <button class="btn" data-a="training">Training Ground</button>
-      <button class="btn" data-a="live">Live Server</button>
-      <button class="btn" data-a="settings">Settings</button>
-      <button class="btn" data-a="exit">Exit Game</button>
+      <button class="btn" data-a="home">Play</button>
+      <button class="btn" data-a="creator">Creator Support</button>
+      <button class="btn" data-a="exit">Exit</button>
       <div class="footer">${VERSION_LABEL}</div>`;
     el.addEventListener('click', (e) => {
       const a = e.target.dataset?.a;
-      if (a === 'training') game.goto('world', { classId: 'mage', mode: 'training' });
-      else if (a) game.goto(a);
+      if (a) game.goto(a);
     });
     this.ui.appendChild(el);
   }

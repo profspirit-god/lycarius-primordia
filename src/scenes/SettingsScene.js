@@ -77,7 +77,7 @@ export class SettingsScene extends Scene {
       if (a === "nextSpec") prog.addSpecXp(prog.specXpToNext());
       if (a === "resetProg") prog.reset();
       if (a === "addChar" || a === "addSpec" || a === "nextSpec" || a === "resetProg") refresh();
-      if (a === "back") game.goto("menu");
+      if (a === "back") game.goto("home");
       if (a === "reset") {
         Settings.reset();
         game.goto("settings");

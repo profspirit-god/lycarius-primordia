@@ -150,11 +150,11 @@ export class WorldScene extends Scene {
     this.pauseEl.className = "panel";
     this.pauseEl.style.display = "none";
     this.pauseEl.innerHTML = `<h2 class="title" style="font-size:28px">PAUSED</h2><div class="subtitle">${VERSION_LABEL}</div>
-      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="menu">Main menu</button>`;
+      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="menu">Home</button>`;
     this.pauseEl.addEventListener("click", (e) => {
       const a = e.target.dataset?.a;
       if (a === "resume") this.setPaused(false);
-      if (a === "menu") this.game.goto("menu");
+      if (a === "menu") this.game.goto("home");
     });
     this.ui.appendChild(this.pauseEl);
   }
