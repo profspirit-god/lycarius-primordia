@@ -1,14 +1,14 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.8.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.9.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
-This repository currently holds the **combat MVP**: one class with three skills unlocked through a class specialization tree, an experience system, a burn status effect, projectile collisions, a training dummy that can fight back and use skills, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
+This repository currently holds the **combat MVP**: one class with three skills unlocked through a class specialization tree, an experience system, a burn status effect, projectile collisions, a training dummy that can fight back and use skills, a melee enemy (Graugr) with smart AI and a mock raid mode, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
 
 ---
 
-## 1. What is in V1.8.0.00
+## 1. What is in V1.9.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -23,6 +23,9 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), HUD bars, death and respawn                                                             |
 | Mana cost      | Scales with charge: 5 at minimum charge up to 20 at full charge                                                                        |
 | Dummy          | Passive mode: infinite health. Hostile mode: uses the player's stats, fights back, can be defeated                                     |
+| Graugr         | Melee enemy: 25 HP, 50 stamina, three arm skills (Arm Swing Barrage, Piercing Poke, Leap), smart AI (attack, buy time, retreat, dodge)  |
+| Mock raid      | Training Ground button: removes the dummy, spawns raids of Graugr (raid N = N + 1 enemies, enhanced N - 1 tiers). Kill and one-shot kill counters |
+| Stun           | Status effect: a stunned player cannot move or cast. Applied by Graugr's Leap                                                          |
 | Damage counter | Numbers pop up, arc and **fall with gravity**, then fade. Crits are larger and orange. Damage taken by the player is red               |
 | Audio          | Procedural sound effects (no asset files), positional for the hostile dummy, working master volume                                     |
 | Map            | Infinite placeholder ground (deterministic noise + grass tufts)                                                                        |
@@ -69,6 +72,30 @@ Set in **Settings → Dummy attacks** (applies when you press Training Ground).
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Flame Shield    | Raises it while you are charging a fireball (above 25%) or have a fireball in the air within 700 px, keeps it 1.2 s longer, drops it when the threat ends. Needs more than 14 mana to raise |
 | Burn Resistance | Casts it whenever it has no ward and at least 45 mana (it holds the cast like you do; a hit during the cast cancels it)             |
+
+### Graugr and the mock raid (V1.9.0.00)
+
+Press **Start Mock Raid** (top-right in the Training Ground). The training dummy leaves and raid 1 begins. **Stop Mock Raid** removes the enemies and brings the dummy back. Raid N spawns N + 1 Graugr; 4 seconds after the last one dies the next raid starts. Enemies in raid N are **enhanced N - 1 tiers** (raid 1 is base strength): each tier adds 20% max health and 20% damage, shown as one yellow up-arrow per tier above the name (above 5 tiers: one arrow and `xN`). A panel under the top-right panel counts **kills** and **one-shot kills** (an enemy that died from the first damage it ever took). Both reset when a new raid session starts.
+
+**Graugr stats:** 25 health (regen 1/s), 50 stamina (regen 4/s). Walks at 150 px/s (you walk at 230). Only attacks with its arms.
+
+| Skill                | Stamina | Cooldown | What it does                                                                                                                                                                     |
+| -------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Arm Swing Barrage  | 10      | 35 s     | 0.6 s red-circle wind-up, then both arms spin for 10 s: 12 damage per hit, one hit per 0.5 s, reach 78 px past its body. While spinning, 40% of projectiles that reach the arms are batted back |
+| 2 Piercing Poke      | 13      | 60 s     | Stops and charges for 3 s (the telegraph strip is shown while it charges; aim locks at 70%), then stretches one arm 250 px in a line for 25 damage                               |
+| 3 Leap               | 20      | 8 s      | Instant 170 px dash to attack, dodge or escape. Hitting a body deals 8 damage and stuns it for 1.5 s                                                                             |
+
+**AI modes** (health and stamina are fractions of the maximum):
+
+| Mode      | When                                                                                  | Behaviour                                                                                  |
+| --------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Attack    | health above 50% and stamina above 31%                                                | Walks in. Barrage when you are in reach, Poke within 212 px, Leap in from 90-170 px         |
+| Buy time  | stamina 30% or less (also health 40-50%, which the rules left open)                  | Keeps about 250 px away and strafes while stamina and health come back. Leaps away if you get within 80 px and it can afford it |
+| Retreat   | health below 40% and stamina below 5%                                                 | Runs away; stays in retreat until stamina is back above 31%                                 |
+
+In any mode (leap ready, 20+ stamina) it **dodges** a fireball that is about to hit by leaping sideways. It is committed during Barrage and Poke: it does not dodge then, so a charging Graugr is the moment to hit it.
+
+All Graugr numbers are the `GRAUGR` constant at the top of `src/entities/Graugr.js`. Raid numbers (4 s intermission, spawn distance) are at the top of `src/systems/RaidSystem.js`.
 
 ### Menus and lobby (V1.7.0.00, art added in V1.8.0.00)
 
@@ -285,6 +312,7 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
 | `K`                          | Skill tree (class specialization) |
 | `Esc`                        | Pause menu (or close the skill tree) |
+| **Start / Stop Mock Raid** button | Training Ground, top-right (mouse only) |
 
 ---
 
@@ -341,13 +369,13 @@ src/
   lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
   ui/                         SkillTreePanel (DOM overlay for the specialization tree), Modal (lobby modals)
-  entities/                   Entity (base), Player, TrainingDummy
+  entities/                   Entity (base), Player, TrainingDummy, Graugr
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
                               FireballProjectile, FlameShieldEffect, BurnWardEffect, ProjectileClash
   systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects,
-                              StatusSystem, BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem
-  render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
+                              StatusSystem (burn, stun), BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem, RaidSystem
+  render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura, drawEnhance, drawStun
 ```
 
 ### Core concepts
@@ -419,7 +447,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.8.0.00)
+## 6. Known limitations (V1.9.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
@@ -430,6 +458,8 @@ git checkout dev && git pull
 - Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
 - The skill tree has no respec: picks are permanent until you reset progression in Developer options.
 - Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
+- Graugr has no sounds of its own yet. Barrage damage (12 per 0.5 s) is very high against 50 HP: outrun it (you walk 230 px/s, it walks 105 while spinning). Raids are not saved, and kill counts reset when a raid session starts.
+- A deflected fireball keeps its burn, so it can ignite you. Flame Shield does not stop Graugr's melee.
 - Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`.
 
 See **[ROADMAP.md](ROADMAP.md)** for what comes next and **[CHANGELOG.md](CHANGELOG.md)** for history.

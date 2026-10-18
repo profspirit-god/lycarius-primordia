@@ -12,6 +12,7 @@
  * Status slots the world looks for (null when absent):
  *   burn  -> running burn, owned by StatusSystem
  *   ward  -> active BurnWardEffect (Burn Resistance)
+ *   stunT -> seconds of stun left (0 = none); counted down by StatusSystem, honoured by Player and Graugr
  */
 export class Entity {
   constructor() {
@@ -25,6 +26,7 @@ export class Entity {
     this.solid = false;
     this.burn = null;
     this.ward = null;
+    this.stunT = 0;
   }
   update(dt, world) {}
   draw(ctx, world) {}
