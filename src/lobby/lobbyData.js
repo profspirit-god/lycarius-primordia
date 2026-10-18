@@ -21,9 +21,9 @@ export const PROFILE = {
 /** Shared wallet. Home and Shop read the same object, so the balance carries into the shop. */
 export const WALLET = {
   currencies: [
-    { id: "gold", label: "Gold", icon: "◉", color: "#f2c46d", amount: 12500, hint: "Earned in play. Buys common cosmetics." },
-    { id: "crystals", label: "Crystals", icon: "◆", color: "#7fd4ff", amount: 320, hint: "Premium currency. Placeholder." },
-    { id: "points", label: "Points", icon: "✦", color: "#c9a2ff", amount: 90, hint: "Event / Genesis Path points. Placeholder." },
+    { id: "gold", label: "Gold", icon: "coin", color: "#f2c46d", amount: 12500, hint: "Earned in play. Buys common cosmetics." },
+    { id: "crystals", label: "Crystals", icon: "gem", color: "#7fd4ff", amount: 320, hint: "Premium currency. Placeholder." },
+    { id: "points", label: "Points", icon: "star", color: "#c9a2ff", amount: 90, hint: "Event / Genesis Path points. Placeholder." },
   ],
 };
 
@@ -64,11 +64,11 @@ export const GENESIS_PATH = {
 
 /** Bottom row of the Home scene. `scene` set = navigates; otherwise opens a placeholder modal. */
 export const HOME_BUTTONS = [
-  { id: "inventory", label: "Inventory", icon: "▣", blurb: "Items, materials and equipment." },
-  { id: "customize", label: "Character", icon: "☉", blurb: "Character customization: look, outfit, aura." },
-  { id: "season", label: "Season Info", icon: "❖", blurb: "Current season, rewards and timeline." },
-  { id: "rank", label: "Rank", icon: "♛", blurb: "Ranked ladder, tiers and leaderboards." },
-  { id: "settings", label: "Settings", icon: "⚙", scene: "settings" },
+  { id: "inventory", label: "Inventory", icon: "box", blurb: "Items, materials and equipment." },
+  { id: "customize", label: "Character", icon: "user", blurb: "Character customization: look, outfit, aura." },
+  { id: "season", label: "Season Info", icon: "calendar", blurb: "Current season, rewards and timeline." },
+  { id: "rank", label: "Rank", icon: "crown", blurb: "Ranked ladder, tiers and leaderboards." },
+  { id: "settings", label: "Settings", icon: "gear", scene: "settings" },
 ];
 
 export const MESSAGES = [
@@ -144,7 +144,9 @@ export const LOADING = {
       "Flame Shield absorbs damage, but explosions go through it.",
       "Burn Resistance halves burn damage and can snuff a burn outright.",
     ],
-    minTime: 2.4,
+    minTime: 1.2, // shortest time the screen stays up, so it never just flashes
+    timeout: 20, // give up waiting for optional loads (art, audio) after this many seconds
+    preload: [], // extra image URLs to fetch before the world starts (art the zone needs)
     next: { scene: "world", params: { classId: "mage", mode: "training" } },
     image: "assets/loading/training.webp",
     art: "Placeholder: custom training art goes here", // shown only if the image is missing

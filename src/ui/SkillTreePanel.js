@@ -1,5 +1,6 @@
 import { SPEC_BONUSES } from "../progression/SpecBonuses.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { icon as svg } from "./icons.js";
 
 const pct = (v) => `${v >= 0 ? "+" : ""}${Math.round(v * 100)}%`;
 
@@ -50,12 +51,12 @@ export class SkillTreePanel {
     } else {
       const id = prog.picks[lv],
         b = SPEC_BONUSES.find((x) => x.id === id);
-      icon = b ? b.icon : reached ? "❓" : "🔒";
+      icon = b ? b.icon : reached ? "help" : "lock";
       name = b ? b.name : reached ? "Choose a bonus" : "Bonus";
       kind = "Bonus";
       state = b ? "done" : reached ? "choose" : "locked";
     }
-    return `<div class="node ${state} ${skillId ? "skill" : ""}"><div class="ni">${icon}</div><div class="nl">Lv ${lv}</div><div class="nn">${name}</div><div class="nk">${kind}</div></div>`;
+    return `<div class="node ${state} ${skillId ? "skill" : ""}"><div class="ni">${svg(icon)}</div><div class="nl">Lv ${lv}</div><div class="nn">${name}</div><div class="nk">${kind}</div></div>`;
   }
 
   totals(m) {
@@ -82,7 +83,7 @@ export class SkillTreePanel {
     const choices = pending.length
       ? `<div class="pick-title">Choose a bonus for specialization level ${pending[0]} <span>(${pending.length} pick${pending.length > 1 ? "s" : ""} available)</span></div>
          <div class="picks">${SPEC_BONUSES.map(
-           (b) => `<button class="btn pick" data-pick="${b.id}"><span class="pi">${b.icon}</span><span><b>${b.name}</b><br><small>${b.text}${m.counts[b.id] ? ` · taken x${m.counts[b.id]}` : ""}</small></span></button>`,
+           (b) => `<button class="btn pick" data-pick="${b.id}"><span class="pi">${svg(b.icon)}</span><span><b>${b.name}</b><br><small>${b.text}${m.counts[b.id] ? ` · taken x${m.counts[b.id]}` : ""}</small></span></button>`,
          ).join("")}</div>`
       : `<div class="note" style="text-align:center">${si.level >= si.max ? "Specialization complete." : "No bonus to pick right now. Earn specialization XP to reach the next level."}</div>`;
     this.el.innerHTML = `

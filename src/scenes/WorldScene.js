@@ -14,7 +14,6 @@ import { BurnFx } from "../systems/BurnFx.js";
 import { Toasts } from "../systems/Toasts.js";
 import { drawGround } from "../render/drawGround.js";
 import { VERSION_LABEL } from "../config.js";
-import { drawBar } from "../render/drawBar.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
 import { ExplosionSystem } from "../systems/ExplosionSystem.js";
 import { ExplosionFx } from "../systems/ExplosionFx.js";
@@ -23,6 +22,8 @@ import { RaidSystem } from "../systems/RaidSystem.js";
 import { drawEnhance } from "../render/drawEnhance.js";
 import { Progression } from "../progression/Progression.js";
 import { SkillTreePanel } from "../ui/SkillTreePanel.js";
+import { PlayerHud } from "../ui/PlayerHud.js";
+import { ProfilePanel } from "../ui/ProfilePanel.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
@@ -82,6 +83,17 @@ export class WorldScene extends Scene {
     this.buildPauseMenu();
     this.buildRaidButton();
     this.tree = new SkillTreePanel(this);
+    this.profile = new ProfilePanel(this);
+    this.hud = new PlayerHud(this);
+    this.fadeIn();
+  }
+
+  /** Black overlay that fades out over 0.7 s, so the world never pops in on its first frame. */
+  fadeIn() {
+    const f = document.createElement("div");
+    f.className = "world-fade";
+    f.addEventListener("animationend", () => f.remove());
+    this.ui.appendChild(f);
   }
 
   exit() {
@@ -141,6 +153,22 @@ export class WorldScene extends Scene {
   closeTree() {
     this.tree.close();
     this.paused = false;
+  }
+  /** Character panel (profile circle). Only opens from a running game, and closes back to it. */
+  openProfile() {
+    if (this.paused) return;
+    this.paused = true;
+    this.player.caster.cancel();
+    this.audio.silence();
+    this.profile.open();
+  }
+  closeProfile() {
+    this.profile.close();
+    this.paused = false;
+  }
+  toggleProfile() {
+    if (this.profile.isOpen) this.closeProfile();
+    else this.openProfile();
   }
 
   spawn(e) {
@@ -219,13 +247,15 @@ export class WorldScene extends Scene {
   update(dt) {
     const inp = this.input;
     if (inp.wasPressed("Escape")) {
-      if (this.tree.isOpen) this.closeTree();
+      if (this.profile.isOpen) this.closeProfile();
+      else if (this.tree.isOpen) this.closeTree();
       else this.setPaused(!this.paused);
     } else if (inp.wasPressed("KeyK") && (!this.paused || this.tree.isOpen)) {
       if (this.tree.isOpen) this.closeTree();
       else this.openTree();
     }
     this.fps += (1 / Math.max(dt, 0.0001) - this.fps) * 0.1;
+    this.hud.update();
     if (this.paused !== this.raidHidden) {
       this.raidHidden = this.paused; // the raid button hides behind the pause menu and the skill tree
       this.raidBtn.style.display = this.paused ? "none" : "";
@@ -287,114 +317,6 @@ export class WorldScene extends Scene {
     g.addColorStop(1, "rgba(0,0,0,.55)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
-  }
-
-  /** One skill slot: icon, cooldown, dim when unaffordable, bar (charge, shield points, or ward time left), key hint. */
-  drawSlot(ctx, x, y, s, p, v) {
-    const sk = s.skill,
-      on = !!sk.isActive?.(p),
-      cd = s.cooldown / (s.cdMax || sk.cooldown),
-      cx = x + 34;
-    ctx.fillStyle = "rgba(12,14,20,.8)";
-    ctx.strokeStyle = s.charging || on ? "#ffb15a" : "rgba(242,196,109,.4)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x, y, 68, 68, 12);
-    ctx.fill();
-    ctx.stroke();
-    ctx.font = "34px serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(sk.icon, cx, y + 45);
-    if (cd > 0) {
-      ctx.fillStyle = "rgba(0,0,0,.6)";
-      ctx.fillRect(x + 2, y + 2 + 64 * (1 - cd), 64, 64 * cd);
-    }
-    if (!s.charging && !on && !sk.canStart(v.mana)) {
-      ctx.fillStyle = "rgba(20,40,120,.55)";
-      ctx.fillRect(x + 2, y + 2, 64, 64);
-    }
-    const frac = sk.toggle
-      ? on ? p.shield.points / p.shield.maxPoints : 0
-      : on ? p.ward.life / p.ward.maxLife : s.charge;
-    ctx.fillStyle = "rgba(255,255,255,.12)";
-    ctx.fillRect(x, y + 76, 68, 7);
-    ctx.fillStyle = "#ff8a3a";
-    ctx.fillRect(x, y + 76, 68 * frac, 7);
-    const label = sk.name.toUpperCase();
-    ctx.font = "11px Georgia, serif";
-    const lw = ctx.measureText(label).width;
-    if (lw > 86) ctx.font = `${Math.floor((11 * 86) / lw)}px Georgia, serif`; // long names shrink to fit
-    ctx.fillStyle = "#b9a77f";
-    ctx.fillText(label, cx, y + 99);
-    if (sk.hint) {
-      ctx.font = "10px Georgia, serif";
-      ctx.fillStyle = "rgba(234,223,200,.7)";
-      ctx.fillText(sk.hint, cx, y + 12);
-    }
-  }
-
-  /** A skill the specialization has not unlocked yet. */
-  drawLockedSlot(ctx, x, y, sk, level) {
-    ctx.fillStyle = "rgba(12,14,20,.6)";
-    ctx.strokeStyle = "rgba(255,255,255,.15)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x, y, 68, 68, 12);
-    ctx.fill();
-    ctx.stroke();
-    ctx.textAlign = "center";
-    ctx.font = "30px serif";
-    ctx.fillStyle = "rgba(255,255,255,.35)";
-    ctx.fillText("🔒", x + 34, y + 44);
-    ctx.font = "11px Georgia, serif";
-    ctx.fillStyle = "#7c735f";
-    ctx.fillText(sk.name.toUpperCase(), x + 34, y + 99);
-    ctx.font = "10px Georgia, serif";
-    ctx.fillText(`SPEC Lv ${level}`, x + 34, y + 12);
-  }
-
-  /** Bottom-left: character and specialization XP, plus the skill-tree hint. */
-  drawProgress(ctx, w, h) {
-    const prog = this.player.prog;
-    if (!prog) return;
-    const c = prog.char,
-      s = prog.specInfo,
-      x = 18,
-      y = h - 104,
-      f = this.xpFlash,
-      fa = Math.max(0, Math.min(1, f.t / 0.6)),
-      pend = prog.pendingLevels().length;
-    ctx.fillStyle = "rgba(12,14,20,.72)";
-    ctx.strokeStyle = "rgba(242,196,109,.3)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(x - 8, y - 8, 256, 96, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.textAlign = "left";
-    ctx.font = "12px Georgia, serif";
-    ctx.fillStyle = "#eadfc8";
-    ctx.fillText(`CHARACTER  Lv ${c.level}`, x, y + 6);
-    ctx.fillText(`${this.player.cls.specialization.element.toUpperCase()} SPEC  Lv ${s.level}`, x, y + 36);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#b9a77f";
-    ctx.fillText(c.need ? `${c.into} / ${c.need}` : "MAX", x + 240, y + 6);
-    ctx.fillText(s.need ? `${s.into} / ${s.need}` : "MAX", x + 240, y + 36);
-    drawBar(ctx, x, y + 10, 240, 8, c.frac, "#6aa8ff");
-    drawBar(ctx, x, y + 40, 240, 8, s.frac, "#f2c46d");
-    if (fa > 0) {
-      ctx.globalAlpha = fa;
-      ctx.fillStyle = "#9dc8ff";
-      if (f.char) ctx.fillText(`+${f.char} XP`, x + 150, y + 6);
-      ctx.fillStyle = "#ffe08a";
-      if (f.spec) ctx.fillText(`+${f.spec} XP`, x + 150, y + 36);
-      ctx.globalAlpha = 1;
-    }
-    ctx.textAlign = "left";
-    ctx.font = pend ? "bold 12px Georgia, serif" : "12px Georgia, serif";
-    ctx.fillStyle = pend ? `rgba(123,216,143,${0.65 + 0.35 * Math.sin(performance.now() / 220)})` : "#8d836b";
-    ctx.fillText(pend ? `K  Skill tree: ${pend} bonus pick${pend > 1 ? "s" : ""} available!` : "K  Skill tree", x, y + 72);
   }
 
   drawBanners(ctx, w, h) {
@@ -459,76 +381,17 @@ export class WorldScene extends Scene {
 
   drawHud(ctx, w, h) {
     const p = this.player,
-      v = p.vitals,
-      s = p.caster.slots[0],
       d = this.dummy;
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
     ctx.font = "13px Georgia, serif";
     ctx.fillStyle = "rgba(234,223,200,.85)";
-    ctx.fillText(
-      "WASD move  ·  Mouse aim  ·  K skill tree  ·  Esc pause",
-      18,
-      26,
-    );
     if (Settings.get("showDebug"))
       ctx.fillText(
         `${VERSION_LABEL}  ·  ${Math.round(this.fps)} FPS  ·  ${this.particles.list.length} particles`,
         18,
-        46,
-      );
-
-    // player vitals
-    const cost = s.charging ? s.skill.manaCost(s.charge) : 0;
-    drawBar(ctx, 18, 60, 240, 16, v.hp / v.maxHp, "#d93b3b");
-    drawBar(ctx, 18, 84, 240, 16, v.mana / v.maxMana, "#3b82f6", {
-      border: p.lowManaFlash > 0 ? "#ff4040" : undefined,
-    });
-    if (cost > 0) {
-      // preview of the mana this cast will consume
-      const x0 = 18 + (240 * Math.max(0, v.mana - cost)) / v.maxMana;
-      ctx.fillStyle = "rgba(255,255,255,.4)";
-      ctx.fillRect(x0, 84, (240 * Math.min(cost, v.mana)) / v.maxMana, 16);
-    }
-    ctx.font = "12px Georgia, serif";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(`HP ${v.hp.toFixed(1)} / ${v.maxHp}`, 24, 72);
-    ctx.fillText(
-      `MP ${Math.floor(v.mana)} / ${v.maxMana}${cost > 0 ? `   (-${cost})` : ""}`,
-      24,
-      96,
-    );
-
-    // flame shield points
-    if (p.shield) {
-      const sh = p.shield;
-      drawBar(ctx, 18, 108, 240, 12, sh.points / sh.maxPoints, "#ff9a3c");
-      ctx.font = "12px Georgia, serif";
-      ctx.fillStyle = "#fff";
-      ctx.fillText(`SHIELD ${Math.ceil(sh.points)} / ${sh.maxPoints}   (-${sh.upkeep} MP/s)`, 24, 118);
-    }
-
-    // burn resistance time left, burn time left
-    let sy = p.shield ? 128 : 108;
-    if (p.ward) {
-      drawBar(ctx, 18, sy, 240, 12, p.ward.life / p.ward.maxLife, "#ff5a32");
-      ctx.font = "12px Georgia, serif";
-      ctx.fillStyle = "#fff";
-      ctx.fillText(`BURN RESISTANCE ${Math.ceil(p.ward.life)}s`, 24, sy + 10);
-      sy += 20;
-    }
-    if (p.burn) {
-      const b = p.burn;
-      ctx.font = "bold 13px Georgia, serif";
-      ctx.fillStyle = "#ff8a2a";
-      ctx.fillText(`BURNING  ${Math.max(0, b.dur - b.t).toFixed(1)}s  (${(b.dps * (p.ward ? 1 - p.ward.burnReduction : 1)).toFixed(0)}/s)`, 18, sy + 12);
-      sy += 18;
-    }
-    if (p.stunT > 0) {
-      ctx.font = "bold 13px Georgia, serif";
-      ctx.fillStyle = "#ffe066";
-      ctx.fillText(`STUNNED  ${p.stunT.toFixed(1)}s`, 18, sy + 12);
-    }
+        124,
+      ); // under the HUD card
 
     // dummy panel (the raid panel takes its place while a mock raid runs)
     if (!d) this.drawRaidPanel(ctx, w);
@@ -561,16 +424,6 @@ export class WorldScene extends Scene {
     }
     this.drawKillPanel(ctx, w);
 
-    // skill slots
-    const slots = p.caster.slots,
-      locked = Object.entries(p.cls.specialization.unlocks).filter(([, id]) => !p.caster.has(id)),
-      gap = 92,
-      x0 = w / 2 - ((slots.length + locked.length) * gap - 10) / 2;
-    slots.forEach((sl, i) => this.drawSlot(ctx, x0 + i * gap, h - 100, sl, p, v));
-    locked.forEach(([lv, id], i) =>
-      this.drawLockedSlot(ctx, x0 + (slots.length + i) * gap, h - 100, SkillRegistry.get(id), Number(lv)),
-    );
-    this.drawProgress(ctx, w, h);
     this.drawBanners(ctx, w, h);
 
     if (p.downed) {

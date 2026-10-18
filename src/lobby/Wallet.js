@@ -1,4 +1,5 @@
 import { WALLET } from "./lobbyData.js";
+import { icon } from "../ui/icons.js";
 
 /** In-memory wallet (placeholder: not saved yet). Home and Shop share this one object. */
 export const Wallet = {
@@ -15,7 +16,7 @@ export const Wallet = {
   /** HTML for the currency line. The same markup is used on Home and inside the Shop. */
   barHtml() {
     return WALLET.currencies
-      .map((c) => `<span class="cur" title="${c.hint}"><i style="color:${c.color}">${c.icon}</i><b>${c.amount.toLocaleString("en-US")}</b><button class="cur-plus" data-a="topup" data-cur="${c.id}" aria-label="Add ${c.label}">+</button></span>`)
+      .map((c) => `<span class="cur" title="${c.hint}"><i style="color:${c.color}">${icon(c.icon)}</i><b>${c.amount.toLocaleString("en-US")}</b><button class="cur-plus" data-a="topup" data-cur="${c.id}" aria-label="Add ${c.label}">+</button></span>`)
       .join("");
   },
 };

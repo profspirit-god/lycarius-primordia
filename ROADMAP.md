@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.9.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -17,6 +17,7 @@ Current version: **V1.9.0.00**. Completed work is recorded in `CHANGELOG.md`; th
 | V1.7.0.00 | Lobby menus: title menu (Play / Creator Support / Exit), Home scene, Shop, Mode Select, Training loading screen. All placeholders |
 | V1.8.0.00 | Lobby art: Home scenery, Mode Select video, mode card pictures, training loading art (L1 partly done) |
 | V1.9.0.00 | Graugr melee enemy (smart AI, 3 skills), stun status, projectile deflect, mock raid with enhancement tiers, kill and one-shot counters |
+| V1.10.0.00 | Real task-based loading screen, stamina resource, DOM HUD (profile circle, compact bars, status effects, skill circles), character panel, SVG icon set |
 
 ## Lobby path (for the next sessions)
 
@@ -33,7 +34,7 @@ The lobby shell exists with placeholder data. Everything below plugs into it wit
 | L7 | Messages inbox: subscribe the bell to events (system, creator, events); unread dot | `HomeScene.openMessages`, `MESSAGES` | EventBus |
 | L8 | Profile and login (Google sign-in), friends, guild | Profile circle, `PROFILE` | V2.0.0.00 |
 | L9 | Creator Support: real support links / provider and an idea form or community link. Ask the user which provider | `CreatorSupportScene` | User decision |
-| L10 | Real loading: drive `LoadingScene.progress` from dynamic `import()` of zone / class data instead of the fixed timer; add `LOADING` entries for Campaign and Live | `LoadingScene` | World work (tilemap, zones) |
+| L10 | **Partly done in V1.10.0.00** (task-driven loading bar, readiness gate, fatal error screen). Still to do: dynamic `import()` of zone / class data as a task, and `LOADING` entries for Campaign and Live | `LoadingScene`, `lobby/loadTasks.js` | World work (tilemap, zones) |
 | L11 | Live Server and Campaign replace their `PlaceholderScene`s; Mode Select stats (players, ping, progress) come from real data | `MODES` in `lobbyData.js` | V2.0.0.00 / Campaign work |
 
 Rules for this area: keep content as data in `lobbyData.js` (or registries once real); no direct imports between scenes; reuse `openModal`; keep the cosmetic-only shop rule (no gameplay power for sale) unless the user decides otherwise; one lobby feature per version.

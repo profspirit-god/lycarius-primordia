@@ -32,6 +32,33 @@ class AudioEngine {
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
   }
+  /**
+   * Loading-screen warm-up: unlock, wait (up to `maxWait` ms) until the context is running, and push one silent
+   * oscillator through the graph so the first real sound does not stutter. Resolves true when audio is ready, false
+   * when the browser has no Web Audio or refused to start it (the game then just plays silently).
+   */
+  warmup(maxWait = 900) {
+    this.unlock();
+    const c = this.ctx;
+    if (!c) return Promise.resolve(false);
+    return new Promise((res) => {
+      const t0 = performance.now();
+      const tick = () => {
+        if (c.state === "running") {
+          const o = c.createOscillator(),
+            g = c.createGain();
+          g.gain.value = 0;
+          o.connect(g);
+          g.connect(this.master);
+          o.start();
+          o.stop(c.currentTime + 0.03);
+          res(true);
+        } else if (performance.now() - t0 > maxWait) res(false);
+        else setTimeout(tick, 30);
+      };
+      tick();
+    });
+  }
   setSuspended(hidden) {
     if (this.ctx) hidden ? this.ctx.suspend() : this.ctx.resume();
   }
