@@ -2,6 +2,58 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.7.0.00 — Lobby menus: Home, Mode Select, loading screen, Creator Support
+
+### Added
+
+- **New title menu:** Play, Creator Support, Exit.
+- **Creator Support scene** (placeholder): Monetary Support and Idea Support cards.
+- **Home scene** (PUBG-style lobby, all placeholders): profile circle (top-left; click opens name, Gmail, ID and more fields), currency line (Gold, Crystals, Points) and a bell for messages (top-right), Shop panel under the currency line, Genesis Path (season pass, Starlight-style) under the Shop, big Play button bottom-left, bottom row Inventory / Character / Season Info / Rank / Settings, and a placeholder character and scenery on the canvas.
+- **Shop** (click the panel): expands into a modal with the same currency line on top (shared `Wallet`), category tabs and cosmetic item cards. Buying is a placeholder.
+- **Mode Select scene** (Play): Live Server, Campaign, Training Grounds. Each card has a picture placeholder; hovering shows the mode definition and stat placeholders (server, starting point, current players...). Video placeholder background that tints per mode.
+- **Loading scene**: custom loading screen for Training Grounds (rune rings, progress bar, rotating tips, art placeholder). Driven by `LOADING` data; add one entry per destination.
+- New files: `HomeScene`, `ModeSelectScene`, `LoadingScene`, `CreatorSupportScene`, `lobby/lobbyData.js`, `lobby/Wallet.js`, `ui/Modal.js`.
+
+### Changed
+
+- **Settings** moved from the title menu to the Home bottom row; its Back button returns to Home.
+- Campaign / Live Server placeholders return to Mode Select (`PlaceholderScene` takes `back`).
+- The in-game pause menu button now reads **Home** and returns to the Home scene.
+- Training Ground is reached through Play, Mode Select and the loading screen instead of a title-menu button.
+- `#ui` overlay now stretches full screen (`.panel` stays centred); menu click sound also covers the new lobby controls.
+- `VERSION` is `1.7.0.00`.
+
+### Notes
+
+- All lobby content is placeholder data in `src/lobby/lobbyData.js`. Wallet is in-memory (not saved). Profile, Genesis Path, Rank and Season are display-only.
+- Roadmap now lists the lobby development path for future sessions.
+
+## V1.6.0.00 — Experience, specialization tree and projectile clash
+
+### Added
+
+- **Experience system** with two separate tracks (`Progression`): character level (cap 50) and class specialization level (cap 10). Damage you deal earns both; defeating the hostile dummy gives +50 character XP; casting Fireball gives a little specialization XP. XP bars bottom-left with a `+N XP` flash; level-ups show a banner, a ring of sparks and a jingle. Progress is saved in `localStorage` (versioned).
+- **Class specialization tree** (press `K`): Mage / fire. You now start with **Fireball only**. Specialization level 5 unlocks **Flame Shield**, level 10 unlocks **Burn Resistance**. Levels 2-4 and 6-9 each grant one bonus pick from: +max mana (+10), +mana regen (+0.25/s), -cast time (5%), -skill cooldown (5%), +element damage (5%), +skill damage (5%). Locked skills show as greyed slots on the HUD.
+- **Projectile collision.** Fireballs from different owners that touch explode. A stronger charge destroys a weaker one and keeps flying, weakened (full vs half: damage x0.8, size x0.875); charges within 0.12 of each other annihilate each other. The explosion (radius 70-190 px, 6-24 damage at the centre, falling to 30% at the edge) damages every nearby entity, including the caster. New files: `ProjectileClash`, `ExplosionSystem`, `ExplosionFx`; new `explosion` event and sound.
+- **Dummy uses skills** setting. The hostile dummy can raise Flame Shield when threatened and cast Burn Resistance.
+- **Menu:** Campaign (placeholder), Training Ground (the previous "Start"), Live Server (placeholder). New `PlaceholderScene`.
+- **Cast timer debug** (Settings → Show cast timer): elapsed / total cast time above the player while charging.
+- **Developer options** in Settings: test panel to add character XP, add specialization XP, jump to the next specialization level, or reset progression.
+- New files: `Progression`, `SpecBonuses`, `Mods`, `XpSystem`, `SkillTreePanel`, `PlaceholderScene`.
+- Skill system: `SkillCaster.addSkill / has / chargingSlot`, per-slot `cdMax` and `need` (effective cast time); `SkillDef.element`; `ClassDef.specialization`; `CasterOwner.mods`; `HitEvent.aoe`. See `src/types.js`.
+
+### Changed
+
+- The Mage no longer starts with all three skills (see the specialization tree). Existing play-throughs start at specialization level 1.
+- Cast time and cooldown go through the owner's modifiers (`mods.castTimeMult`, `mods.cooldownMult`). HUD cooldown overlay uses the real (shortened) cooldown.
+- The hostile dummy only owns the first class skill unless **Dummy uses skills** is on. A defeated dummy drops its Flame Shield.
+- Settings panel scrolls when taller than the window.
+- HUD controls line shortened; each skill slot shows its own key hint.
+
+### Notes
+
+- "-Skill CC" in the design notes was implemented as **skill cooldown**. If crowd control or casting cost was meant, change the `cooldown` entry in `SpecBonuses.js`.
+
 ## V1.5.0.00 — Burn and Burn Resistance
 
 ### Added

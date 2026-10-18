@@ -1,22 +1,24 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.5.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.7.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
-This repository currently holds the **combat MVP**: one class with three skills, a burn status effect, a training dummy that can fight back, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
+This repository currently holds the **combat MVP**: one class with three skills unlocked through a class specialization tree, an experience system, a burn status effect, projectile collisions, a training dummy that can fight back and use skills, health and mana, and a full audio-visual effect stack. Everything else is scaffolded so new features slot in without rewrites.
 
 ---
 
-## 1. What is in V1.5.0.00
+## 1. What is in V1.7.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Menu           | Start, Settings, Exit Game                                                                                                             |
-| Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), dummy attacks toggle, dummy movement mode. Persisted in `localStorage`. |
+| Menu           | Title menu: Play, Creator Support (placeholder), Exit. Play opens the Home lobby (placeholders), then Mode Select: Live Server (placeholder), Campaign (placeholder), Training Grounds (playable, with a loading screen). Settings is on the Home bottom row |
+| Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), cast-timer debug, dummy attacks toggle, dummy uses skills toggle, dummy movement mode, Developer options test panel. Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
-| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn |
+| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. You start with Fireball only; the other two unlock in the specialization tree |
+| Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` |
+| Projectile clash | Two enemy fireballs that meet explode and hurt anything near. A stronger charge destroys a weaker one                                |
 | Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
 | Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), HUD bars, death and respawn                                                             |
 | Mana cost      | Scales with charge: 5 at minimum charge up to 20 at full charge                                                                        |
@@ -54,12 +56,93 @@ Rules:
 
 ### Dummy modes
 
-Set in **Settings → Dummy attacks** (applies when you press Start).
+Set in **Settings → Dummy attacks** (applies when you press Training Ground).
 
 | Mode          | Behaviour                                                                                                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Off (default) | Passive training dummy with infinite health. Tracks total damage, hits, last hit and 5-second DPS                                                                                                                                       |
 | On            | The dummy takes the player class's stats (50 HP, 100 mana, same regen), leads its target, charges to a random level and fires fireballs at you. A hit staggers it and cancels its cast. It can be defeated and respawns after 3 seconds |
+
+**Settings → Dummy uses skills** (needs Dummy attacks; applies when you press Training Ground). Off: the dummy only fires Fireball. On: it also uses the rest of the Mage kit:
+
+| Skill           | When the dummy uses it                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Flame Shield    | Raises it while you are charging a fireball (above 25%) or have a fireball in the air within 700 px, keeps it 1.2 s longer, drops it when the threat ends. Needs more than 14 mana to raise |
+| Burn Resistance | Casts it whenever it has no ward and at least 45 mana (it holds the cast like you do; a hit during the cast cancels it)             |
+
+### Menus and lobby (V1.7.0.00)
+
+Flow: **Title menu** (Play, Creator Support, Exit) → **Home** → **Mode Select** → **Loading** → game. All lobby content is placeholder data in `src/lobby/lobbyData.js`.
+
+| Screen         | Contents                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title menu     | Play (to Home), Creator Support, Exit                                                                                                                         |
+| Creator Support | Monetary Support and Idea Support cards (placeholders)                                                                                                       |
+| Home           | Profile circle (top-left; click shows name, Gmail, ID, placeholder fields), currency line (Gold, Crystals, Points) and a bell for messages (top-right), Shop panel, Genesis Path (season pass) under it, Play (bottom-left), bottom row: Inventory, Character, Season Info, Rank, Settings. Placeholder character and scenery on the canvas |
+| Shop           | Click the panel: modal with the same currency line on top, category tabs and cosmetic cards. Buying is a placeholder                                           |
+| Mode Select    | Live Server, Campaign, Training Grounds. Picture placeholder per card; hover shows the definition and stats. Video placeholder background. Esc or Home goes back |
+| Loading        | Custom loading screen for Training Grounds (rune rings, bar, tips, art placeholder), then the world                                                           |
+
+| Mode            | What it does                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Campaign        | Placeholder screen. Planned single-player story (quests, NPCs, branching story)                            |
+| Training Grounds | The current playable scene (dummy, combat sandbox), reached through the loading screen                    |
+| Live Server     | Placeholder screen. Planned open-world MMORPG; needs the V2.0.0.00 multiplayer work                        |
+
+### Experience and levels
+
+Two separate tracks (`src/progression/Progression.js`). Both are saved per class in `localStorage` (versioned save format).
+
+| Track                        | How you earn it                                                                                              | Curve (XP from level L to L+1) | Cap |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------ | --- |
+| Character level              | 1 XP per point of damage you deal to anything but yourself (fireball, explosion, burn tick); +50 for defeating the hostile dummy | `round(100 x L^1.5)`           | 50  |
+| Class specialization level   | 1 XP per point of damage you deal (same sources); +2 to +5 per Fireball cast (by charge)                     | `round(50 x L^1.4)`            | 10  |
+
+Character level has no gameplay effect yet; it is tracked and shown so stats can hang off it later. Both levels and XP bars are shown bottom-left, with a `+N XP` flash on every gain. A level-up shows a banner, a ring of sparks and a jingle.
+
+### Class specialization tree (Mage, element: fire)
+
+Press `K` to open the tree (pauses the game; `K` or `Esc` closes). It is a single path of 10 specialization levels:
+
+| Spec level      | Reward                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------- |
+| 1 (start)       | **Fireball** (the only skill you begin with)                                            |
+| 2, 3, 4         | Pick one bonus each (see below)                                                         |
+| 5               | **Flame Shield** unlocked                                                               |
+| 6, 7, 8, 9      | Pick one bonus each                                                                     |
+| 10 (max)        | **Burn Resistance** unlocked                                                            |
+
+Locked skills show as greyed slots (with the level needed) on the HUD. Reaching a bonus level adds a pending pick; the `K` hint turns green and pulses while you have unspent picks. Picks fill the lowest pending level first.
+
+| Bonus            | Per pick                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
+| Max Mana         | +10 max mana (current mana rises by the same amount)                                              |
+| Mana Regen       | +0.25 mana per second                                                                             |
+| Cast Time        | x0.95 cast time (multiplies; applies to Fireball charge time and the Burn Resistance cast)        |
+| Skill Cooldown   | x0.95 cooldown on all skills ("Skill CC" in the design notes was read as cooldown)                |
+| Element Damage   | +5% fire damage: Fireball, explosions and burn ticks                                              |
+| Skill Damage     | +5% skill hit damage: Fireball and explosions (burn ticks are not affected)                       |
+
+Element and skill damage multiply each other (`(1 + skill) x (1 + element)`). The same bonus can be picked repeatedly. The dummy never gets specialization bonuses.
+
+### Projectile collision
+
+Two projectiles from different owners that touch collide (your own projectiles pass through each other). Rules (`src/skills/ProjectileClash.js`):
+
+| Situation                                    | Result                                                                                                     |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Charges differ by less than 0.12             | Both are destroyed in one explosion of strength `0.6 x (charge A + charge B)` (max 1)                       |
+| Charges differ by 0.12 or more               | The stronger survives, the weaker is destroyed in an explosion of strength `0.9 x weaker charge`. The survivor loses power: damage x`(1 - 0.4 r)` and size x`(1 - 0.25 r)` with `r = weaker / stronger`. Full vs half: damage x0.8, size x0.875 |
+
+Explosion (`src/systems/ExplosionSystem.js`): radius `70 + 120 x strength` px; damage at the centre `6 + 18 x strength`, falling to 30% at the edge, modified by the source's skill and element damage. **Every** entity whose body edge is inside the radius takes damage, including the caster and including the dummy. Flame Shields do not stop explosions; a Burn Resistance ward reduces it by 30%. Explosions do not ignite. Damage dealt by the player earns XP. The explosion is credited to the owner of the stronger ball (on equal charges, to the owner of the ball that detected the clash first).
+
+### Debug: cast timer
+
+**Settings → Show cast timer (debug)** draws `Skill  elapsed / total s` and a small bar above the player while charging. The total is the effective cast time, so cast-time bonuses are visible. The text turns green once the time is full.
+
+### Developer options (test panel)
+
+**Settings → Developer options** edits the saved Mage progression (it applies the next time you enter the Training Ground): add character XP, add specialization XP (amount box, default 100), jump to the next specialization level, or reset all progression. A status line shows both levels and pending picks.
 
 ### Magic circle casting
 
@@ -200,7 +283,8 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Release                      | Cast            |
 | `Right Mouse` or `E`         | Raise / drop Flame Shield |
 | Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
-| `Esc`                        | Pause menu      |
+| `K`                          | Skill tree (class specialization) |
+| `Esc`                        | Pause menu (or close the skill tree) |
 
 ---
 
@@ -253,13 +337,16 @@ src/
     Registry.js               id -> definition store
     Settings.js               persisted settings
     math.js                   helpers (lerp, rand, hash2, colour)
-  scenes/                     MenuScene, SettingsScene, ExitScene, WorldScene
+  scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
+  lobby/                      lobbyData (placeholder lobby content), Wallet (shared currencies)
+  progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
+  ui/                         SkillTreePanel (DOM overlay for the specialization tree), Modal (lobby modals)
   entities/                   Entity (base), Player, TrainingDummy
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
-                              FireballProjectile, FlameShieldEffect, BurnWardEffect
+                              FireballProjectile, FlameShieldEffect, BurnWardEffect, ProjectileClash
   systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects,
-                              StatusSystem, BurnFx, Toasts, AudioSystem
+                              StatusSystem, BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem
   render/                     drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
 ```
 
@@ -271,6 +358,8 @@ src/
 - **Any entity can cast.** `SkillCaster` works with any owner that provides `vitals`, `aim`, `getCastOrigin()`, `wantsCast(slot, world)` and `applyImpulse()`. The player reads the keyboard; the hostile dummy reads its AI. Future enemies and NPCs reuse this.
 - **Status effects.** Burn lives on `entity.burn` and is run by `StatusSystem`; a ward lives on `entity.ward`. Ignition is an offer carried by the `hit` event (`burn: { chance, duration, dps }`), so any future skill can burn by adding that field. `StatusSystem` emits `burn` events (`ignite`, `tick`, `nullify`, `end`); the skill emits `ward` events (`up`, `down`). `BurnFx`, `Toasts` and `AudioSystem` react to them. Entities take burn damage through `onDot(e)`.
 - **Cast-time and self skills.** `autoRelease: true` fires a skill the moment its charge fills; `self: true` marks skills that only target the caster (AI casters skip them, the player draws an aura instead of the charge orb); `palette` recolours the magic circle.
+- **Progression.** `Progression` owns XP, levels and bonus picks; `XpSystem` feeds it from `hit`, `burn` and `cast` events. The class declares `specialization { element, maxLevel, start, unlocks }`; bonuses are data in `SpecBonuses.js` (registered through `SpecBonusRegistry` in `content/index.js`). `Player.syncProgression()` turns it into `player.stats`, `player.mods` and new `SkillCaster` slots (`addSkill`). Casters apply `mods.castTimeMult` and `mods.cooldownMult`; damage code uses `progression/Mods.js`.
+- **Projectile clash and explosions.** Projectiles set `isProjectile = true` and call `clashProjectiles()` when they touch a foreign projectile. That emits `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true`, `ExplosionFx` draws it and `AudioSystem` plays it.
 - **Reusable vitals.** `Vitals` holds health, mana, regeneration and damage/spend helpers.
 - **Scene factory.** `game.register(name, factory)` and `game.goto(name, params)`.
 - **Audio is a listener, not a caller.** Combat code never plays sounds; `AudioSystem` reads events and entity state. `AudioEngine` can be swapped for real sound files without touching gameplay code.
@@ -293,6 +382,10 @@ src/
 **A new sound** — add a public method to `AudioEngine` and call it from `AudioSystem`.
 
 **A new setting** — add a default in `Settings.js` and a row in `SettingsScene.js`.
+
+**A new specialization bonus** — add an entry to `SPEC_BONUSES` in `src/progression/SpecBonuses.js` (stat add, modifier add, or modifier multiply). The tree lists it automatically; a modifier that is new must also be read where it applies.
+
+**A new projectile** — set `isProjectile = true`, `owner`, `charge` and `weaken(ratio)`, call `clashProjectiles` in its hit check, and check shields first (see `FireballProjectile`).
 
 ---
 
@@ -326,14 +419,17 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.5.0.00)
+## 6. Known limitations (V1.7.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
 - Single-player only; the networking layer is planned (see `ROADMAP.md`).
-- Changing the **Dummy attacks** setting takes effect the next time you press Start.
-- The hostile dummy never casts Burn Resistance (or Flame Shield) yet; only the player can use the defensive skills.
+- Changing **Dummy attacks** or **Dummy uses skills** takes effect the next time you press Training Ground.
+- Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is a fixed timer.
+- Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
+- The skill tree has no respec: picks are permanent until you reset progression in Developer options.
+- Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
 - Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`.
 
 See **[ROADMAP.md](ROADMAP.md)** for what comes next and **[CHANGELOG.md](CHANGELOG.md)** for history.

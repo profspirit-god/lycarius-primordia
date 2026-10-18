@@ -58,11 +58,14 @@ src/
   types.js           JSDoc contracts (SkillDef, ClassDef, CasterOwner, HitEvent, CastEvent)
   content/index.js   ONE manifest: register skills + classes here
   core/              Game, Scene, Input, EventBus, Registry, Settings, math
-  scenes/            Menu, Settings, Exit, World
+  scenes/            Menu, Home, ModeSelect, Loading, CreatorSupport, Settings, Exit, World, Placeholder (Campaign, Live Server)
+  lobby/             lobbyData (placeholder content as data), Wallet
   entities/          Entity base, Player, TrainingDummy
   classes/           ClassRegistry + class data (Mage)
-  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect)
-  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem
+  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect) + ProjectileClash
+  progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (damage multipliers)
+  ui/                SkillTreePanel (DOM overlay), Modal (lobby modals)
+  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem
   audio/             AudioEngine (procedural Web Audio, no asset files)
   render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
 ```
@@ -168,7 +171,16 @@ Rules: no emoji in code or commits. Don't compress code identifiers or user-faci
 - Ward lives on `entity.ward` (`BurnWardEffect`). Projectiles call `target.ward.resist(dmg)` before emitting `hit`; any new fire projectile must do the same.
 - Cast-time skills: `autoRelease:true` fires when charge hits 1 and latches until the key is released. `self:true` skills are skipped by AI `wantsCast` and draw an aura instead of the charge orb. `Player.draw` reads `caster.chargingSkill`.
 - Damage is rounded in `FireballProjectile.roll()`. Keep new damage sources integer.
+- Player starts with Fireball only. Skills come from `Progression.unlockedSkills()`; `Player.syncProgression()` adds slots (`SkillCaster.addSkill`) and recomputes `player.stats` / `player.mods`. Call it after any pick or level-up. Specialization is separate from character level.
+- Cast time and cooldown: use `owner.mods?.castTimeMult` / `cooldownMult` (SkillCaster already does). Damage: multiply by `skillMult(owner)` / `elementMult(owner, element)` from `progression/Mods.js`.
+- Any projectile: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; call `clashProjectiles` before the shield check. Skip work in `update` if `dead` (a clash can kill it earlier in the same frame).
+- Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true` (HitEffects skips hit-stop and the big burst for those). Create `XpSystem` AFTER `HitEffects` + `StatusSystem`.
+- Dummy skills AI (`thinkSkills`) only runs with Settings `dummySkills` + `dummyAttacks`; both are read at world start.
+- "Training Ground" is the playable scene (`world` scene, `mode: 'training'`); `campaign` and `live` are `PlaceholderScene`s (`back: "modes"`).
+- Scene flow (V1.7): `menu` → `home` → `modes` → `loading` (`{target}`) → `world`. Settings and pause return to `home`. Lobby content is placeholder data in `lobby/lobbyData.js`; add loading screens via `LOADING`. `#ui` is full-screen (flex stretch); `.panel` centres itself with `margin:auto`; lobby scenes use their own absolute-positioned root. Modals: `openModal(parent, {title, html})`; Esc closes the top one.
 
 ## 8. Roadmap pointer
+
+Lobby path L1-L11 is in `ROADMAP.md` ("Lobby path"): art, items/inventory, customization, wallet and shop, Genesis Path, season/rank, messages, login, creator support, real loading. Do one per version.
 
 Next candidates (see `ROADMAP.md`): more combat depth (sprites/animation, dummy behaviours, second skill) or world (tilemap, collision, two zones). Then classes/skills, progression, NPCs/quests, enemies/bosses, then V2.0.0.00 online. Ask the user which fork when starting.
