@@ -48,6 +48,12 @@ export const SHOP = {
   ],
 };
 
+/** Lobby art. Paths are relative to index.html. A missing file falls back to the drawn placeholder. */
+export const ART = {
+  homeScenery: "assets/home/scenery.webp",
+  modeVideo: ["assets/modes/select-bg.webm", "assets/modes/select-bg.mp4"], // WebM first, MP4 for Safari
+};
+
 export const GENESIS_PATH = {
   name: "Genesis Path",
   blurb: "Season pass",
@@ -75,6 +81,7 @@ export const MESSAGES = [
 export const MODES = [
   {
     id: "live",
+    pic: "assets/modes/live.webp",
     name: "Live Server",
     tag: "Online · MMORPG",
     color: [120, 190, 255],
@@ -91,6 +98,7 @@ export const MODES = [
   },
   {
     id: "campaign",
+    pic: "assets/modes/campaign.webp",
     name: "Campaign",
     tag: "Single player · Story",
     color: [255, 200, 110],
@@ -107,6 +115,7 @@ export const MODES = [
   },
   {
     id: "training",
+    pic: "assets/modes/training.webp",
     name: "Training Grounds",
     tag: "Sandbox · Playable now",
     color: [255, 130, 70],
@@ -137,6 +146,7 @@ export const LOADING = {
     ],
     minTime: 2.4,
     next: { scene: "world", params: { classId: "mage", mode: "training" } },
-    art: "Placeholder: custom training art / video goes here",
+    image: "assets/loading/training.webp",
+    art: "Placeholder: custom training art goes here", // shown only if the image is missing
   },
 };
