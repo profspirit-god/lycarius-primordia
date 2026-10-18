@@ -7,14 +7,26 @@ import { SkillRegistry } from "../skills/SkillRegistry.js";
 export class SkillCaster {
   constructor(owner, skillIds, bindings) {
     this.owner = owner;
-    this.slots = skillIds.map((id) => ({
-      skill: SkillRegistry.get(id),
-      keys: bindings[id] ?? [],
-      cooldown: 0,
-      charging: false,
-      charge: 0,
-      t: 0,
-    }));
+    this.slots = [];
+    for (const id of skillIds) this.addSkill(id, bindings[id] ?? []);
+  }
+  has(id) {
+    return this.slots.some((s) => s.skill.id === id);
+  }
+  /** Add a skill slot at runtime (specialization unlocks). No-op if already present. */
+  addSkill(id, keys = []) {
+    if (this.has(id)) return;
+    const skill = SkillRegistry.get(id);
+    this.slots.push({ skill, keys, cooldown: 0, cdMax: skill.cooldown, charging: false, charge: 0, t: 0, need: skill.chargeTime });
+  }
+  /** Slot being charged right now, or null. Its `t` and `need` (effective cast time) feed the cast-timer debug. */
+  get chargingSlot() {
+    return this.slots.find((s) => s.charging) ?? null;
+  }
+  /** Start a slot's cooldown, shortened by the owner's cooldown modifier. */
+  _cd(s) {
+    s.cdMax = s.skill.cooldown * (this.owner.mods?.cooldownMult ?? 1);
+    s.cooldown = s.cdMax;
   }
   get charging() {
     return this.slots.some((s) => s.charging);
@@ -51,12 +63,12 @@ export class SkillCaster {
     const ctx = this._ctx(s, world);
     if (sk.isActive(this.owner)) {
       sk.onDeactivate(ctx);
-      s.cooldown = sk.cooldown;
+      this._cd(s);
     } else if (s.cooldown <= 0) {
       if (!sk.canStart(mana)) this.owner.lowManaFlash = 0.4;
       else {
         sk.onActivate(ctx);
-        s.cooldown = sk.cooldown;
+        this._cd(s);
       }
     }
   }
@@ -88,15 +100,16 @@ export class SkillCaster {
         continue;
       }
       s.t += dt;
+      s.need = sk.chargeTime * (this.owner.mods?.castTimeMult ?? 1); // cast-time modifier
       const cap = sk.maxAffordableCharge ? sk.maxAffordableCharge(mana) : 1;
-      s.charge = Math.min(1, s.t / sk.chargeTime, cap);
+      s.charge = Math.min(1, s.t / s.need, cap);
       const ctx = this._ctx(s, world);
       if (held && sk.autoRelease && s.charge >= 1) {
         // cast-time skills fire the moment the bar fills
         s.charging = false;
         s.latched = true;
         sk.onRelease(ctx);
-        s.cooldown = sk.cooldown;
+        this._cd(s);
         s.charge = 0;
         continue;
       }
@@ -105,7 +118,7 @@ export class SkillCaster {
         s.charging = false;
         if (s.charge >= sk.minCharge) {
           sk.onRelease(ctx);
-          s.cooldown = sk.cooldown;
+          this._cd(s);
         }
         s.charge = 0;
       }

@@ -13,6 +13,7 @@ export const FlameShield = {
   id: "flameShield",
   name: "Flame Shield",
   icon: "🛡️",
+  element: "fire",
   hint: "RMB / E",
   toggle: true,
   cooldown: 0.6, // after cast or drop, before it can be raised again

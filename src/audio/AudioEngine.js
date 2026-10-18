@@ -4,7 +4,7 @@ import { clamp, rand } from "../core/math.js";
 /**
  * Procedural audio (Web Audio API). No asset files needed.
  * To use real sound files later, replace the bodies of the public methods
- * (ui, cast, impact, hurt, lowMana, down, respawn, chargeVoice, shieldUp, shieldHit, shieldBreak, shieldDown,
+ * (ui, cast, impact, explosion, levelUp, hurt, lowMana, down, respawn, chargeVoice, shieldUp, shieldHit, shieldBreak, shieldDown,
  * burnIgnite, burnTick, burnNullify, wardUp, wardDown) and keep their signatures.
  */
 class AudioEngine {
@@ -143,6 +143,25 @@ class AudioEngine {
       });
     }
     if (crit) this._osc("triangle", 1500, 900, t, 0.18, out, 0.25);
+  }
+  /** Two fireballs colliding: deep boom, noise burst, crackle. */
+  explosion(charge, pan = 0, vol = 1) {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(pan, vol),
+      d = 0.5 + charge * 0.5;
+    this._osc("sine", 140 - charge * 60, 28, t, d, out, 1);
+    this._osc("sawtooth", 240, 50, t, 0.25, out, 0.25);
+    this._noise(t, d, out, 0.9, { type: "lowpass", f0: 4000, f1: 150 });
+    for (let i = 0; i < 4 + charge * 6; i++)
+      this._noise(t + rand(0.03, 0.6), 0.05, out, 0.22, { type: "highpass", f0: 3200, f1: 2200 });
+  }
+  /** Level-up jingle (UI sound, not positional). */
+  levelUp() {
+    const t = this._begin();
+    if (t === null) return;
+    const out = this._out(0, 0.8);
+    [523, 659, 784, 1047].forEach((f, i) => this._osc("triangle", f, f, t + i * 0.09, 0.28, out, 0.3));
   }
   hurt(charge, pan = 0, vol = 1) {
     const t = this._begin();

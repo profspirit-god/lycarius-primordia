@@ -12,13 +12,15 @@ export class MenuScene extends Scene {
     el.innerHTML = `
       <h1 class="title">LYCARIUS</h1>
       <div class="subtitle">${GAME_NAME.replace('Lycarius ', '')} · ${EDITION}</div>
-      <button class="btn" data-a="start">Start</button>
+      <button class="btn" data-a="campaign">Campaign</button>
+      <button class="btn" data-a="training">Training Ground</button>
+      <button class="btn" data-a="live">Live Server</button>
       <button class="btn" data-a="settings">Settings</button>
       <button class="btn" data-a="exit">Exit Game</button>
       <div class="footer">${VERSION_LABEL}</div>`;
     el.addEventListener('click', (e) => {
       const a = e.target.dataset?.a;
-      if (a === 'start') game.goto('world', { classId: 'mage' });
+      if (a === 'training') game.goto('world', { classId: 'mage', mode: 'training' });
       else if (a) game.goto(a);
     });
     this.ui.appendChild(el);

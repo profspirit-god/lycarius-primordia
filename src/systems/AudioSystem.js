@@ -16,6 +16,8 @@ export class AudioSystem {
       world.events.on("shield", (e) => this.onShield(e)),
       world.events.on("burn", (e) => this.onBurn(e)),
       world.events.on("ward", (e) => this.onWard(e)),
+      world.events.on("explosion", (e) => this.onExplosion(e)),
+      world.events.on("levelup", () => GameAudio.levelUp()),
     ];
   }
 
@@ -35,6 +37,10 @@ export class AudioSystem {
     const s = this.spatial(e.target.x, e.target.y);
     if (e.target === this.world.player) GameAudio.hurt(e.charge, s.pan, s.vol);
     else GameAudio.impact(e.charge, e.crit, s.pan, s.vol);
+  }
+  onExplosion(e) {
+    const s = this.spatial(e.x, e.y);
+    GameAudio.explosion(e.charge, s.pan, s.vol);
   }
   onCast(e) {
     const s = this.spatial(e.owner.x, e.owner.y);

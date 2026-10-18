@@ -4,17 +4,23 @@ import { Vitals } from "../systems/Vitals.js";
 import { drawCylinder } from "../render/drawCylinder.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
 import { drawAura } from "../render/drawAura.js";
+import { drawBar } from "../render/drawBar.js";
 import { WARD_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
+import { Settings } from "../core/Settings.js";
 
 const AIM_Z = 32; // cursor is read at body height so shots land where the sprite visually is
 const RESPAWN_TIME = 3; // seconds spent downed
 
 export class Player extends Entity {
-  constructor(cls) {
+  /** @param {import('../progression/Progression.js').Progression} [prog] specialization state; without it the player owns every class skill */
+  constructor(cls, prog = null) {
     super();
     this.cls = cls;
+    this.prog = prog;
+    this.stats = { ...cls.stats }; // base stats + specialization bonuses
+    this.mods = null; // specialization modifiers (castTimeMult, cooldownMult, elementDamage, skillDamage)
     this.radius = cls.stats.radius;
     this.height = cls.stats.height;
     this.vx = 0;
@@ -27,13 +33,30 @@ export class Player extends Entity {
     this.hittable = true;
     this.damageColor = "#ff6b6b";
     this.home = { x: 0, y: 0 };
-    this.vitals = new Vitals(cls.stats);
-    this.caster = new SkillCaster(this, cls.skills, cls.bindings);
+    this.vitals = new Vitals(this.stats);
+    this.caster = new SkillCaster(this, [], {});
     this.shield = null; // active FlameShieldEffect, if any
     this.flash = 0;
     this.lowManaFlash = 0;
     this.downed = false;
     this.downedTimer = 0;
+    this.syncProgression();
+  }
+
+  /** Re-read the Progression: recompute stats and modifiers, add newly unlocked skill slots. Call after a level-up or pick. */
+  syncProgression() {
+    const prog = this.prog,
+      base = this.cls.stats;
+    this.mods = prog ? prog.mods() : null;
+    const add = this.mods?.stats;
+    this.stats = { ...base, maxMana: base.maxMana + (add?.maxMana ?? 0), manaRegen: base.manaRegen + (add?.manaRegen ?? 0) };
+    const v = this.vitals,
+      gained = this.stats.maxMana - v.maxMana;
+    v.maxMana = this.stats.maxMana;
+    v.manaRegen = this.stats.manaRegen;
+    if (gained > 0) v.mana += gained;
+    v.mana = Math.min(v.mana, v.maxMana);
+    for (const id of prog ? prog.unlockedSkills() : this.cls.skills) this.caster.addSkill(id, this.cls.bindings[id] ?? []);
   }
   applyImpulse(x, y) {
     this.knock.x += x;
@@ -84,7 +107,7 @@ export class Player extends Entity {
     this.vy = 0;
   }
   respawn() {
-    this.vitals.configure(this.cls.stats);
+    this.vitals.configure(this.stats);
     this.x = this.home.x;
     this.y = this.home.y;
     this.knock.x = 0;
@@ -147,6 +170,21 @@ export class Player extends Entity {
     this.caster.update(dt, world);
   }
 
+  /** Debug: elapsed / effective cast time above the head. The cast time already includes specialization reductions. */
+  drawCastTimer(ctx, y, slot) {
+    const done = Math.min(slot.t, slot.need),
+      full = slot.t >= slot.need;
+    ctx.textAlign = "center";
+    ctx.font = "bold 11px Consolas, monospace";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,.85)";
+    const label = `${slot.skill.name}  ${done.toFixed(2)} / ${slot.need.toFixed(2)}s`;
+    ctx.strokeText(label, this.x, y);
+    ctx.fillStyle = full ? "#9dffa0" : "#ffe08a";
+    ctx.fillText(label, this.x, y);
+    drawBar(ctx, this.x - 30, y + 4, 60, 5, done / slot.need, full ? "#7bd88f" : "#ff8a3a");
+  }
+
   draw(ctx) {
     const moving = Math.hypot(this.vx, this.vy) / this.cls.stats.speed,
       c = Math.cos(this.aim),
@@ -187,5 +225,7 @@ export class Player extends Entity {
       drawAura(ctx, this.x, this.y, this.height, this.radius, charge * 0.9, this.t, casting.palette);
     else if (casting) drawChargeOrb(ctx, this.getCastOrigin(), charge, this.aim);
     ctx.globalAlpha = 1;
+    const slot = this.caster.chargingSlot;
+    if (slot && Settings.get("debugCastTimer")) this.drawCastTimer(ctx, top.ty - 28, slot);
   }
 }
