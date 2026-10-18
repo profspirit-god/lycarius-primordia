@@ -22,8 +22,10 @@ export class HitEffects {
       { target, dir, charge, crit } = e;
     const mid = target.height * 0.55;
     target.onHit?.(e);
-    w.hitstop(0.04 + 0.06 * charge);
-    w.camera.addTrauma(0.22 + 0.45 * charge);
+    if (!e.aoe) {
+      w.hitstop(0.04 + 0.06 * charge);
+      w.camera.addTrauma(0.22 + 0.45 * charge);
+    }
     w.damageNumbers.spawn(
       target.x,
       target.y - target.height - 8,
@@ -33,6 +35,11 @@ export class HitEffects {
         color: target.damageColor ?? (crit ? "#ff7a3d" : "#ffe08a"),
       },
     );
+    if (e.aoe) {
+      // explosion splash: ExplosionFx owns the big visuals, the target only gets a few sparks
+      this.frontSparks({ ...e, charge: e.charge * 0.35 });
+      return;
+    }
     this.frontSparks(e);
     this.backBurst(e, mid);
     this.shockwaves(e);

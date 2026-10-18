@@ -26,7 +26,9 @@
  * @property {string} name
  * @property {number[]} color                         RGB, 0-255.
  * @property {ClassStats} stats
- * @property {string[]} skills                        Skill ids from SkillRegistry.
+ * @property {string[]} skills                        Skill ids from SkillRegistry (everything the class can ever learn).
+ * @property {{ element: string, maxLevel: number, start: string[], unlocks: Object<number,string> }} specialization
+ *   Class specialization tree: `start` skills at level 1, `unlocks` level -> skill id, every other level above 1 grants a bonus pick.
  * @property {Object<string, string[]>} bindings      skillId -> input codes (e.g. 'Mouse0', 'Space').
  */
 
@@ -47,6 +49,8 @@
  * @property {object|null} [ward]                     Active BurnWardEffect, if the owner has cast Burn Resistance.
  * @property {(e: { damage: number, kind: string, source: object }) => void} [onDot]  Damage over time (burn tick).
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
+ * @property {{ element: string, castTimeMult: number, cooldownMult: number, elementDamage: number, skillDamage: number }|null} [mods]
+ *   Specialization modifiers (Player only). SkillCaster applies castTimeMult / cooldownMult; damage code uses progression/Mods.js.
  */
 
 /**
@@ -66,6 +70,7 @@
  * @property {string} id
  * @property {string} name
  * @property {string} icon
+ * @property {string} [element]                       Damage element, e.g. 'fire'. Matched against the caster's specialization element.
  * @property {number} cooldown                        Seconds.
  * @property {number} chargeTime                      Seconds to reach full charge.
  * @property {number} minCharge                       0..1; releasing below this cancels the cast.
@@ -98,6 +103,7 @@
  * @property {number} y
  * @property {number} z                               Impact point.
  * @property {number} [resisted]                      Damage removed by the target's ward (damage is already reduced).
+ * @property {boolean} [aoe]                          Explosion splash: HitEffects skips hit-stop and the big burst.
  * @property {{ chance: number, duration: number, dps: number }} [burn]  Ignition offer: StatusSystem rolls `chance`.
  */
 
@@ -142,6 +148,27 @@
  * @property {number} y
  * @property {number} z
  * @property {string} [reason]                        'expired' | 'spent' | 'downed' ('down').
+ */
+
+/**
+ * Emitted on world.events as 'explosion' when two projectiles clash (ProjectileClash).
+ * ExplosionSystem deals the area damage as 'hit' events with aoe=true; ExplosionFx draws it.
+ * @typedef {Object} ExplosionEvent
+ * @property {object} source                          Owner credited with the damage (the stronger ball; on ties, the one that detected the clash).
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} charge                          0..1 strength: sets radius (70-190 px) and damage (6-24 at the centre).
+ * @property {'clash'} kind
+ * @property {string} element
+ */
+
+/**
+ * Emitted on world.events as 'levelup' (re-emitted from Progression by WorldScene).
+ * @typedef {Object} LevelUpEvent
+ * @property {'char'|'spec'} track
+ * @property {number} level                           The level just reached.
+ * @property {string|null} [unlock]                   Skill id unlocked at this specialization level, if any.
  */
 
 export {};
