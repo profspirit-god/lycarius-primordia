@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.5.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.6.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -13,14 +13,16 @@ Current version: **V1.5.0.00**. Completed work is recorded in `CHANGELOG.md`; th
 | V1.3.0.00 | Moving dummy: Stationary, Patrol and Strafe modes                      |
 | V1.4.0.00 | Magic circle casting, Flame Shield (toggle skill with shield points)   |
 | V1.5.0.00 | Burn status effect, Burn Resistance (cast-time self buff, nullify toast) |
+| V1.6.0.00 | Experience, class specialization tree, projectile clash and explosions, dummy uses skills, Campaign / Training Ground / Live Server menu, cast-timer debug, dev XP panel |
 
 ## Next: combat depth (continued)
 
 - Sprites and animation for characters (replace the plain cylinders; keep the pseudo-3D `(x, y, z)` model).
 - Dummy behaviours beyond movement: dodging, retreating at low health.
-- Hostile dummy that raises its own Flame Shield (the shield already works for any caster that implements `wantsToggle`) and casts its own Burn Resistance (the skill is flagged `self`, so the AI currently skips it).
 - More status effects on the new `StatusSystem` (any skill can offer one through the `burn` field on its `hit` event).
 - Skill hotkey rebinding and a Settings row for it.
+- Make character level matter (stat growth per level) and add a respec option for the specialization tree.
+- Second class and a second specialization element; explosions that can ignite; clash rules for other projectile types.
 
 ## Then: world
 
@@ -30,7 +32,8 @@ Current version: **V1.5.0.00**. Completed work is recorded in `CHANGELOG.md`; th
 ## Later
 
 1. More classes and skills; cooldowns and a skill bar.
-2. Progression: levels, stats, items, inventory.
+2. Progression (levels and specialization exist; still to do): stats, items, inventory.
+2b. **Campaign** (single-player story) and **Live Server** (online open world) replace the menu placeholders.
 3. NPCs, dialogue, quests and branching story.
 4. Enemies and bosses with reusable AI built on `SkillCaster`.
 5. Desktop wrapper (real "Exit Game").

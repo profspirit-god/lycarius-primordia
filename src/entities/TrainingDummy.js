@@ -5,7 +5,8 @@ import { drawCylinder } from "../render/drawCylinder.js";
 import { drawGlow } from "../render/drawGlow.js";
 import { drawBar } from "../render/drawBar.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
-import { drawGroundCircle } from "../render/drawMagicCircle.js";
+import { drawGroundCircle, WARD_CIRCLE } from "../render/drawMagicCircle.js";
+import { drawAura } from "../render/drawAura.js";
 import { rand, TAU } from "../core/math.js";
 
 const RESPAWN_TIME = 3;
@@ -17,10 +18,12 @@ const ORBIT_RATE = 0.35; // rad/s around the player
 
 /**
  * Passive mode: infinite health, never attacks.
- * Attack mode (Settings > Dummy attacks): uses the player's class stats, casts the class skills at the player, can be defeated.
+ * Attack mode (Settings > Dummy attacks): uses the player's class stats, fires the class's first skill at the player, can be defeated.
+ * Skills mode (Settings > Dummy uses skills, needs attack mode): also raises its Flame Shield when it feels threatened
+ * and casts Burn Resistance whenever it has no ward and enough mana.
  */
 export class TrainingDummy extends Entity {
-  constructor(x, y, { attack = false, cls = null, move = "off" } = {}) {
+  constructor(x, y, { attack = false, cls = null, move = "off", skills = false } = {}) {
     super();
     Object.assign(this, {
       x,
@@ -41,12 +44,14 @@ export class TrainingDummy extends Entity {
     this.attack = attack && !!cls;
     this.cls = cls;
     this.vitals = this.attack ? new Vitals(cls.stats) : null;
-    this.caster = this.attack ? new SkillCaster(this, cls.skills, {}) : null;
+    this.skills = this.attack && skills;
+    this.caster = this.attack ? new SkillCaster(this, this.skills ? cls.skills : cls.skills.slice(0, 1), {}) : null;
     this.aim = Math.PI;
     this.kick = 0;
     this.knock = { x: 0, y: 0 };
     this.lowManaFlash = 0;
-    this.ai = { cast: false, timer: rand(1.5, 2.5), target: 1, t: 0 };
+    this.ai = { cast: false, timer: rand(1.5, 2.5), target: 1, t: 0, ward: false, shield: false, shieldTimer: 0 };
+    this.xpGiven = false; // XpSystem pays the kill bonus once per defeat
     this.downed = false;
     this.downedTimer = 0;
     this.freeze = 0;
@@ -66,7 +71,12 @@ export class TrainingDummy extends Entity {
 
   // --- caster interface -------------------------------------------------
   wantsCast(slot) {
-    return this.ai.cast && !slot.skill.self; // the AI only fires attack skills for now
+    if (slot.skill.self) return this.skills && this.ai.ward && !this.ai.cast; // self buffs (Burn Resistance)
+    return this.ai.cast;
+  }
+  /** Toggle skills: ask for a press whenever the real state differs from what the AI wants. */
+  wantsToggle(slot) {
+    return this.skills && !this.downed && this.ai.shield !== !!slot.skill.isActive(this);
   }
   applyImpulse(x, y) {
     this.knock.x += x;
@@ -113,12 +123,15 @@ export class TrainingDummy extends Entity {
   down() {
     this.burn = null;
     this.ward?.deactivate("downed");
+    this.shield?.deactivate("downed");
     this.downed = true;
     this.downedTimer = RESPAWN_TIME;
     this.hittable = false;
     this.solid = false;
     this.caster.cancel();
     this.ai.cast = false;
+    this.ai.ward = false;
+    this.ai.shield = false;
   }
   respawn() {
     this.vitals.configure(this.cls.stats);
@@ -133,6 +146,7 @@ export class TrainingDummy extends Entity {
     this.solid = true;
     this.ai.cast = false;
     this.ai.timer = rand(1.5, 2.5);
+    this.xpGiven = false;
   }
   dps() {
     const now = performance.now();
@@ -174,8 +188,11 @@ export class TrainingDummy extends Entity {
     const d = Math.hypot(p.x - this.x, p.y - this.y);
     if (p.downed || d > 1000) {
       ai.cast = false;
+      ai.ward = false;
+      ai.shield = false;
       return;
     }
+    if (this.skills) this.thinkSkills(dt, world, p, d);
     const lead = Math.min(0.6, d / 800) * 0.7;
     this.aim = Math.atan2(
       p.y + p.vy * lead - this.y,
@@ -183,7 +200,7 @@ export class TrainingDummy extends Entity {
     );
     if (!ai.cast) {
       ai.timer -= dt;
-      if (ai.timer <= 0 && this.vitals.mana >= 8) {
+      if (ai.timer <= 0 && this.vitals.mana >= 8 && !ai.ward) {
         ai.cast = true;
         ai.target = rand(0.4, 1);
         ai.t = 0;
@@ -198,6 +215,22 @@ export class TrainingDummy extends Entity {
         ai.timer = rand(1.2, 2.6);
       }
     }
+  }
+
+  /** Skills AI. Shield: up while the player charges or has shots in the air nearby, plus a short linger. Ward: whenever missing. */
+  thinkSkills(dt, world, p, d) {
+    const ai = this.ai,
+      v = this.vitals;
+    let threat = d < 900 && p.caster.charging && p.caster.chargeLevel > 0.25;
+    if (!threat)
+      for (const e of world.entities)
+        if (e.isProjectile && e.owner === p && !e.dead && Math.hypot(e.x - this.x, e.y - this.y) < 700) {
+          threat = true;
+          break;
+        }
+    ai.shieldTimer = threat ? 1.2 : ai.shieldTimer - dt;
+    ai.shield = ai.shieldTimer > 0 && v.mana > (this.shield ? 3 : 14);
+    ai.ward = !this.ward && v.mana >= 45;
   }
 
   update(dt, world) {
@@ -279,8 +312,11 @@ export class TrainingDummy extends Entity {
       this.ly + this.vy * 0.015 - (this.attack ? s * this.kick * 4 : 0),
     ];
     if (this.downed) ctx.globalAlpha = 0.3;
-    if (this.attack && this.caster.charging)
-      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + this.caster.chargeLevel * 22, performance.now() / 1000, this.caster.chargeLevel);
+    const casting = this.attack ? this.caster.chargingSkill : null;
+    if (casting)
+      drawGroundCircle(ctx, this.x, this.y, this.radius + 30 + this.caster.chargeLevel * 22, performance.now() / 1000, this.caster.chargeLevel, {
+        palette: casting.palette,
+      });
     const top = drawCylinder(ctx, {
       x: this.x,
       y: this.y,
@@ -288,6 +324,7 @@ export class TrainingDummy extends Entity {
       h: this.height,
       color: [178, 134, 86],
       flash: this.flash,
+      tint: this.ward ? { c: WARD_CIRCLE.main, a: 0.45 * this.ward.level() } : null,
       lean,
     });
     for (const [k, col] of [
@@ -321,8 +358,9 @@ export class TrainingDummy extends Entity {
         TAU,
       );
       ctx.fill();
-      if (this.caster.charging)
-        drawChargeOrb(ctx, this.getCastOrigin(), this.caster.chargeLevel, this.aim);
+      if (casting?.self)
+        drawAura(ctx, this.x, this.y, this.height, this.radius, this.caster.chargeLevel * 0.9, performance.now() / 1000, casting.palette);
+      else if (casting) drawChargeOrb(ctx, this.getCastOrigin(), this.caster.chargeLevel, this.aim);
     }
     if (this.glow > 0) {
       ctx.globalCompositeOperation = "lighter";

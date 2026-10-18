@@ -6,6 +6,7 @@ import { MenuScene } from "./scenes/MenuScene.js";
 import { SettingsScene } from "./scenes/SettingsScene.js";
 import { ExitScene } from "./scenes/ExitScene.js";
 import { WorldScene } from "./scenes/WorldScene.js";
+import { PlaceholderScene } from "./scenes/PlaceholderScene.js";
 
 Settings.load();
 const game = new Game();
@@ -13,6 +14,16 @@ game.register("menu", () => new MenuScene());
 game.register("settings", () => new SettingsScene());
 game.register("exit", () => new ExitScene());
 game.register("world", (params) => new WorldScene(params));
+game.register("campaign", () => new PlaceholderScene({
+  title: "Campaign",
+  blurb: "Single-player story mode.",
+  plan: "Placeholder. Planned: branching story, quests and NPCs (see ROADMAP.md).",
+}));
+game.register("live", () => new PlaceholderScene({
+  title: "Live Server",
+  blurb: "The open-world MMORPG, played online.",
+  plan: "Placeholder. Needs the V2.0.0.00 server-authoritative multiplayer work (see ROADMAP.md).",
+}));
 
 // Browsers block audio until the first user gesture.
 for (const ev of ["pointerdown", "keydown"])
