@@ -16,7 +16,7 @@ const COST = 25; // mana, paid when the cast completes
 export const BurnResistance = {
   id: "burnResistance",
   name: "Burn Resistance",
-  icon: "🧯",
+  icon: "ward",
   element: "fire",
   hint: "Q (hold)",
   self: true,

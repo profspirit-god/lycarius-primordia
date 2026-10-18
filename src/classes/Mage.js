@@ -12,6 +12,8 @@ export const Mage = {
     maxMana: 100,
     hpRegen: 0.1,
     manaRegen: 1,
+    maxStamina: 100,
+    staminaRegen: 8,
   },
   skills: ["fireball", "flameShield", "burnResistance"],
   // Class specialization (separate from character level): Lv1 starts with `start`, `unlocks` grant skills,

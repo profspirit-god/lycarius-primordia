@@ -17,6 +17,8 @@
  * @property {number} maxMana
  * @property {number} hpRegen    Per second.
  * @property {number} manaRegen  Per second.
+ * @property {number} [maxStamina]   Optional; 0 or missing means the entity has no stamina bar (Graugr keeps its own stamina field).
+ * @property {number} [staminaRegen] Per second.
  */
 
 /**
