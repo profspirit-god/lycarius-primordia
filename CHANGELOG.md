@@ -2,6 +2,32 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.7.0.00 — Lobby menus: Home, Mode Select, loading screen, Creator Support
+
+### Added
+
+- **New title menu:** Play, Creator Support, Exit.
+- **Creator Support scene** (placeholder): Monetary Support and Idea Support cards.
+- **Home scene** (PUBG-style lobby, all placeholders): profile circle (top-left; click opens name, Gmail, ID and more fields), currency line (Gold, Crystals, Points) and a bell for messages (top-right), Shop panel under the currency line, Genesis Path (season pass, Starlight-style) under the Shop, big Play button bottom-left, bottom row Inventory / Character / Season Info / Rank / Settings, and a placeholder character and scenery on the canvas.
+- **Shop** (click the panel): expands into a modal with the same currency line on top (shared `Wallet`), category tabs and cosmetic item cards. Buying is a placeholder.
+- **Mode Select scene** (Play): Live Server, Campaign, Training Grounds. Each card has a picture placeholder; hovering shows the mode definition and stat placeholders (server, starting point, current players...). Video placeholder background that tints per mode.
+- **Loading scene**: custom loading screen for Training Grounds (rune rings, progress bar, rotating tips, art placeholder). Driven by `LOADING` data; add one entry per destination.
+- New files: `HomeScene`, `ModeSelectScene`, `LoadingScene`, `CreatorSupportScene`, `lobby/lobbyData.js`, `lobby/Wallet.js`, `ui/Modal.js`.
+
+### Changed
+
+- **Settings** moved from the title menu to the Home bottom row; its Back button returns to Home.
+- Campaign / Live Server placeholders return to Mode Select (`PlaceholderScene` takes `back`).
+- The in-game pause menu button now reads **Home** and returns to the Home scene.
+- Training Ground is reached through Play, Mode Select and the loading screen instead of a title-menu button.
+- `#ui` overlay now stretches full screen (`.panel` stays centred); menu click sound also covers the new lobby controls.
+- `VERSION` is `1.7.0.00`.
+
+### Notes
+
+- All lobby content is placeholder data in `src/lobby/lobbyData.js`. Wallet is in-memory (not saved). Profile, Genesis Path, Rank and Season are display-only.
+- Roadmap now lists the lobby development path for future sessions.
+
 ## V1.6.0.00 — Experience, specialization tree and projectile clash
 
 ### Added

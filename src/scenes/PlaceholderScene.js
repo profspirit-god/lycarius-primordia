@@ -4,9 +4,9 @@ import { rand } from "../core/math.js";
 
 /** "Coming soon" screen for modes that are planned but not built (Campaign, Live Server). */
 export class PlaceholderScene extends Scene {
-  constructor({ title = "Coming soon", blurb = "", plan = "" } = {}) {
+  constructor({ title = "Coming soon", blurb = "", plan = "", back = "menu" } = {}) {
     super();
-    Object.assign(this, { title, blurb, plan });
+    Object.assign(this, { title, blurb, plan, back });
   }
   enter(game) {
     super.enter(game);
@@ -20,7 +20,7 @@ export class PlaceholderScene extends Scene {
       <div class="note" style="text-align:center">${this.plan}</div>
       <button class="btn" data-a="back">Back</button>`;
     el.addEventListener("click", (e) => {
-      if (e.target.dataset?.a === "back") game.goto("menu");
+      if (e.target.dataset?.a === "back") game.goto(this.back);
     });
     this.ui.appendChild(el);
   }

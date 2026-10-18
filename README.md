@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.6.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.7.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,11 +8,11 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.6.0.00
+## 1. What is in V1.7.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Menu           | Campaign (placeholder), Training Ground (the playable scene), Live Server (placeholder), Settings, Exit Game                           |
+| Menu           | Title menu: Play, Creator Support (placeholder), Exit. Play opens the Home lobby (placeholders), then Mode Select: Live Server (placeholder), Campaign (placeholder), Training Grounds (playable, with a loading screen). Settings is on the Home bottom row |
 | Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), cast-timer debug, dummy attacks toggle, dummy uses skills toggle, dummy movement mode, Developer options test panel. Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
@@ -70,12 +70,23 @@ Set in **Settings → Dummy attacks** (applies when you press Training Ground).
 | Flame Shield    | Raises it while you are charging a fireball (above 25%) or have a fireball in the air within 700 px, keeps it 1.2 s longer, drops it when the threat ends. Needs more than 14 mana to raise |
 | Burn Resistance | Casts it whenever it has no ward and at least 45 mana (it holds the cast like you do; a hit during the cast cancels it)             |
 
-### Menu modes
+### Menus and lobby (V1.7.0.00)
 
-| Button          | What it does                                                                                               |
+Flow: **Title menu** (Play, Creator Support, Exit) → **Home** → **Mode Select** → **Loading** → game. All lobby content is placeholder data in `src/lobby/lobbyData.js`.
+
+| Screen         | Contents                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title menu     | Play (to Home), Creator Support, Exit                                                                                                                         |
+| Creator Support | Monetary Support and Idea Support cards (placeholders)                                                                                                       |
+| Home           | Profile circle (top-left; click shows name, Gmail, ID, placeholder fields), currency line (Gold, Crystals, Points) and a bell for messages (top-right), Shop panel, Genesis Path (season pass) under it, Play (bottom-left), bottom row: Inventory, Character, Season Info, Rank, Settings. Placeholder character and scenery on the canvas |
+| Shop           | Click the panel: modal with the same currency line on top, category tabs and cosmetic cards. Buying is a placeholder                                           |
+| Mode Select    | Live Server, Campaign, Training Grounds. Picture placeholder per card; hover shows the definition and stats. Video placeholder background. Esc or Home goes back |
+| Loading        | Custom loading screen for Training Grounds (rune rings, bar, tips, art placeholder), then the world                                                           |
+
+| Mode            | What it does                                                                                               |
 | --------------- | ---------------------------------------------------------------------------------------------------------- |
 | Campaign        | Placeholder screen. Planned single-player story (quests, NPCs, branching story)                            |
-| Training Ground | The current playable scene (dummy, combat sandbox). Was "Start" before V1.6.0.00                           |
+| Training Grounds | The current playable scene (dummy, combat sandbox), reached through the loading screen                    |
 | Live Server     | Placeholder screen. Planned open-world MMORPG; needs the V2.0.0.00 multiplayer work                        |
 
 ### Experience and levels
@@ -326,9 +337,10 @@ src/
     Registry.js               id -> definition store
     Settings.js               persisted settings
     math.js                   helpers (lerp, rand, hash2, colour)
-  scenes/                     MenuScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
+  scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
+  lobby/                      lobbyData (placeholder lobby content), Wallet (shared currencies)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
-  ui/                         SkillTreePanel (DOM overlay for the specialization tree)
+  ui/                         SkillTreePanel (DOM overlay for the specialization tree), Modal (lobby modals)
   entities/                   Entity (base), Player, TrainingDummy
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
@@ -407,14 +419,14 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.6.0.00)
+## 6. Known limitations (V1.7.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
 - Single-player only; the networking layer is planned (see `ROADMAP.md`).
 - Changing **Dummy attacks** or **Dummy uses skills** takes effect the next time you press Training Ground.
-- Campaign and Live Server are placeholder screens.
+- Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is a fixed timer.
 - Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
 - The skill tree has no respec: picks are permanent until you reset progression in Developer options.
 - Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
