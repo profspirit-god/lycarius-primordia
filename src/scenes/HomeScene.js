@@ -1,11 +1,13 @@
 import { Scene } from "../core/Scene.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { drawCylinder } from "../render/drawCylinder.js";
+import { drawCover } from "../render/drawCover.js";
 import { rand } from "../core/math.js";
 import { VERSION_LABEL } from "../config.js";
 import { openModal } from "../ui/Modal.js";
 import { Wallet } from "../lobby/Wallet.js";
-import { PROFILE, SHOP, GENESIS_PATH, HOME_BUTTONS, MESSAGES } from "../lobby/lobbyData.js";
+import { PROFILE, SHOP, GENESIS_PATH, HOME_BUTTONS, MESSAGES, ART } from "../lobby/lobbyData.js";
+import { loadImage, loadVideo } from "../lobby/assets.js";
 
 const RARITY = { common: "#9aa3b2", rare: "#5aa8ff", epic: "#c27bff" };
 
@@ -19,6 +21,8 @@ export class HomeScene extends Scene {
   enter(game) {
     super.enter(game);
     this.t = 0;
+    this.bg = null;
+    this.bgFade = 0;
     this.modals = [];
     this.particles = new ParticleSystem(400);
     const el = (this.root = document.createElement("div"));
@@ -55,6 +59,8 @@ export class HomeScene extends Scene {
       <div class="lobby-toast" data-toast></div>`;
     el.addEventListener("click", (e) => this.onClick(e));
     this.ui.appendChild(el);
+    loadImage(ART.homeScenery).then((img) => { if (this.game.scene === this) this.bg = img; });
+    loadVideo(ART.modeVideo); // warm the Mode Select video so it starts instantly
   }
 
   toast(msg) {
@@ -153,6 +159,7 @@ export class HomeScene extends Scene {
 
   update(dt) {
     this.t += dt;
+    if (this.bg) this.bgFade = Math.min(1, this.bgFade + dt * 1.5);
     if (this.modals.length && this.game.input.wasPressed("Escape")) this.modals[this.modals.length - 1].close();
     const { width: w, height: h } = this.game;
     if (Math.random() < 0.6)
@@ -162,18 +169,25 @@ export class HomeScene extends Scene {
   }
 
   render(ctx, w, h) {
-    // Scenery placeholder: dusk sky, ridge silhouettes, ground.
-    const sky = ctx.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, "#0b0e1c"); sky.addColorStop(0.55, "#2a1a24"); sky.addColorStop(0.75, "#4a2410"); sky.addColorStop(1, "#120b08");
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
-    const ridge = (base, amp, color, seed) => {
-      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, h);
-      for (let x = 0; x <= w; x += 20) ctx.lineTo(x, base + Math.sin(x * 0.006 + seed) * amp + Math.sin(x * 0.017 + seed * 2) * amp * 0.4);
-      ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-    };
-    ridge(h * 0.58, 46, "#1a1218", 1); ridge(h * 0.66, 34, "#120d10", 4);
+    // Scenery: the art when loaded, otherwise a drawn dusk placeholder.
     const gy = h * 0.8;
-    ctx.fillStyle = "#0c0a0c"; ctx.fillRect(0, gy, w, h - gy);
+    if (this.bg) {
+      ctx.fillStyle = "#07080c"; ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = this.bgFade;
+      drawCover(ctx, this.bg, this.bg.naturalWidth, this.bg.naturalHeight, w, h, 0.5, 0.65);
+      ctx.globalAlpha = 1;
+    } else {
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#0b0e1c"); sky.addColorStop(0.55, "#2a1a24"); sky.addColorStop(0.75, "#4a2410"); sky.addColorStop(1, "#120b08");
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+      const ridge = (base, amp, color, seed) => {
+        ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 20) ctx.lineTo(x, base + Math.sin(x * 0.006 + seed) * amp + Math.sin(x * 0.017 + seed * 2) * amp * 0.4);
+        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+      };
+      ridge(h * 0.58, 46, "#1a1218", 1); ridge(h * 0.66, 34, "#120d10", 4);
+      ctx.fillStyle = "#0c0a0c"; ctx.fillRect(0, gy, w, h - gy);
+    }
     this.particles.render(ctx);
 
     // Character placeholder (cylinder) with a slow idle sway and a ground glow.
@@ -184,7 +198,7 @@ export class HomeScene extends Scene {
     drawCylinder(ctx, { x: cx, y: gy, r: 30, h: 110 + bob, color: [200, 90, 50], lean: [Math.sin(this.t * 0.8) * 3, 0] });
     ctx.fillStyle = "rgba(234,223,200,.35)"; ctx.font = "12px Georgia"; ctx.textAlign = "center";
     ctx.fillText("CHARACTER PLACEHOLDER", cx, gy + 34);
-    ctx.fillText("SCENERY PLACEHOLDER", cx, h * 0.5);
+    if (!this.bg) ctx.fillText("SCENERY PLACEHOLDER", cx, h * 0.5);
     ctx.textAlign = "start";
   }
 }

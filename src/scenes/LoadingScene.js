@@ -1,7 +1,9 @@
 import { Scene } from "../core/Scene.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
+import { drawCover } from "../render/drawCover.js";
 import { LOADING } from "../lobby/lobbyData.js";
+import { loadImage } from "../lobby/assets.js";
 
 /**
  * Custom loading screen. `params.target` picks an entry in LOADING (lobbyData.js).
@@ -17,6 +19,7 @@ export class LoadingScene extends Scene {
     this.t = 0;
     this.progress = 0;
     this.done = false;
+    this.bg = null;
     this.particles = new ParticleSystem(500);
     const c = this.cfg;
     this.tipIdx = Math.floor(Math.random() * c.tips.length);
@@ -34,7 +37,11 @@ export class LoadingScene extends Scene {
     this.bar = el.querySelector("[data-bar]");
     this.pct = el.querySelector("[data-pct]");
     this.tip = el.querySelector("[data-tip]");
+    this.artEl = el.querySelector(".ld-art");
     this.ui.appendChild(el);
+    loadImage(c.image).then((img) => {
+      if (img && this.game.scene === this) { this.bg = img; this.artEl.style.display = "none"; }
+    });
   }
   update(dt) {
     this.t += dt;
@@ -61,12 +68,20 @@ export class LoadingScene extends Scene {
   }
   render(ctx, w, h) {
     ctx.fillStyle = "#07080c"; ctx.fillRect(0, 0, w, h);
+    if (this.bg) {
+      ctx.globalAlpha = Math.min(0.6, this.t * 1.2);
+      drawCover(ctx, this.bg, this.bg.naturalWidth, this.bg.naturalHeight, w, h);
+      ctx.globalAlpha = 1;
+      const v = ctx.createLinearGradient(0, h * 0.55, 0, h);
+      v.addColorStop(0, "rgba(5,6,10,0)"); v.addColorStop(1, "rgba(5,6,10,.85)");
+      ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+    }
     const cx = w / 2, cy = h * 0.4;
     const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 260);
     g.addColorStop(0, "rgba(255,140,60,.28)"); g.addColorStop(1, "rgba(255,140,60,0)");
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
     // Rotating rune rings (procedural placeholder for the custom art).
-    ctx.save(); ctx.translate(cx, cy); ctx.strokeStyle = "rgba(242,196,109,.55)";
+    ctx.save(); ctx.translate(cx, cy); ctx.globalAlpha = this.bg ? 0.4 : 1; ctx.strokeStyle = "rgba(242,196,109,.55)";
     for (const [r, speed, dash] of [[120, 0.5, 14], [90, -0.8, 8], [58, 1.2, 5]]) {
       ctx.save(); ctx.rotate(this.t * speed); ctx.setLineDash([dash, dash * 1.6]); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.stroke(); ctx.restore();

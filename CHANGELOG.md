@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.8.0.00 — Lobby art: Home scenery, Mode Select video, mode cards, training loading art
+
+### Added
+
+- **Art assets** in a new `assets/` folder: `home/scenery.webp`, `modes/select-bg.webm` + `select-bg.mp4`, `modes/live.webp`, `modes/campaign.webp`, `modes/training.webp`, `loading/training.webp` (about 1 MB in total).
+- **Home scenery** replaces the drawn placeholder (fades in once loaded). The character is still a placeholder cylinder.
+- **Mode Select video**: muted looping background drawn on the canvas, darkened in the centre for readability. WebM first, MP4 for Safari. The video was loaded on Home so it starts instantly, and it pauses when the scene exits.
+- **Mode card pictures** for Live Server, Campaign and Training Grounds.
+- **Training loading art** behind the rune rings (reuses the Training Grounds picture).
+- New files: `lobby/assets.js` (lazy `loadImage` / `loadVideo`, cached, resolve `null` on failure), `render/drawCover.js` (cover-fit drawing).
+
+### Changed
+
+- Art paths are data in `lobbyData.js` (`ART`, `MODES[].pic`, `LOADING[].image`). If a file is missing or a format is unsupported, the scene keeps its drawn placeholder; no errors are thrown.
+- The video was converted from the supplied 640x360 clip: audio removed and a 1-second crossfade added so it loops seamlessly (9 s).
+- `VERSION` is `1.8.0.00`.
+
+### Notes
+
+- The supplied files were named the other way round (`Home-scenery.mp4` is the Mode Select video, `ModeSelectVideo.jpg` is the Home scenery). They are used by content, not by name.
+- The video is 640x360 and is scaled up; a 1280x720 or 1920x1080 export from Flow would look sharper.
+
 ## V1.7.0.00 — Lobby menus: Home, Mode Select, loading screen, Creator Support
 
 ### Added

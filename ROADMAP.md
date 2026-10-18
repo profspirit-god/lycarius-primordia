@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.7.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.8.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -15,6 +15,7 @@ Current version: **V1.7.0.00**. Completed work is recorded in `CHANGELOG.md`; th
 | V1.5.0.00 | Burn status effect, Burn Resistance (cast-time self buff, nullify toast) |
 | V1.6.0.00 | Experience, class specialization tree, projectile clash and explosions, dummy uses skills, Campaign / Training Ground / Live Server menu, cast-timer debug, dev XP panel |
 | V1.7.0.00 | Lobby menus: title menu (Play / Creator Support / Exit), Home scene, Shop, Mode Select, Training loading screen. All placeholders |
+| V1.8.0.00 | Lobby art: Home scenery, Mode Select video, mode card pictures, training loading art (L1 partly done) |
 
 ## Lobby path (for the next sessions)
 
@@ -22,7 +23,7 @@ The lobby shell exists with placeholder data. Everything below plugs into it wit
 
 | Step | Work | Where it plugs in | Depends on |
 | ---- | ---- | ----------------- | ---------- |
-| L1 | Real art: Home character and scenery, mode pictures, Mode Select video, Training loading art | `HomeScene.render`, `.mode-pic`, `ModeSelectScene.render`, `LoadingScene` (`LOADING[target].art`) | Decision on asset loading (images / video files break the "no asset files" rule; needs the user's approval and a lazy-load plan) |
+| L1 | **Partly done in V1.8.0.00** (scenery, Mode Select video, card pictures, training loading art; lazy loader `lobby/assets.js` with placeholder fallback). Still to do: Home character art (replace the cylinder), shop item images, profile avatar, per-mode videos, loading art for Campaign and Live | `HomeScene.render`, `Shop` cards, `ART` / `MODES[].pic` / `LOADING[].image` in `lobbyData.js` | Art from the user |
 | L2 | Items and inventory data model: items as definitions in a `Registry` (`ItemRegistry`), registered in `content/index.js`; versioned save | Inventory button (placeholder modal in `HomeScene.openPlaceholder`) | None |
 | L3 | Character customization: pick outfit / aura / skill effect and apply it in `Player.draw` / `drawCylinder` tint and `drawAura` | Character button; Shop cosmetics | L2 |
 | L4 | Wallet persistence and the Shop buy flow (`Wallet.spend`, ownership check, versioned save), then server-side checks | `Wallet.js`, `HomeScene.openShop` (`data-a="buy"`) | L2 |
