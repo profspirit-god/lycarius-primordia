@@ -182,3 +182,6 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .mode-pic { background-size:cover; background-position:center; }
 .mode-pic.has-img span,.mode-pic.has-img small { display:none; }
 .mode-pic.has-img { border-style:solid; border-color:rgba(var(--mc),.35); }
+
+/* Training Ground: mock raid button (under the kills panel, top-right) */
+.raid-btn { position:absolute; top:204px; right:16px; width:222px; margin:0; pointer-events:auto; }

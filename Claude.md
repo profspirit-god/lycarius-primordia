@@ -1,186 +1,120 @@
 # CLAUDE.md: Lycarius MMORPG: Primordia
 
-Read this first. It says how we work, how to code here, and how to spend tokens well.
-Keep this file short; it is loaded every session. Update it when a rule changes.
+Read first, every session. Keep it short (it is loaded each time). Update it when a rule changes.
 
-## 1. Project snapshot
+## 1. Snapshot
 
-- 2D open-world MMORPG (adventure / RPG / management). Edition 1 = **Primordia**; edition 2 = **Proto** (separate, later).
-- Stack: HTML5 Canvas + vanilla JS ES modules. No bundler, no deps, no build step.
-- Run: VS Code Live Server on `index.html` (modules need http).
-- Current: see `VERSION` in `src/config.js`. History: `CHANGELOG.md`. Plan: `ROADMAP.md`. Full docs: `README.md`.
-- Characters are cylinders. Pseudo-3D: objects have ground `(x,y)` + height `z`, drawn at `y - z`.
-- Long-term: factions, guild wars, territory wars, branching story, real-party missions, server-authoritative multiplayer (V2).
+- 2D open-world MMORPG (adventure / RPG / management). Edition 1 = **Primordia**; edition 2 = **Proto** (later, separate).
+- Stack: HTML5 Canvas + vanilla JS ES modules. No bundler, deps or build step. Run with VS Code Live Server on `index.html` (modules need http).
+- Version: `VERSION` in `src/config.js`. History `CHANGELOG.md`, plan `ROADMAP.md`, full docs `README.md`.
+- Pseudo-3D: characters are cylinders; entities have ground `(x,y)` + height `z`, drawn at `y - z`. Ground rings are drawn squashed (0.5) but hit tests are circles in `(x,y)`.
+- Long-term: factions, guild wars, branching story, real-party missions, server-authoritative multiplayer (V2).
 
-## 2. How we work (the user's workflow)
+## 2. Session protocol (save tokens)
 
-- **User codes in VS Code by copy-paste.** Claude gives code + exact location. User is on Windows / PowerShell.
-- **No guessing the repo state.** If unsure a file matches, ask the user to paste it (or grep if files are uploaded).
-- Every feature ships as one version with a full guide, in this order:
-  1. Design decisions (short, with numbers).
-  2. New files (full code, path above each block).
-  3. Replace-whole-file list (only when most of the file changes).
-  4. Small edits (find → replace snippets, with the exact anchor line).
-  5. Docs updates (CHANGELOG, README, ROADMAP, `config.js` version).
-  6. Test checklist (concrete, observable steps).
-  7. GitHub steps (branch, commit, PR, tag).
-- The user tests and reports back. Fixes ship as the next FIX version.
-- User wants docs **meticulous and punctual** (README, ROADMAP, CHANGELOG). Never skip doc updates.
-- Do not bundle unrequested features. Ask which direction when the roadmap forks (one question max).
+1. **Start:** read this file. Do **not** ask for or unzip the whole repo for a small task. Use the code map (section 4) to name the 3-8 files needed. If the user attached a full zip, unzip once, then `grep -n` / `view_range`; never `cat` big files.
+2. **Work in a copy.** Source files are **CRLF**. Read with `tr -d '\r'`; edit in LF with exact-match replace (assert one match); convert back to CRLF before packaging (`sed -i 's/$/\r/'`). Never leave mixed endings.
+3. **Verify before delivering:** `node --check` on every `src/**/*.js`; for logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
+4. **Deliver a changes-only zip**, never the whole repo: `lycarius-primordia-V<x.y.z.nn>-changes.zip`, paths relative to the repo root (`src/...`, `css/...`, docs), CRLF kept, only new + changed files, docs and `Claude.md` included. List the files in chat. User extracts into the repo root and overwrites. Make the zip with python `zipfile`, forward slashes.
+5. **Chat reply, in order:** design decisions with numbers (only the non-obvious ones, flag ambiguities and the default taken) → what changed (file list) → test checklist (concrete, observable) → GitHub steps (exact commands, section 7) → known difficulties. No code dumps in chat unless the user asks.
+6. **Ask at most one question**, only if blocked or at a real roadmap fork. Do not bundle unrequested features. Bugs: cause in 1-2 lines, then the fix as the next FIX version.
+7. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
 
-### Versioning: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>`
+## 3. Versioning and git
 
-| Digit     | Use                                                                 |
-| --------- | ------------------------------------------------------------------- |
-| 1 MAJOR   | new edition, huge system (e.g. networking), breaking data           |
-| 2 MINOR   | new feature / content                                               |
-| 3 FIX     | bug fix, balance tweak, typo                                        |
-| 4 CLEANUP | refactor, format, dead code, comments, docs. Two digits (`00`-`99`) |
+`V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (cleanup is two digits). MAJOR = new edition / huge system; MINOR = feature / content; FIX = bug or balance; CLEANUP = refactor, format, docs. A bump resets the digits to its right. Bump `config.js` + CHANGELOG + README + ROADMAP + git tag together. Docs are public and meticulous: full prose, never skipped.
 
-- Bump resets all digits to the right to 0. First release was `V1.0.0.00`.
-- Version lives in `src/config.js`. Bump it + CHANGELOG + git tag together.
-- Commits (Conventional): `feat` → minor, `fix` → fix, `chore/refactor/docs/style` → cleanup.
+Commits (Conventional): `feat` → minor, `fix` → fix, `chore/refactor/docs/style` → cleanup. Branches: `main` stable + tags only, `dev` integration, work on `feature/*`, `fix/*`, `cleanup/*` from `dev`. Code and docs in separate commits. In `git add`, **list files explicitly** (a plain `git add .` can pick up line-ending noise).
 
-### Git flow
-
-- `main` = stable, tagged releases only. `dev` = integration. Work on `feature/*`, `fix/*`, `cleanup/*` from `dev`.
-- Cycle: branch from `dev` → commit code, commit docs separately → push → PR to `dev` → PR `dev`→`main` → tag `V#.#.#.##` on `main` → pull `dev`.
-- Cleanup releases may skip the GitHub Release page; tag + CHANGELOG suffice.
-
-## 3. Architecture rules (keep new code easy to integrate)
-
-Principle: **nothing is written as if finished.** New features are additions, not edits.
+## 4. Code map (read this instead of opening files)
 
 ```
-src/
-  main.js            bootstrap
-  config.js          name, edition, VERSION
-  types.js           JSDoc contracts (SkillDef, ClassDef, CasterOwner, HitEvent, CastEvent)
-  content/index.js   ONE manifest: register skills + classes here
-  core/              Game, Scene, Input, EventBus, Registry, Settings, math
-  scenes/            Menu, Home, ModeSelect, Loading, CreatorSupport, Settings, Exit, World, Placeholder (Campaign, Live Server)
-  lobby/             lobbyData (content + art paths as data), Wallet, assets (lazy loaders)
-  entities/          Entity base, Player, TrainingDummy
-  classes/           ClassRegistry + class data (Mage)
-  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect) + ProjectileClash
-  progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (damage multipliers)
-  ui/                SkillTreePanel (DOM overlay), Modal (lobby modals)
-  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem
-  audio/             AudioEngine (procedural Web Audio, no asset files)
-  render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
+main.js            bootstrap: settings, scenes, audio unlock, loop
+config.js          GAME_NAME, EDITION, VERSION
+types.js           JSDoc: SkillDef, ClassDef, CasterOwner, HitEvent (+burn, stun), CastEvent, ExplosionEvent
+content/index.js   ONE manifest: register skills, classes, spec bonuses
+core/              Game (loop, goto(name,params) clears #ui), Scene, Input (isDown/wasPressed, mouse), EventBus (on/off/emit),
+                   Registry, Settings (DEFAULTS keys), math (clamp lerp rand dist lerpColor rgba hash2 TAU)
+scenes/            Menu, Home, ModeSelect, Loading, CreatorSupport, Settings, Exit, Placeholder (campaign, live), World
+  WorldScene       THE game scene = `world` object. enter() builds systems in order; update(); render(); HUD (drawHud, drawRaidPanel,
+                   drawKillPanel, drawSlot, drawProgress, drawBanners); spawn(), hitstop(), pushBanner(), removeDummy()/restoreDummy(),
+                   buildPauseMenu(), buildRaidButton(); fields: player, dummy (can be null in a raid), raid, entities, events, particles,
+                   lights, damageNumbers, camera, audio, progression, banners
+lobby/             lobbyData (content + art paths), Wallet, assets (lazy loaders)
+entities/          Entity (x y z radius height dead hittable solid burn ward stunT; hooks onHit onDot),
+                   Player (stats, syncProgression, stun-aware, downed/respawn), TrainingDummy (passive/hostile, thinkSkills),
+                   Graugr (melee enemy; GRAUGR consts; AI pickMode/think/dodge; startBarrage/startPoke/leap; tryDeflect; emits 'kill')
+classes/           ClassRegistry, Mage (data)
+skills/            SkillRegistry; defs Fireball FlameShield BurnResistance; FireballProjectile (checkHit order: clash → deflect →
+                   shield → body; roll(); hit()), FlameShieldEffect, BurnWardEffect, ProjectileClash
+progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (skillMult, elementMult)
+ui/                SkillTreePanel, Modal (openModal)
+systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast applyImpulse kick lowManaFlash), Vitals (hp/mana),
+                   HitEffects ('hit' → target.onHit → VFX), StatusSystem (burn + stun), ExplosionSystem, XpSystem,
+                   RaidSystem (start/stop/nextRaid/update; kills, oneShots), ParticleSystem (emit; `scaled as n`), Lights, Camera,
+                   DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, AudioSystem (events → GameAudio)
+audio/AudioEngine  procedural Web Audio, no asset files
+render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
 ```
 
-Rules:
+World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `stun`. HitEvent: `{source,target,damage,crit,dir,charge,x,y,z,aoe?,burn?,stun?}`.
 
-1. **Data over code.** Classes, skills, (later) items/quests/factions are plain definition objects registered in `content/index.js` via `Registry`.
-2. **Events over calls.** Gameplay emits (`hit`, `cast`); visuals (`HitEffects`), audio (`AudioSystem`), UI, quests subscribe. Never call audio/VFX directly from combat logic.
-3. **Any entity can cast.** `SkillCaster` needs the `CasterOwner` shape (`vitals`, `aim`, `getCastOrigin`, `wantsCast`, `applyImpulse`, `kick`, `lowManaFlash`). Reuse it for enemies/NPCs.
-4. **Entities** extend `Entity`; optional hooks: `hittable`, `solid`, `onHit(e)`, `damageColor`.
-5. **Scenes** extend `Scene`, call `super.enter(game)`, registered via `game.register(name, factory)`.
-6. **Settings:** add default in `Settings.js` + row in `SettingsScene.js`. Persisted automatically.
-7. **Shared helpers live once.** Particle count: `import { scaled as n } from '../systems/ParticleSystem.js'`. Do not re-declare.
-8. **Annotate** new skills/classes/events with `@type {import('../types.js').X}`.
-9. No new dependency or bundler without the user's approval and a roadmap entry.
-10. Import cycles: scenes talk via `game.goto(name)`, never by importing each other.
+## 5. Architecture rules
 
-## 4. Performance and load goals
+1. **Data over code.** Classes, skills (later items, quests) are definition objects registered in `content/index.js`.
+2. **Events over calls.** Combat emits; VFX, audio, UI, quests subscribe. Never call audio/VFX from combat logic.
+3. **Any entity can cast** through `SkillCaster` + the `CasterOwner` shape. Melee enemies (Graugr) run their own small state machine instead.
+4. Entities extend `Entity`; optional `hittable`, `solid`, `onHit(e)`, `onDot(e)`, `damageColor`. Scenes extend `Scene`, call `super.enter(game)`, register via `game.register`; they talk via `game.goto`, never by importing each other.
+5. Settings: default in `Settings.js` + row in `SettingsScene.js`. Shared helpers live once (`scaled as n` for particle counts).
+6. Annotate new skills/classes/events with `@type {import('../types.js').X}`. No dependency or bundler without approval and a roadmap entry.
+7. New features are additions, not edits. Keep damage integers. Constants for tuning go at the top of the file.
 
-Targets: 60 FPS with 3,000+ particles on mid-range hardware; first interactive frame < 1 s on local; zero external requests.
+## 6. Performance and tokens
 
-- **Load:** keep modules small and static. As content grows, lazy-load zones/classes with dynamic `import()`. Audio stays asset-free or lazy-loaded; unlock audio on first gesture only.
-- **Per-frame hot paths** (`update`, `render`, particles, trail): avoid allocating (no `new`/spread/`.map`/`.filter`/`.sort` copies when an in-place loop works). Existing code uses some `filter`/`slice`; do not copy that into new hot paths, and fix it opportunistically in cleanups.
-- **Particles:** pool or compact in place (see `ParticleSystem.update`). Hard cap exists (6000). Always scale counts with `scaled()`.
-- **Canvas:** batch by composite mode (non-additive pass, then additive pass). Pre-render repeated gradients/sprites to offscreen canvases. Cull anything off-screen. Cache static layers (ground) once a real tilemap exists.
-- **Audio:** reuse buffers (shared noise buffer). Cap simultaneous voices when sound count grows.
-- **Data:** keep saves/definitions as small JSON-able objects. Version every save format.
-- Measure before optimizing: use the Settings → debug FPS/particle readout. State the cost you saw, not a guess.
+- Targets: 60 FPS with 3,000+ particles, first frame < 1 s, zero external requests. Hot paths (`update`, `render`, particles): no `new`, spread, `.map/.filter/.sort` copies when an in-place loop works. Scale particle counts with `scaled()`; hard cap 6000. Cull off-screen; batch by composite mode. Measure with Settings → debug before optimizing.
+- Tokens: smallest diff wins; do not re-read files already in context; do not repeat unchanged code; one tool call per file; batch independent calls; `sh` has no brace expansion (`mkdir -p a b c`). Chat: answer first, short sentences, numbers over adjectives, one recommendation. Shorthand (`→ w/ cfg impl req perf alloc ctx`) in notes only; docs stay in full prose. No emoji in code or commits.
 
-## 5. Token efficiency (how Claude should work here)
+## 7. GitHub steps (give these, with the real branch and version)
 
-Goal: same quality, fewer tokens. The user's context and limits are finite.
+```
+git checkout dev; git pull
+git checkout -b feature/<name>
+Expand-Archive -Path "$HOME\Downloads\<zip>" -DestinationPath . -Force   # from the repo root
+git status                                  # only the delivered files should appear
+git add <explicit file list>; git commit -m "feat(<scope>): <summary>"
+git add README.md CHANGELOG.md ROADMAP.md Claude.md; git commit -m "docs: update for V<x.y.z.nn>"
+git push -u origin feature/<name>
+# GitHub: PR feature → dev (merge, delete branch), then PR dev → main (merge)
+git checkout main; git pull
+git tag -a V<x.y.z.nn> -m "V<x.y.z.nn> - <title>"; git push origin V<x.y.z.nn>
+git checkout dev; git pull
+```
 
-### Reading
+Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `git switch dev; git branch -D feature/<name>`.
 
-- Do not re-read a file already in context. Do not dump whole files to inspect them.
-- Locate with `grep -n` / `rg`; read with a `view_range`. Read one file fully only when editing most of it.
-- Trust this file and `types.js` for structure before opening source.
+## 8. Definition of done
 
-### Writing code
+- [ ] Works; console clean; no gameplay regression. `node --check` passes. No duplicate helpers.
+- [ ] `VERSION` bumped; CHANGELOG, README, ROADMAP, this file updated if a rule or the code map changed.
+- [ ] Changes-only zip, test checklist, GitHub steps delivered.
 
-- **Smallest diff wins.** Prefer `str_replace`-style edits or "find this line → replace with this" snippets over rewriting files.
-- Give a **full file only if**: it is new, or >~40% changes, or the user must replace it wholesale to avoid mistakes.
-- Never repeat unchanged code, long comments, or the whole file "for context". Show a unique anchor line instead.
-- Reference things by symbol/file path, not by re-pasting them.
-- Put one-line comments only where intent is non-obvious. No decorative banners.
-- Batch independent tool calls in one turn. One syntax check (`node --check`) over all files, not per file.
-- Create files with a single heredoc/`create_file` per file; do not write then rewrite.
-- Use the shell correctly: the sandbox shell is `sh` (no `{a,b}` brace expansion). Create dirs with explicit `mkdir -p a b c`.
+## 9. Gotchas
 
-### Replying (chat)
+- Opening `index.html` directly fails (modules). Use Live Server or `npx serve .`. Audio unlocks on the first gesture. "Exit Game" cannot close a tab.
+- Dummy "attacks" and "skills" settings are read at world start (and again by `restoreDummy`). Dummy skills AI needs both.
+- `Lights` with `once:true` live one frame; re-add every update. Hit-stop scales entity `dt` to 8% and particle `dt` to 40%; real-time code uses the raw `dt`.
+- Toggle skills: caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)`. Cast-time skills: `autoRelease` fires at charge 1; `self:true` skills are skipped by AI `wantsCast`.
+- Projectiles: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; skip `update` work if `dead`; call `clashProjectiles`, then the deflect loop (`e.deflecting` → `e.tryDeflect(proj, world)`), then shields (`isShield` `blocks/absorb`), then bodies. Fire projectiles call `target.ward.resist(dmg)` before emitting `hit`.
+- Status: burn on `entity.burn` (ignition offered by `hit.burn`); stun on `entity.stunT` (offered by `hit.stun`, always applies, refreshes not stacks). Create `StatusSystem` and `BurnFx` AFTER `HitEffects`; `BurnFx.update` after `lights.update`. Entities that can burn implement `onDot(e)`; a stunned entity must honour `stunT` itself (Player, Graugr do).
+- Create `XpSystem` AFTER `HitEffects` + `StatusSystem`. It pays kill XP for `downed && attack && !xpGiven`, so enemies that die set `downed = true` and `attack = true` (Graugr does).
+- `world.dummy` is `null` during a mock raid. Anything touching it must use `?.` (AudioSystem does). `restoreDummy()` rebuilds it from Settings.
+- Graugr: emits `kill {target, source, oneShot, tier}` on the first update after death (it has no world in `onHit`). One-shot = it died on its first damage event. Barrage ticks are `aoe` hits (no hit-stop spam). A deflected projectile gets `owner = Graugr`.
+- DOM buttons over the canvas: `#ui` has `pointer-events:none`; give the control `pointer-events:auto`. A focused button reacts to Space (the fireball key), so use `tabIndex=-1` and `preventDefault` on `mousedown`.
+- Player starts with Fireball only; skills come from `Progression.unlockedSkills()`; call `Player.syncProgression()` after any pick or level-up. Cast time / cooldown use `owner.mods?.castTimeMult / cooldownMult`; damage uses `skillMult` / `elementMult`.
+- Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe:true`.
+- Scene flow: `menu → home → modes → loading({target}) → world`. Settings and pause return to `home`. Lobby content is data in `lobbyData.js`; art loads only via `lobby/assets.js` (resolve `null` on failure) and `render/drawCover.js`. Modals: `openModal(parent,{title,html})`.
+- `drawGround.js` has a local `const n` unrelated to the particle helper. Leave it.
 
-- Lead with the answer or the artifact. No preamble, no "Great question", no recap of what the user just said.
-- Don't restate the plan after doing it. Don't list what was obviously done.
-- Short sentences; fragments OK. Numbers over adjectives. One recommendation, not five options.
-- Ask **at most one** question, only if blocked or at a real roadmap fork.
-- On bug reports: state the cause in 1-2 lines, give the fix. No lecture.
-- Explanations only when asked or when a pitfall would otherwise bite (e.g. "run Live Server, not file://").
-- Don't re-explain git every time; give the exact commands, once, per the standard cycle.
+## 10. Next
 
-### Word compression (chat + internal notes only)
-
-Use shorthand in working notes, commit bodies, and internal comments. Keep **public docs (README, ROADMAP, CHANGELOG) in full clear prose**; the user wants those meticulous.
-
-| Write                       | Instead of                                             |
-| --------------------------- | ------------------------------------------------------ |
-| `→`                         | leads to / then                                        |
-| `w/`, `w/o`                 | with, without                                          |
-| `cfg`, `impl`, `dep`, `req` | configuration, implementation, dependency, requirement |
-| `perf`, `alloc`, `ctx`      | performance, allocation, context                       |
-| `e.g.`, `i.e.`, `vs`        | for example, that is, versus                           |
-| drop articles/filler        | "the", "a", "just", "basically", "in order to"         |
-| active, imperative          | "you may want to consider adding"                      |
-
-Rules: no emoji in code or commits. Don't compress code identifiers or user-facing text (menus, HUD, errors).
-
-### Long sessions
-
-- Prefer finishing a feature per session; end with the GitHub steps so state is clear.
-- If the conversation is getting long, summarize repo state in <10 lines (version, branch, last change, next step) so a fresh session can resume from this file + that summary.
-
-## 6. Definition of done (per version)
-
-- [ ] Works; console clean (no red errors); no gameplay regression.
-- [ ] `node --check` passes on all `src/**/*.js` (if sandbox available).
-- [ ] No duplicate helpers; new content registered in `content/index.js`.
-- [ ] `VERSION` bumped; CHANGELOG, README, ROADMAP updated.
-- [ ] Test checklist + GitHub steps delivered in the standard format.
-
-## 7. Gotchas
-
-- Opening `index.html` directly fails (ES modules). Use Live Server or `npx serve .`.
-- "Exit Game" cannot close a browser tab; it shows an exit screen. Real quit needs a desktop wrapper (roadmap).
-- Audio is blocked until a user gesture; `main.js` unlocks on first pointer/key.
-- Dummy "attacks" setting is read at world start; takes effect next Start.
-- `Lights` with `once:true` live one frame; re-add every update. Timed lights expire by `life`.
-- `drawGround.js` uses a local `const n` for tile noise; unrelated to the `n` particle helper. Leave it.
-- Hit-stop scales entity `dt` to 8% and particle `dt` to 40%; code that must keep real time uses the raw `dt`.
-- Toggle skills (`toggle:true`): caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)` (Player has it, dummy does not). Shield state lives on `owner.shield`.
-- Projectiles ask entities with `isShield` via `blocks()`/`absorb()` before the body check. Any new projectile must do the same.
-- Aim reads the cursor at body height (`AIM_Z = 32`) so shots land where the sprite looks.
-- Status: burn lives on `entity.burn`, run by `StatusSystem`; ignition is an offer on the `hit` event (`burn: {chance, duration, dps}`). Create `StatusSystem` and `BurnFx` AFTER `HitEffects`; call `BurnFx.update` after `lights.update` (its lights are `once:true`). Entities that can burn implement `onDot(e)`.
-- Ward lives on `entity.ward` (`BurnWardEffect`). Projectiles call `target.ward.resist(dmg)` before emitting `hit`; any new fire projectile must do the same.
-- Cast-time skills: `autoRelease:true` fires when charge hits 1 and latches until the key is released. `self:true` skills are skipped by AI `wantsCast` and draw an aura instead of the charge orb. `Player.draw` reads `caster.chargingSkill`.
-- Damage is rounded in `FireballProjectile.roll()`. Keep new damage sources integer.
-- Player starts with Fireball only. Skills come from `Progression.unlockedSkills()`; `Player.syncProgression()` adds slots (`SkillCaster.addSkill`) and recomputes `player.stats` / `player.mods`. Call it after any pick or level-up. Specialization is separate from character level.
-- Cast time and cooldown: use `owner.mods?.castTimeMult` / `cooldownMult` (SkillCaster already does). Damage: multiply by `skillMult(owner)` / `elementMult(owner, element)` from `progression/Mods.js`.
-- Any projectile: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; call `clashProjectiles` before the shield check. Skip work in `update` if `dead` (a clash can kill it earlier in the same frame).
-- Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true` (HitEffects skips hit-stop and the big burst for those). Create `XpSystem` AFTER `HitEffects` + `StatusSystem`.
-- Dummy skills AI (`thinkSkills`) only runs with Settings `dummySkills` + `dummyAttacks`; both are read at world start.
-- "Training Ground" is the playable scene (`world` scene, `mode: 'training'`); `campaign` and `live` are `PlaceholderScene`s (`back: "modes"`).
-- Scene flow (V1.7): `menu` → `home` → `modes` → `loading` (`{target}`) → `world`. Settings and pause return to `home`. Lobby content is placeholder data in `lobby/lobbyData.js`; add loading screens via `LOADING`. `#ui` is full-screen (flex stretch); `.panel` centres itself with `margin:auto`; lobby scenes use their own absolute-positioned root. Modals: `openModal(parent, {title, html})`; Esc closes the top one. Art (V1.8): files in `assets/` (WebP, WebM + MP4), loaded only via `lobby/assets.js` (`loadImage` / `loadVideo` resolve `null` on failure; the scene keeps its drawn placeholder), drawn with `render/drawCover.js`, paths are data in `lobbyData.js`. Pause the Mode Select video in `exit()`.
-
-## 8. Roadmap pointer
-
-Lobby path L1-L11 (L1 art partly done in V1.8) is in `ROADMAP.md` ("Lobby path"): art, items/inventory, customization, wallet and shop, Genesis Path, season/rank, messages, login, creator support, real loading. Do one per version.
-
-Next candidates (see `ROADMAP.md`): more combat depth (sprites/animation, dummy behaviours, second skill) or world (tilemap, collision, two zones). Then classes/skills, progression, NPCs/quests, enemies/bosses, then V2.0.0.00 online. Ask the user which fork when starting.
+See `ROADMAP.md` (lobby path L1-L11; combat depth; world; classes; NPCs/quests; V2.0.0.00 online). Ask the user which fork when starting; one lobby feature per version.

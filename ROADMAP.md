@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.8.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.9.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -16,6 +16,7 @@ Current version: **V1.8.0.00**. Completed work is recorded in `CHANGELOG.md`; th
 | V1.6.0.00 | Experience, class specialization tree, projectile clash and explosions, dummy uses skills, Campaign / Training Ground / Live Server menu, cast-timer debug, dev XP panel |
 | V1.7.0.00 | Lobby menus: title menu (Play / Creator Support / Exit), Home scene, Shop, Mode Select, Training loading screen. All placeholders |
 | V1.8.0.00 | Lobby art: Home scenery, Mode Select video, mode card pictures, training loading art (L1 partly done) |
+| V1.9.0.00 | Graugr melee enemy (smart AI, 3 skills), stun status, projectile deflect, mock raid with enhancement tiers, kill and one-shot counters |
 
 ## Lobby path (for the next sessions)
 
@@ -40,7 +41,10 @@ Rules for this area: keep content as data in `lobbyData.js` (or registries once 
 ## Next: combat depth (continued)
 
 - Sprites and animation for characters (replace the plain cylinders; keep the pseudo-3D `(x, y, z)` model).
-- Dummy behaviours beyond movement: dodging, retreating at low health.
+- Dummy behaviours beyond movement: dodging, retreating at low health (Graugr has both since V1.9.0.00; the dummy does not).
+- Graugr follow-ups: its own sounds (swing, poke charge, leap), a stagger rule for the Poke charge, a basic arm punch between long cooldowns, tuning once played (Barrage damage is very high against 50 HP).
+- Raid follow-ups: rewards per raid, more enemy types, a best-raid record, a Settings or Developer-options row to jump to a raid number.
+- Stun for the player's own skills; other stun sources.
 - More status effects on the new `StatusSystem` (any skill can offer one through the `burn` field on its `hit` event).
 - Skill hotkey rebinding and a Settings row for it.
 - Make character level matter (stat growth per level) and add a respec option for the specialization tree.

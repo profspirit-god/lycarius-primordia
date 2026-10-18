@@ -1,11 +1,13 @@
 const TICK = 1; // seconds between burn damage ticks
 
 /**
- * Gameplay side of status effects (burn). Visuals live in BurnFx, sounds in AudioSystem;
+ * Gameplay side of status effects (burn, stun). Visuals live in BurnFx, sounds in AudioSystem;
  * both listen to the 'burn' event. Burn state is stored on `target.burn`:
  *   { t, dur, dps, ticks, fx, source }
  * Ignition: a 'hit' event may carry `burn: { chance, duration, dps }`. A Burn Resistance ward
  * (`target.ward`) gets to nullify it first. Create this AFTER HitEffects so the hit damage lands first.
+ * Stun: a 'hit' event may carry `stun: { duration }`. It sets `target.stunT` (seconds, refreshed never stacked);
+ * this system counts it down, the entity decides what being stunned means.
  */
 export class StatusSystem {
   constructor(world) {
@@ -20,9 +22,15 @@ export class StatusSystem {
   onHit(e) {
     const b = e.burn,
       t = e.target;
+    if (e.stun && t.hittable && !t.dead && !t.downed) this.stun(t, e.stun.duration);
     if (!b || !t.hittable || t.dead) return;
     if (Math.random() >= b.chance) return;
     this.ignite(t, b, e.source);
+  }
+
+  stun(target, duration) {
+    if (!(target.stunT > 0)) this.world.events.emit("stun", { type: "start", target, x: target.x, y: target.y, z: target.height });
+    target.stunT = Math.max(target.stunT || 0, duration);
   }
 
   ignite(target, { duration, dps }, source) {
@@ -50,6 +58,7 @@ export class StatusSystem {
     for (let i = 0; i < list.length; i++) {
       const t = list[i],
         b = t.burn;
+      if (t.stunT > 0) t.stunT = Math.max(0, t.stunT - dt);
       if (!b) continue;
       if (t.dead || t.downed) {
         t.burn = null;

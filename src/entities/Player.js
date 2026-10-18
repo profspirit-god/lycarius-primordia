@@ -4,6 +4,7 @@ import { Vitals } from "../systems/Vitals.js";
 import { drawCylinder } from "../render/drawCylinder.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
 import { drawAura } from "../render/drawAura.js";
+import { drawStun } from "../render/drawStun.js";
 import { drawBar } from "../render/drawBar.js";
 import { WARD_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawGroundCircle } from "../render/drawMagicCircle.js";
@@ -70,12 +71,12 @@ export class Player extends Entity {
     };
   }
   wantsCast(slot, world) {
-    return !this.downed && slot.keys.some((k) => world.input.isDown(k));
+    return !this.downed && !(this.stunT > 0) && slot.keys.some((k) => world.input.isDown(k));
   }
 
   /** Toggle skills fire on the key press, not while held. */
   wantsToggle(slot, world) {
-    return !this.downed && slot.keys.some((k) => world.input.wasPressed(k));
+    return !this.downed && !(this.stunT > 0) && slot.keys.some((k) => world.input.wasPressed(k));
   }
 
   /** Called by HitEffects when something hits the player. */
@@ -96,6 +97,7 @@ export class Player extends Entity {
   }
   down() {
     this.burn = null;
+    this.stunT = 0;
     this.ward?.deactivate("downed");
     this.downed = true;
     this.downedTimer = RESPAWN_TIME;
@@ -134,11 +136,12 @@ export class Player extends Entity {
     const my =
       Number(i.isDown("KeyS") || i.isDown("ArrowDown")) -
       Number(i.isDown("KeyW") || i.isDown("ArrowUp"));
-    const len = Math.hypot(mx, my) || 1;
+    const len = Math.hypot(mx, my) || 1,
+      free = this.stunT > 0 ? 0 : 1; // stunned: no steering, no casting
     const sp = this.cls.stats.speed * (this.caster.charging ? 0.55 : 1);
     const k = 1 - Math.exp(-14 * dt);
-    this.vx += ((mx / len) * sp - this.vx) * k;
-    this.vy += ((my / len) * sp - this.vy) * k;
+    this.vx += ((mx / len) * sp * free - this.vx) * k;
+    this.vy += ((my / len) * sp * free - this.vy) * k;
     const kd = Math.exp(-7 * dt);
     this.knock.x *= kd;
     this.knock.y *= kd;
@@ -167,6 +170,7 @@ export class Player extends Entity {
     this.aim = Math.atan2(m.y + AIM_Z - this.y, m.x - this.x);
     this.kick *= Math.exp(-6 * dt);
     this.t += dt;
+    if (this.stunT > 0) this.caster.cancel();
     this.caster.update(dt, world);
   }
 
@@ -221,6 +225,7 @@ export class Player extends Entity {
       TAU,
     );
     ctx.fill();
+    if (this.stunT > 0) drawStun(ctx, top.tx, top.ty, this.t);
     if (casting?.self)
       drawAura(ctx, this.x, this.y, this.height, this.radius, charge * 0.9, this.t, casting.palette);
     else if (casting) drawChargeOrb(ctx, this.getCastOrigin(), charge, this.aim);

@@ -2,6 +2,39 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.9.0.00 — Graugr, mock raid, stun and projectile deflect
+
+### Added
+
+- **Graugr**, a melee enemy (`entities/Graugr.js`, all numbers in the `GRAUGR` constant). 25 health (regen 1/s), 50 stamina (regen 4/s). It only attacks with its arms. Smart AI with three modes:
+  - **Attack**: health above 50% and stamina above 31%. Closes in and uses skills.
+  - **Buy time**: stamina at 30% or less (also used for health 40-50%, which the rules left open). Keeps a gap of about 250 px, strafes, recovers, and may leap away if the player is on top of it.
+  - **Retreat**: health below 40% and stamina below 5%. Runs away and stays in retreat until stamina is back above 31%.
+  - It also dodges: when a fireball is about to hit, it leaps sideways out of the line (if the leap is ready and it has the stamina).
+- **Skill 1, Arm Swing Barrage**: both arms spin for 10 s, 12 damage per hit, one hit per 0.5 s per target, short reach (78 px past the body). 40% of projectiles that reach the arms are batted back (the ball changes owner and flies away from Graugr). Costs 10 stamina, cooldown 35 s. Telegraph: a red ground circle fills during a 0.6 s wind-up, then a faint ring marks the reach while the arms spin.
+- **Skill 2, Piercing Poke**: Graugr stops and charges for 3 s, then stretches one arm in a straight line (250 px) for 25 damage. Costs 13 stamina, cooldown 60 s. Telegraph is shown during the charge: the danger strip grows brighter toward its tip, and the aim locks at 70% of the charge (white outline) so a sidestep works.
+- **Skill 3, Leap**: an instant dash of 170 px for attacking, dodging and escaping. Costs 20 stamina, cooldown 8 s. A body in the path takes 8 damage and a 1.5 s stun, and the dash stops at its edge.
+- **Stun status**: a `hit` event can carry `stun: { duration }`. `StatusSystem` sets `entity.stunT` and counts it down. A stunned player cannot move or cast (yellow stars over the head, `STUNNED` text in the HUD).
+- **Mock raid** in the Training Ground: the **Start Mock Raid** button (top-right) removes the training dummy and starts raid 1. Raid N spawns N + 1 Graugr. The next raid starts 4 s after the last one dies. **Stop Mock Raid** removes the enemies and brings the dummy back.
+- **Enhancement**: raid N enemies are enhanced N - 1 tiers (raid 1 is base strength). Each tier adds 20% max health and 20% damage, shown as one yellow up-arrow per tier above the name (above 5 tiers: one arrow and `xN`).
+- **Kill count** and **one-shot kill count** (an enemy that dies from the first damage it ever takes) in a panel under the top-right panel. They reset when a new raid session starts.
+- New files: `entities/Graugr.js`, `systems/RaidSystem.js`, `render/drawEnhance.js`, `render/drawStun.js`.
+
+### Changed
+
+- `FireballProjectile.checkHit` asks entities with `deflecting` (`tryDeflect`) before the shield and body checks.
+- `StatusSystem` also handles stun. `Entity` has a new `stunT` field. `Player` honours it.
+- `WorldScene`: raid button, raid and kill panels, `pushBanner`, `removeDummy`, `restoreDummy`. `world.dummy` can now be `null` during a raid; `AudioSystem.casters()` was made null-safe.
+- The new `kill` event (Graugr emits it) and `stun` event. `HitEvent.stun` added to `types.js`.
+- `VERSION` is `1.9.0.00`.
+
+### Notes
+
+- Graugr's Barrage ticks are sent as `aoe` hits so repeated ticks do not stack hit-stop and shake.
+- A deflected fireball keeps its burn offer, so it can ignite the player.
+- Graugr has no sounds of its own yet; it uses the existing hit, hurt and down sounds.
+- The leap cannot be used while retreating or buying time at low stamina (it needs 20 stamina and those modes start at 15 or less). It is used to attack, to dodge, and to escape when health is 40-50% with stamina to spare.
+
 ## V1.8.0.00 — Lobby art: Home scenery, Mode Select video, mode cards, training loading art
 
 ### Added

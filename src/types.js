@@ -46,6 +46,7 @@
  * @property {(slot: object, world: object) => boolean} [wantsToggle] True on the frame a toggle skill key is pressed. Omit for casters that never toggle.
  * @property {object|null} [shield]                   Active FlameShieldEffect, if the owner has raised one.
  * @property {object|null} [burn]                     Running burn { t, dur, dps, ticks, fx, source }, owned by StatusSystem.
+ * @property {number} [stunT]                         Seconds of stun left (0 = none), owned by StatusSystem.
  * @property {object|null} [ward]                     Active BurnWardEffect, if the owner has cast Burn Resistance.
  * @property {(e: { damage: number, kind: string, source: object }) => void} [onDot]  Damage over time (burn tick).
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
@@ -105,6 +106,7 @@
  * @property {number} [resisted]                      Damage removed by the target's ward (damage is already reduced).
  * @property {boolean} [aoe]                          Explosion splash: HitEffects skips hit-stop and the big burst.
  * @property {{ chance: number, duration: number, dps: number }} [burn]  Ignition offer: StatusSystem rolls `chance`.
+ * @property {{ duration: number }} [stun]            Stun offer: StatusSystem sets `target.stunT` (always applies).
  */
 
 /**
