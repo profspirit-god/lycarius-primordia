@@ -10,6 +10,7 @@ export const Fireball = {
   id: "fireball",
   name: "Fireball",
   icon: "🔥",
+  element: "fire",
   hint: "LMB / Space",
   cooldown: 0.7,
   chargeTime: 1.3,

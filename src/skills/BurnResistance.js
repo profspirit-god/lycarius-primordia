@@ -17,6 +17,7 @@ export const BurnResistance = {
   id: "burnResistance",
   name: "Burn Resistance",
   icon: "🧯",
+  element: "fire",
   hint: "Q (hold)",
   self: true,
   autoRelease: true,

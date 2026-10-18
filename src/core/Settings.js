@@ -1,5 +1,5 @@
 const KEY = 'lycarius.primordia.settings';
-const DEFAULTS = { masterVolume: 0.8, particleQuality: 1, screenShake: true, damageNumbers: true, showDebug: false, dummyAttacks: false, dummyMovement: 'off' };
+const DEFAULTS = { masterVolume: 0.8, particleQuality: 1, screenShake: true, damageNumbers: true, showDebug: false, dummyAttacks: false, dummyMovement: 'off', dummySkills: false, debugCastTimer: false };
 
 /** Persistent user settings. Add a key to DEFAULTS and it is saved/loaded automatically. */
 export const Settings = {

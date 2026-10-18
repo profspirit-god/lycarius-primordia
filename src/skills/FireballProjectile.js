@@ -2,6 +2,8 @@ import { Entity } from "../entities/Entity.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
 import { clamp, dist, lerp, lerpColor, rand, rgba, TAU } from "../core/math.js";
 import { drawGlow } from "../render/drawGlow.js";
+import { clashProjectiles } from "./ProjectileClash.js";
+import { elementMult, skillMult } from "../progression/Mods.js";
 
 export class FireballProjectile extends Entity {
   constructor({ owner, x, y, z, angle, charge, damage = [8, 30], burn = null }) {
@@ -16,9 +18,21 @@ export class FireballProjectile extends Entity {
     this.trail = [];
     this.t = 0;
     this.rolled = null; // damage is rolled once, so a shield and the body see the same number
+    this.isProjectile = true; // other projectiles look for this to clash
+    this.element = "fire";
+    this.potency = 1; // damage multiplier; drops when this ball survives a clash
+  }
+
+  /** Lose power after winning a clash against a weaker ball (ratio = weak charge / this charge). */
+  weaken(ratio) {
+    const f = 1 - 0.4 * ratio;
+    this.potency *= f;
+    this.radius *= 1 - 0.25 * ratio;
+    if (this.rolled) this.rolled.damage = Math.max(1, Math.round(this.rolled.damage * f));
   }
 
   update(dt, world) {
+    if (this.dead) return; // destroyed earlier this frame by a clash
     this.t += dt;
     const step = this.speed * dt,
       steps = Math.max(1, Math.ceil(step / this.radius));
@@ -88,6 +102,15 @@ export class FireballProjectile extends Entity {
 
   checkHit(world) {
     for (const e of world.entities) {
+      // projectile vs projectile: the stronger charge survives, equals annihilate (see ProjectileClash)
+      if (!e.isProjectile || e === this || e.dead || e.owner === this.owner) continue;
+      const reach = this.radius + e.radius;
+      if (dist(this.x, this.y, e.x, e.y) < reach && Math.abs(this.z - e.z) < reach) {
+        clashProjectiles(this, e, world);
+        return;
+      }
+    }
+    for (const e of world.entities) {
       // flame shields first: the arc is in front of the body it protects
       if (!e.isShield || e.owner === this.owner) continue;
       if (e.blocks(this.x, this.y, this.z, this.radius)) {
@@ -119,7 +142,10 @@ export class FireballProjectile extends Entity {
           ),
         ) *
           rand(0.9, 1.1) *
-          (crit ? 1.75 : 1),
+          (crit ? 1.75 : 1) *
+          this.potency *
+          skillMult(this.owner) *
+          elementMult(this.owner, this.element),
       );
       this.rolled = { damage, crit };
     }
@@ -155,7 +181,7 @@ export class FireballProjectile extends Entity {
       burn: bd && {
         chance: lerp(bd.chance[0], bd.chance[1], this.charge),
         duration: rand(bd.duration[0], bd.duration[1]),
-        dps: bd.dps,
+        dps: bd.dps * elementMult(this.owner, this.element), // element damage also boosts the burn
       },
       dir,
       charge: this.charge,
