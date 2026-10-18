@@ -58,11 +58,13 @@ src/
   types.js           JSDoc contracts (SkillDef, ClassDef, CasterOwner, HitEvent, CastEvent)
   content/index.js   ONE manifest: register skills + classes here
   core/              Game, Scene, Input, EventBus, Registry, Settings, math
-  scenes/            Menu, Settings, Exit, World
+  scenes/            Menu, Settings, Exit, World, Placeholder (Campaign, Live Server)
   entities/          Entity base, Player, TrainingDummy
   classes/           ClassRegistry + class data (Mage)
-  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect)
-  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem
+  skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect) + ProjectileClash
+  progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (damage multipliers)
+  ui/                SkillTreePanel (DOM overlay)
+  systems/           SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects, StatusSystem, BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem
   audio/             AudioEngine (procedural Web Audio, no asset files)
   render/            drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura
 ```
@@ -168,6 +170,12 @@ Rules: no emoji in code or commits. Don't compress code identifiers or user-faci
 - Ward lives on `entity.ward` (`BurnWardEffect`). Projectiles call `target.ward.resist(dmg)` before emitting `hit`; any new fire projectile must do the same.
 - Cast-time skills: `autoRelease:true` fires when charge hits 1 and latches until the key is released. `self:true` skills are skipped by AI `wantsCast` and draw an aura instead of the charge orb. `Player.draw` reads `caster.chargingSkill`.
 - Damage is rounded in `FireballProjectile.roll()`. Keep new damage sources integer.
+- Player starts with Fireball only. Skills come from `Progression.unlockedSkills()`; `Player.syncProgression()` adds slots (`SkillCaster.addSkill`) and recomputes `player.stats` / `player.mods`. Call it after any pick or level-up. Specialization is separate from character level.
+- Cast time and cooldown: use `owner.mods?.castTimeMult` / `cooldownMult` (SkillCaster already does). Damage: multiply by `skillMult(owner)` / `elementMult(owner, element)` from `progression/Mods.js`.
+- Any projectile: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; call `clashProjectiles` before the shield check. Skip work in `update` if `dead` (a clash can kill it earlier in the same frame).
+- Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true` (HitEffects skips hit-stop and the big burst for those). Create `XpSystem` AFTER `HitEffects` + `StatusSystem`.
+- Dummy skills AI (`thinkSkills`) only runs with Settings `dummySkills` + `dummyAttacks`; both are read at world start.
+- "Training Ground" is the playable scene (`world` scene, `mode: 'training'`); `campaign` and `live` are `PlaceholderScene`s.
 
 ## 8. Roadmap pointer
 
