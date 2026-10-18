@@ -1,6 +1,7 @@
 import { Scene } from "../core/Scene.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { rand } from "../core/math.js";
+import { icon } from "../ui/icons.js";
 
 /** Placeholder: ways to support the creator. Real links / payment provider decided later (see ROADMAP.md). */
 export class CreatorSupportScene extends Scene {
@@ -14,13 +15,13 @@ export class CreatorSupportScene extends Scene {
       <div class="subtitle">Help build Lycarius</div>
       <div class="support-grid">
         <div class="support-card">
-          <div class="support-ic">◉</div>
+          <div class="support-ic">${icon("coin")}</div>
           <h3>Monetary Support</h3>
           <p>Donations and memberships that fund development. Placeholder: provider and tiers to be decided.</p>
           <button class="btn" data-a="soon" data-what="Monetary support">Support (soon)</button>
         </div>
         <div class="support-card">
-          <div class="support-ic">✦</div>
+          <div class="support-ic">${icon("star")}</div>
           <h3>Idea Support</h3>
           <p>Share ideas, lore, art and feedback. Placeholder: form or community link to be added.</p>
           <button class="btn" data-a="soon" data-what="Idea support">Share an idea (soon)</button>

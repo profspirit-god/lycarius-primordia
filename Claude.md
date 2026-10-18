@@ -36,11 +36,11 @@ content/index.js   ONE manifest: register skills, classes, spec bonuses
 core/              Game (loop, goto(name,params) clears #ui), Scene, Input (isDown/wasPressed, mouse), EventBus (on/off/emit),
                    Registry, Settings (DEFAULTS keys), math (clamp lerp rand dist lerpColor rgba hash2 TAU)
 scenes/            Menu, Home, ModeSelect, Loading, CreatorSupport, Settings, Exit, Placeholder (campaign, live), World
-  WorldScene       THE game scene = `world` object. enter() builds systems in order; update(); render(); HUD (drawHud, drawRaidPanel,
-                   drawKillPanel, drawSlot, drawProgress, drawBanners); spawn(), hitstop(), pushBanner(), removeDummy()/restoreDummy(),
-                   buildPauseMenu(), buildRaidButton(); fields: player, dummy (can be null in a raid), raid, entities, events, particles,
-                   lights, damageNumbers, camera, audio, progression, banners
-lobby/             lobbyData (content + art paths), Wallet, assets (lazy loaders)
+  WorldScene       THE game scene = `world` object. enter() builds systems in order; update(); render(); canvas HUD (drawHud, drawRaidPanel,
+                   drawKillPanel, drawBanners); DOM HUD = `hud` (PlayerHud) + `profile` (ProfilePanel); spawn(), hitstop(), pushBanner(),
+                   removeDummy()/restoreDummy(), openTree/openProfile (pause the game), buildPauseMenu(), buildRaidButton(); fields: player,
+                   dummy (can be null in a raid), raid, entities, events, particles, lights, damageNumbers, camera, audio, progression, banners
+lobby/             lobbyData (content + art paths), Wallet, assets (lazy loaders), loadTasks (loading-screen readiness tasks: buildTasks)
 entities/          Entity (x y z radius height dead hittable solid burn ward stunT; hooks onHit onDot),
                    Player (stats, syncProgression, stun-aware, downed/respawn), TrainingDummy (passive/hostile, thinkSkills),
                    Graugr (melee enemy; GRAUGR consts; AI pickMode/think/dodge; startBarrage/startPoke/leap; tryDeflect; emits 'kill')
@@ -48,8 +48,9 @@ classes/           ClassRegistry, Mage (data)
 skills/            SkillRegistry; defs Fireball FlameShield BurnResistance; FireballProjectile (checkHit order: clash → deflect →
                    shield → body; roll(); hit()), FlameShieldEffect, BurnWardEffect, ProjectileClash
 progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (skillMult, elementMult)
-ui/                SkillTreePanel, Modal (openModal)
-systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast applyImpulse kick lowManaFlash), Vitals (hp/mana),
+ui/                PlayerHud (top-left card, status icons, bottom-left skill circles), ProfilePanel (character panel), SkillTreePanel,
+                   Modal (openModal), icons (`icon(name)` SVG set; skills / bonuses store the icon NAME)
+systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast applyImpulse kick lowManaFlash), Vitals (hp/mana/stamina),
                    HitEffects ('hit' → target.onHit → VFX), StatusSystem (burn + stun), ExplosionSystem, XpSystem,
                    RaidSystem (start/stop/nextRaid/update; kills, oneShots), ParticleSystem (emit; `scaled as n`), Lights, Camera,
                    DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, AudioSystem (events → GameAudio)
@@ -72,7 +73,7 @@ World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `
 ## 6. Performance and tokens
 
 - Targets: 60 FPS with 3,000+ particles, first frame < 1 s, zero external requests. Hot paths (`update`, `render`, particles): no `new`, spread, `.map/.filter/.sort` copies when an in-place loop works. Scale particle counts with `scaled()`; hard cap 6000. Cull off-screen; batch by composite mode. Measure with Settings → debug before optimizing.
-- Tokens: smallest diff wins; do not re-read files already in context; do not repeat unchanged code; one tool call per file; batch independent calls; `sh` has no brace expansion (`mkdir -p a b c`). Chat: answer first, short sentences, numbers over adjectives, one recommendation. Shorthand (`→ w/ cfg impl req perf alloc ctx`) in notes only; docs stay in full prose. No emoji in code or commits.
+- Tokens: smallest diff wins; do not re-read files already in context; do not repeat unchanged code; one tool call per file; batch independent calls; `sh` has no brace expansion (`mkdir -p a b c`). Chat: answer first, short sentences, numbers over adjectives, one recommendation. Shorthand (`→ w/ cfg impl req perf alloc ctx`) in notes only; docs stay in full prose. No emoji in code, UI or commits: use `icon(name)` from `ui/icons.js`.
 
 ## 7. GitHub steps (give these, with the real branch and version)
 
@@ -112,6 +113,8 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 - DOM buttons over the canvas: `#ui` has `pointer-events:none`; give the control `pointer-events:auto`. A focused button reacts to Space (the fireball key), so use `tabIndex=-1` and `preventDefault` on `mousedown`.
 - Player starts with Fireball only; skills come from `Progression.unlockedSkills()`; call `Player.syncProgression()` after any pick or level-up. Cast time / cooldown use `owner.mods?.castTimeMult / cooldownMult`; damage uses `skillMult` / `elementMult`.
 - Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe:true`.
+- Loading: `LoadingScene` runs every task from `loadTasks.buildTasks` and starts the next scene only when all are done and `minTime` has passed; a `fatal` task shows Retry / Back. Add anything the world needs to wait for as a task.
+- HUD is DOM (`#ui`): `.hud` is `pointer-events:none`, only the profile circle and status icons take pointer events. The HUD writes to the DOM only when a value changes. Stamina exists on `Vitals` but nothing spends it yet.
 - Scene flow: `menu → home → modes → loading({target}) → world`. Settings and pause return to `home`. Lobby content is data in `lobbyData.js`; art loads only via `lobby/assets.js` (resolve `null` on failure) and `render/drawCover.js`. Modals: `openModal(parent,{title,html})`.
 - `drawGround.js` has a local `const n` unrelated to the particle helper. Leave it.
 

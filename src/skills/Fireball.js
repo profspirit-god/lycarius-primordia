@@ -9,7 +9,7 @@ const MANA_MAX = 20; // cost at full charge
 export const Fireball = {
   id: "fireball",
   name: "Fireball",
-  icon: "🔥",
+  icon: "flame",
   element: "fire",
   hint: "LMB / Space",
   cooldown: 0.7,

@@ -5,6 +5,7 @@ import { drawCover } from "../render/drawCover.js";
 import { rand } from "../core/math.js";
 import { VERSION_LABEL } from "../config.js";
 import { openModal } from "../ui/Modal.js";
+import { icon } from "../ui/icons.js";
 import { Wallet } from "../lobby/Wallet.js";
 import { PROFILE, SHOP, GENESIS_PATH, HOME_BUTTONS, MESSAGES, ART } from "../lobby/lobbyData.js";
 import { loadImage, loadVideo } from "../lobby/assets.js";
@@ -31,16 +32,16 @@ export class HomeScene extends Scene {
       <div class="lb-tl">
         <button class="profile-btn" data-a="profile" aria-label="Profile"><span>${PROFILE.name[0]}</span></button>
         <div class="profile-meta"><b>${PROFILE.name}</b><small>Lv ${PROFILE.level} · ${PROFILE.id}</small></div>
-        <button class="chip" data-a="title">‹ Title</button>
+        <button class="chip" data-a="title">${icon("chevronLeft")} Title</button>
       </div>
       <div class="lb-tr">
         <div class="curbar" data-cur>${Wallet.barHtml()}</div>
-        <button class="bell" data-a="bell" aria-label="Messages">🔔<i class="dot"></i></button>
+        <button class="bell" data-a="bell" aria-label="Messages">${icon("bell")}<i class="dot"></i></button>
       </div>
       <div class="lb-right">
         <button class="shop-panel" data-a="shop">
           <div class="sp-head"><b>SHOP</b><small>Cosmetics</small></div>
-          <div class="sp-tiles"><i>▲</i><i>●</i><i>◆</i></div>
+          <div class="sp-tiles"><i>${icon("triangle")}</i><i>${icon("dot")}</i><i>${icon("gem")}</i></div>
           <div class="sp-foot">Tap to open</div>
         </button>
         <button class="genesis" data-a="genesis">
@@ -52,7 +53,7 @@ export class HomeScene extends Scene {
       <div class="lb-bottom">
         <button class="play-btn" data-a="play">PLAY</button>
         <div class="lb-row">
-          ${HOME_BUTTONS.map((b) => `<button class="lb-btn" data-a="btn" data-id="${b.id}"><i>${b.icon}</i><span>${b.label}</span></button>`).join("")}
+          ${HOME_BUTTONS.map((b) => `<button class="lb-btn" data-a="btn" data-id="${b.id}"><i>${icon(b.icon)}</i><span>${b.label}</span></button>`).join("")}
         </div>
         <div class="lb-ver">${VERSION_LABEL}</div>
       </div>
@@ -116,9 +117,9 @@ export class HomeScene extends Scene {
       <div class="tabs">${SHOP.tabs.map((t) => `<button class="tab${t.id === tab ? " on" : ""}" data-a="tab" data-t="${t.id}">${t.label}</button>`).join("")}</div>
       <div class="shop-grid">${items().map((it) => {
         const c = Wallet.get(it.cur);
-        return `<div class="item" style="--rar:${RARITY[it.rarity]}"><div class="item-img"><span>${c.icon}</span></div>
+        return `<div class="item" style="--rar:${RARITY[it.rarity]}"><div class="item-img"><span>${icon(c.icon)}</span></div>
           <div class="item-name">${it.name}</div><div class="item-rar">${it.rarity}</div>
-          <button class="item-buy" data-a="buy" data-n="${it.name}"><i style="color:${c.color}">${c.icon}</i> ${it.price.toLocaleString("en-US")}</button></div>`;
+          <button class="item-buy" data-a="buy" data-n="${it.name}"><i style="color:${c.color}">${icon(c.icon)}</i> ${it.price.toLocaleString("en-US")}</button></div>`;
       }).join("")}</div>
       <div class="note" style="margin:10px 0 0">Placeholder items. Cosmetics only: no gameplay power. Buying is not wired yet.</div>`;
     const m = this.modal({ title: "SHOP", wide: true, html: body() });
@@ -135,8 +136,8 @@ export class HomeScene extends Scene {
     this.modal({
       title: "GENESIS PATH",
       html: `<div class="note" style="margin:0 0 10px">Seasonal reward track with a free and a premium lane (like a Starlight pass). Placeholder.</div>
-        <div class="gp-lane">${Array.from({ length: 10 }, (_, i) => `<div class="gp-cell"><small>${i + 1}</small><i>${i % 5 === 4 ? "◆" : "○"}</i></div>`).join("")}</div>
-        <div class="gp-lane prem">${Array.from({ length: 10 }, (_, i) => `<div class="gp-cell"><small>${i + 1}</small><i>${i % 2 ? "✦" : "◆"}</i></div>`).join("")}</div>
+        <div class="gp-lane">${Array.from({ length: 10 }, (_, i) => `<div class="gp-cell"><small>${i + 1}</small><i>${icon(i % 5 === 4 ? "gem" : "ring")}</i></div>`).join("")}</div>
+        <div class="gp-lane prem">${Array.from({ length: 10 }, (_, i) => `<div class="gp-cell"><small>${i + 1}</small><i>${icon(i % 2 ? "star" : "gem")}</i></div>`).join("")}</div>
         <div class="pf-actions"><button class="btn sm" disabled>Subscribe (soon)</button></div>`,
     });
   }

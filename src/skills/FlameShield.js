@@ -12,7 +12,7 @@ const POINTS = 50; // shield points
 export const FlameShield = {
   id: "flameShield",
   name: "Flame Shield",
-  icon: "🛡️",
+  icon: "shield",
   element: "fire",
   hint: "RMB / E",
   toggle: true,

@@ -10,12 +10,12 @@ export const SpecBonusRegistry = new Registry("specBonus");
  * `per` is the display value of one pick, `unit` how to print it.
  */
 export const SPEC_BONUSES = [
-  { id: "mana", name: "Max Mana", icon: "💧", text: "+10 max mana", stat: "maxMana", add: 10 },
-  { id: "manaRegen", name: "Mana Regen", icon: "🌀", text: "+0.25 mana per second", stat: "manaRegen", add: 0.25 },
-  { id: "castTime", name: "Cast Time", icon: "⏳", text: "-5% cast time", mod: "castTimeMult", mul: 0.95 },
-  { id: "cooldown", name: "Skill Cooldown", icon: "⏱️", text: "-5% skill cooldown", mod: "cooldownMult", mul: 0.95 },
-  { id: "element", name: "Element Damage", icon: "🔥", text: "+5% damage of the specialization element", mod: "elementDamage", add: 0.05 },
-  { id: "skill", name: "Skill Damage", icon: "✨", text: "+5% skill damage", mod: "skillDamage", add: 0.05 },
+  { id: "mana", name: "Max Mana", icon: "drop", text: "+10 max mana", stat: "maxMana", add: 10 },
+  { id: "manaRegen", name: "Mana Regen", icon: "regen", text: "+0.25 mana per second", stat: "manaRegen", add: 0.25 },
+  { id: "castTime", name: "Cast Time", icon: "hourglass", text: "-5% cast time", mod: "castTimeMult", mul: 0.95 },
+  { id: "cooldown", name: "Skill Cooldown", icon: "stopwatch", text: "-5% skill cooldown", mod: "cooldownMult", mul: 0.95 },
+  { id: "element", name: "Element Damage", icon: "flame", text: "+5% damage of the specialization element", mod: "elementDamage", add: 0.05 },
+  { id: "skill", name: "Skill Damage", icon: "sparkles", text: "+5% skill damage", mod: "skillDamage", add: 0.05 },
 ];
 
 /**
