@@ -2,6 +2,33 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.00 — Real loading, new HUD, character panel, SVG icons
+
+### Added
+
+- **Real loading screen.** The Training Grounds loading bar is now the weighted progress of actual tasks (`lobby/loadTasks.js`): class and skill data check, fonts, artwork, audio warm-up (`GameAudio.warmup`), a hidden-canvas renderer warm-up (ground, cylinder, particles, gradient, every icon) and a dry run of the world's data (progression save, player, skill slots). The game starts only when all tasks are done **and** `minTime` (1.2 s) has passed, after a 0.35 s "Ready" hold. Optional tasks that hang are abandoned after `timeout` (20 s for the screen, per-task limits inside the tasks) and the game still starts with placeholders. A fatal task (broken class or skill data) shows an error with **Retry** and **Back** instead of starting a broken game. The world fades in from black over 0.7 s.
+- **Stamina.** `Vitals` has `stamina`, `maxStamina`, `staminaRegen` (Mage: 100 max, 8/s) and `spendStamina(n)`. Nothing spends it yet; Graugr keeps its own `stamina` field.
+- **Character panel.** Click the profile circle in the HUD to open it (the game pauses; `Esc` or the circle closes it). Tabs: Info (character and specialization level with XP bars, health / mana / stamina, class, title, guild, faction, raid kills), Skills (unlocked and locked skills with key, mana cost and cooldown, button to open the skill tree), Attributes (core attributes as placeholders plus the real derived stats) and Equipment (empty slots, placeholder).
+- **Status effect strip.** Icons to the right of the HUD card: Burning and Stunned (debuffs, orange) and Burn Resistance and Flame Shield (buffs, green). Each shows time or points left, a thin bar and a tooltip.
+- **`ui/icons.js`**: the inline SVG icon set (`icon(name)`), 29 icons. New files: `ui/PlayerHud.js`, `ui/ProfilePanel.js`, `ui/icons.js`, `lobby/loadTasks.js`.
+
+### Changed
+
+- **HUD rebuilt in the DOM.** Top-left card: profile circle with the character level under it, player name, then tight, long and thin health / mana / stamina bars (176 x 10 px, values inside), then the status strip outside the card padding. The mana-cost preview on the mana bar and the red low-mana flash are kept.
+- **Skills moved to the bottom-left** as circles with SVG icons, a cooldown sweep, a ring for charge / shield points / ward time, a dimming when mana is short, and a key hint below. Locked skills show a lock and the specialization level needed.
+- **The character and specialization levels moved** from the bottom-left panel into the character panel. The "+N XP" flash now appears under the HUD card, and a green dot on the profile circle marks pending bonus picks.
+- **All emoji and symbol glyphs replaced by SVG**: skill and bonus icons (`icon` fields now hold icon names), currencies, Home buttons, shop tiles, Genesis lanes, bell, modal close, skill tree, creator support. Debug text moved under the HUD card.
+- `LOADING.training`: `minTime` 2.4 → 1.2, new `timeout` and `preload`.
+
+### Removed
+
+- The on-screen tutorial line ("WASD move · Mouse aim · K skill tree · Esc pause"), the "K Skill tree" hint, the canvas HP / MP / shield / ward / burning / stunned text and the canvas skill slots and progress panel (`drawSlot`, `drawLockedSlot`, `drawProgress`).
+
+### Known limits
+
+- Stamina is shown and regenerates but no skill spends it yet (sprint or dodge is the natural first use).
+- The loading bar is quick on a fast machine because the tasks are small; it lengthens by itself when assets get heavier or the connection is slow.
+
 ## V1.9.0.00 — Graugr, mock raid, stun and projectile deflect
 
 ### Added

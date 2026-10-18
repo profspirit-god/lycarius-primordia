@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.9.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.10.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.9.0.00
+## 1. What is in V1.10.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +20,10 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` |
 | Projectile clash | Two enemy fireballs that meet explode and hurt anything near. A stronger charge destroys a weaker one                                |
 | Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
-| Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), HUD bars, death and respawn                                                             |
+| Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), stamina 100 (regen 8/s, no skill spends it yet), death and respawn                      |
+| HUD            | DOM overlay: profile circle (click for the character panel) with the level under it, name and thin health / mana / stamina bars, status-effect icons beside the card; skill circles with SVG icons in the bottom-left |
+| Loading        | Real task-based loading screen (data check, fonts, art, audio, renderer warm-up, world dry run). Starts the game only when everything is ready; shows Retry / Back on a fatal error |
+| Icons          | Every icon is an inline SVG from `src/ui/icons.js` (no emoji)                                                                           |
 | Mana cost      | Scales with charge: 5 at minimum charge up to 20 at full charge                                                                        |
 | Dummy          | Passive mode: infinite health. Hostile mode: uses the player's stats, fights back, can be defeated                                     |
 | Graugr         | Melee enemy: 25 HP, 50 stamina, three arm skills (Arm Swing Barrage, Piercing Poke, Leap), smart AI (attack, buy time, retreat, dodge)  |
@@ -311,7 +314,8 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | `Right Mouse` or `E`         | Raise / drop Flame Shield |
 | Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
 | `K`                          | Skill tree (class specialization) |
-| `Esc`                        | Pause menu (or close the skill tree) |
+| Click the profile circle     | Character panel (info, skills, attributes, equipment) |
+| `Esc`                        | Pause menu (or close the skill tree / character panel) |
 | **Start / Stop Mock Raid** button | Training Ground, top-right (mouse only) |
 
 ---
@@ -366,9 +370,9 @@ src/
     Settings.js               persisted settings
     math.js                   helpers (lerp, rand, hash2, colour)
   scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
-  lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders)
+  lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders), loadTasks (loading-screen readiness tasks)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
-  ui/                         SkillTreePanel (DOM overlay for the specialization tree), Modal (lobby modals)
+  ui/                         PlayerHud (in-game HUD), ProfilePanel (character panel), SkillTreePanel (specialization tree), Modal (lobby modals), icons (SVG icon set)
   entities/                   Entity (base), Player, TrainingDummy, Graugr
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
@@ -409,6 +413,10 @@ src/
 
 **A new sound** — add a public method to `AudioEngine` and call it from `AudioSystem`.
 
+**A new icon** — add an entry to `ICONS` in `src/ui/icons.js` (24 x 24 viewBox, `currentColor`) and refer to it by name: `icon("name")` in templates, or `icon: "name"` in a skill or bonus definition. Do not use emoji or symbol glyphs.
+
+**Something the loading screen must wait for** — add a task to `buildTasks` in `src/lobby/loadTasks.js` (`run` returns a promise; mark it `fatal` if the game cannot start without it).
+
 **A new setting** — add a default in `Settings.js` and a row in `SettingsScene.js`.
 
 **A new specialization bonus** — add an entry to `SPEC_BONUSES` in `src/progression/SpecBonuses.js` (stat add, modifier add, or modifier multiply). The tree lists it automatically; a modifier that is new must also be read where it applies.
@@ -447,14 +455,14 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.9.0.00)
+## 6. Known limitations (V1.10.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
 - Single-player only; the networking layer is planned (see `ROADMAP.md`).
 - Changing **Dummy attacks** or **Dummy uses skills** takes effect the next time you press Training Ground.
-- Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is a fixed timer. The Home character is still a cylinder placeholder; shop item images and the profile avatar are still placeholders.
+- Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is driven by real tasks, but they are small today; Campaign and Live have no loading screen. The Home character is still a cylinder placeholder; shop item images and the profile avatar are still placeholders.
 - Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
 - The skill tree has no respec: picks are permanent until you reset progression in Developer options.
 - Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
