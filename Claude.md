@@ -59,7 +59,7 @@ src/
   content/index.js   ONE manifest: register skills + classes here
   core/              Game, Scene, Input, EventBus, Registry, Settings, math
   scenes/            Menu, Home, ModeSelect, Loading, CreatorSupport, Settings, Exit, World, Placeholder (Campaign, Live Server)
-  lobby/             lobbyData (placeholder content as data), Wallet
+  lobby/             lobbyData (content + art paths as data), Wallet, assets (lazy loaders)
   entities/          Entity base, Player, TrainingDummy
   classes/           ClassRegistry + class data (Mage)
   skills/            SkillRegistry + skill defs + projectiles + effect entities (FlameShieldEffect, BurnWardEffect) + ProjectileClash
@@ -177,10 +177,10 @@ Rules: no emoji in code or commits. Don't compress code identifiers or user-faci
 - Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true` (HitEffects skips hit-stop and the big burst for those). Create `XpSystem` AFTER `HitEffects` + `StatusSystem`.
 - Dummy skills AI (`thinkSkills`) only runs with Settings `dummySkills` + `dummyAttacks`; both are read at world start.
 - "Training Ground" is the playable scene (`world` scene, `mode: 'training'`); `campaign` and `live` are `PlaceholderScene`s (`back: "modes"`).
-- Scene flow (V1.7): `menu` → `home` → `modes` → `loading` (`{target}`) → `world`. Settings and pause return to `home`. Lobby content is placeholder data in `lobby/lobbyData.js`; add loading screens via `LOADING`. `#ui` is full-screen (flex stretch); `.panel` centres itself with `margin:auto`; lobby scenes use their own absolute-positioned root. Modals: `openModal(parent, {title, html})`; Esc closes the top one.
+- Scene flow (V1.7): `menu` → `home` → `modes` → `loading` (`{target}`) → `world`. Settings and pause return to `home`. Lobby content is placeholder data in `lobby/lobbyData.js`; add loading screens via `LOADING`. `#ui` is full-screen (flex stretch); `.panel` centres itself with `margin:auto`; lobby scenes use their own absolute-positioned root. Modals: `openModal(parent, {title, html})`; Esc closes the top one. Art (V1.8): files in `assets/` (WebP, WebM + MP4), loaded only via `lobby/assets.js` (`loadImage` / `loadVideo` resolve `null` on failure; the scene keeps its drawn placeholder), drawn with `render/drawCover.js`, paths are data in `lobbyData.js`. Pause the Mode Select video in `exit()`.
 
 ## 8. Roadmap pointer
 
-Lobby path L1-L11 is in `ROADMAP.md` ("Lobby path"): art, items/inventory, customization, wallet and shop, Genesis Path, season/rank, messages, login, creator support, real loading. Do one per version.
+Lobby path L1-L11 (L1 art partly done in V1.8) is in `ROADMAP.md` ("Lobby path"): art, items/inventory, customization, wallet and shop, Genesis Path, season/rank, messages, login, creator support, real loading. Do one per version.
 
 Next candidates (see `ROADMAP.md`): more combat depth (sprites/animation, dummy behaviours, second skill) or world (tilemap, collision, two zones). Then classes/skills, progression, NPCs/quests, enemies/bosses, then V2.0.0.00 online. Ask the user which fork when starting.

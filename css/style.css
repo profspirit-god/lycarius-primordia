@@ -177,3 +177,8 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .ld-tip { font-size:14px; color:#cfc4aa; min-height:20px; }
 
 @media (max-width:900px) { .lb-row { gap:6px; } .lb-btn { min-width:70px; padding:8px; } .play-btn { width:150px; font-size:20px; } .lb-right { width:190px; } .mi-grid { grid-template-columns:1fr 1fr; } .cur b { min-width:0; } }
+
+/* V1.8.0.00 art: card pictures */
+.mode-pic { background-size:cover; background-position:center; }
+.mode-pic.has-img span,.mode-pic.has-img small { display:none; }
+.mode-pic.has-img { border-style:solid; border-color:rgba(var(--mc),.35); }
