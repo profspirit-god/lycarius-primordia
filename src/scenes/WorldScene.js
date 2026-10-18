@@ -16,15 +16,25 @@ import { drawGround } from "../render/drawGround.js";
 import { VERSION_LABEL } from "../config.js";
 import { drawBar } from "../render/drawBar.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
+import { ExplosionSystem } from "../systems/ExplosionSystem.js";
+import { ExplosionFx } from "../systems/ExplosionFx.js";
+import { XpSystem } from "../systems/XpSystem.js";
+import { Progression } from "../progression/Progression.js";
+import { SkillTreePanel } from "../ui/SkillTreePanel.js";
+import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { scaled as n } from "../systems/ParticleSystem.js";
+import { rand, TAU } from "../core/math.js";
 
 /**
  * The playable world. Acts as the `world` object handed to entities and skills:
  * { game, input, events, camera, particles, lights, damageNumbers, entities, spawn(), hitstop() }
  */
 export class WorldScene extends Scene {
-  constructor({ classId = "mage" } = {}) {
+  /** @param {{ classId?: string, mode?: 'training' }} params `mode` is the game mode; only the training ground exists so far. */
+  constructor({ classId = "mage", mode = "training" } = {}) {
     super();
     this.classId = classId;
+    this.mode = mode;
   }
 
   enter(game) {
@@ -44,18 +54,29 @@ export class WorldScene extends Scene {
     this.hitEffects = new HitEffects(this);
     this.status = new StatusSystem(this); // after HitEffects: hit damage lands before ignition is rolled
     this.burnFx = new BurnFx(this);
-    this.player = this.spawn(new Player(ClassRegistry.get(this.classId)));
+    this.explosions = new ExplosionSystem(this);
+    this.explosionFx = new ExplosionFx(this);
+    const cls = ClassRegistry.get(this.classId);
+    this.progression = new Progression(cls);
+    this.player = this.spawn(new Player(cls, this.progression));
+    this.xp = new XpSystem(this); // after HitEffects + StatusSystem: a killing blow has already downed the target
+    this.progression.onEvent = (e) => this.onProgress(e);
+    this.offLevel = this.events.on("levelup", (e) => this.levelFx(e));
+    this.banners = [];
+    this.xpFlash = { char: 0, spec: 0, t: 0 };
     this.dummy = this.spawn(
       new TrainingDummy(340, 0, {
         attack: Settings.get("dummyAttacks"),
         move: Settings.get("dummyMovement"),
-        cls: ClassRegistry.get(this.classId),
+        skills: Settings.get("dummySkills"),
+        cls,
       }),
     );
     this.audio = new AudioSystem(this);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
     this.buildPauseMenu();
+    this.tree = new SkillTreePanel(this);
   }
 
   exit() {
@@ -63,6 +84,57 @@ export class WorldScene extends Scene {
     this.hitEffects.dispose();
     this.status.dispose();
     this.burnFx.dispose();
+    this.explosions.dispose();
+    this.explosionFx.dispose();
+    this.xp.dispose();
+    this.offLevel();
+  }
+
+  /** Progression events: keep the player in sync and tell the rest of the world through the bus. */
+  onProgress(e) {
+    if (e.type === "xp") {
+      const f = this.xpFlash;
+      if (f.t <= 0) f.char = f.spec = 0;
+      f[e.track] += e.amount;
+      f.t = 1.8;
+    } else if (e.type === "levelup") {
+      this.player.syncProgression();
+      this.events.emit("levelup", e);
+    } else if (e.type === "pick") this.player.syncProgression();
+  }
+
+  /** Level-up banner plus a ring and rising sparks around the player. */
+  levelFx(e) {
+    const spec = e.track === "spec",
+      unlocked = e.unlock ? SkillRegistry.get(e.unlock).name : null;
+    this.banners.push({
+      title: spec ? `SPECIALIZATION LEVEL ${e.level}` : `LEVEL ${e.level}`,
+      sub: !spec ? "Character level up" : unlocked ? `${unlocked} unlocked!` : "Bonus pick available (press K)",
+      t: 0,
+      life: 3.4,
+    });
+    if (this.banners.length > 4) this.banners.shift();
+    const p = this.player,
+      P = this.particles,
+      col = spec ? [255, 210, 110] : [150, 200, 255];
+    P.emit({ shape: "ring", x: p.x, y: p.y, z: 0, life: 0.8, size: 10, sizeEnd: 150, color: col });
+    for (let i = 0; i < n(40); i++) {
+      const a = rand(0, TAU);
+      P.emit({ x: p.x + Math.cos(a) * 24, y: p.y + Math.sin(a) * 12, z: 0, vx: 0, vy: 0, vz: rand(120, 360), gravity: 120, drag: 1,
+        life: rand(0.7, 1.4), size: rand(1.5, 3), sizeEnd: 0.3, color: col, colorEnd: [255, 255, 255], shape: "spark", stretch: 0.03 });
+    }
+    this.lights.add({ x: p.x, y: p.y, z: 30, radius: 260, intensity: 1, life: 0.5, color: col });
+  }
+
+  openTree() {
+    this.paused = true;
+    this.player.caster.cancel();
+    this.audio.silence();
+    this.tree.open();
+  }
+  closeTree() {
+    this.tree.close();
+    this.paused = false;
   }
 
   spawn(e) {
@@ -78,11 +150,11 @@ export class WorldScene extends Scene {
     this.pauseEl.className = "panel";
     this.pauseEl.style.display = "none";
     this.pauseEl.innerHTML = `<h2 class="title" style="font-size:28px">PAUSED</h2><div class="subtitle">${VERSION_LABEL}</div>
-      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="menu">Main menu</button>`;
+      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="menu">Home</button>`;
     this.pauseEl.addEventListener("click", (e) => {
       const a = e.target.dataset?.a;
       if (a === "resume") this.setPaused(false);
-      if (a === "menu") this.game.goto("menu");
+      if (a === "menu") this.game.goto("home");
     });
     this.ui.appendChild(this.pauseEl);
   }
@@ -94,9 +166,19 @@ export class WorldScene extends Scene {
   }
 
   update(dt) {
-    if (this.input.wasPressed("Escape")) this.setPaused(!this.paused);
+    const inp = this.input;
+    if (inp.wasPressed("Escape")) {
+      if (this.tree.isOpen) this.closeTree();
+      else this.setPaused(!this.paused);
+    } else if (inp.wasPressed("KeyK") && (!this.paused || this.tree.isOpen)) {
+      if (this.tree.isOpen) this.closeTree();
+      else this.openTree();
+    }
     this.fps += (1 / Math.max(dt, 0.0001) - this.fps) * 0.1;
     if (this.paused) return;
+    this.xpFlash.t -= dt;
+    for (const b of this.banners) b.t += dt;
+    this.banners = this.banners.filter((b) => b.t < b.life);
 
     let edt = dt,
       pdt = dt;
@@ -155,7 +237,7 @@ export class WorldScene extends Scene {
   drawSlot(ctx, x, y, s, p, v) {
     const sk = s.skill,
       on = !!sk.isActive?.(p),
-      cd = s.cooldown / sk.cooldown,
+      cd = s.cooldown / (s.cdMax || sk.cooldown),
       cx = x + 34;
     ctx.fillStyle = "rgba(12,14,20,.8)";
     ctx.strokeStyle = s.charging || on ? "#ffb15a" : "rgba(242,196,109,.4)";
@@ -196,6 +278,88 @@ export class WorldScene extends Scene {
     }
   }
 
+  /** A skill the specialization has not unlocked yet. */
+  drawLockedSlot(ctx, x, y, sk, level) {
+    ctx.fillStyle = "rgba(12,14,20,.6)";
+    ctx.strokeStyle = "rgba(255,255,255,.15)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x, y, 68, 68, 12);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.font = "30px serif";
+    ctx.fillStyle = "rgba(255,255,255,.35)";
+    ctx.fillText("🔒", x + 34, y + 44);
+    ctx.font = "11px Georgia, serif";
+    ctx.fillStyle = "#7c735f";
+    ctx.fillText(sk.name.toUpperCase(), x + 34, y + 99);
+    ctx.font = "10px Georgia, serif";
+    ctx.fillText(`SPEC Lv ${level}`, x + 34, y + 12);
+  }
+
+  /** Bottom-left: character and specialization XP, plus the skill-tree hint. */
+  drawProgress(ctx, w, h) {
+    const prog = this.player.prog;
+    if (!prog) return;
+    const c = prog.char,
+      s = prog.specInfo,
+      x = 18,
+      y = h - 104,
+      f = this.xpFlash,
+      fa = Math.max(0, Math.min(1, f.t / 0.6)),
+      pend = prog.pendingLevels().length;
+    ctx.fillStyle = "rgba(12,14,20,.72)";
+    ctx.strokeStyle = "rgba(242,196,109,.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x - 8, y - 8, 256, 96, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.font = "12px Georgia, serif";
+    ctx.fillStyle = "#eadfc8";
+    ctx.fillText(`CHARACTER  Lv ${c.level}`, x, y + 6);
+    ctx.fillText(`${this.player.cls.specialization.element.toUpperCase()} SPEC  Lv ${s.level}`, x, y + 36);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#b9a77f";
+    ctx.fillText(c.need ? `${c.into} / ${c.need}` : "MAX", x + 240, y + 6);
+    ctx.fillText(s.need ? `${s.into} / ${s.need}` : "MAX", x + 240, y + 36);
+    drawBar(ctx, x, y + 10, 240, 8, c.frac, "#6aa8ff");
+    drawBar(ctx, x, y + 40, 240, 8, s.frac, "#f2c46d");
+    if (fa > 0) {
+      ctx.globalAlpha = fa;
+      ctx.fillStyle = "#9dc8ff";
+      if (f.char) ctx.fillText(`+${f.char} XP`, x + 150, y + 6);
+      ctx.fillStyle = "#ffe08a";
+      if (f.spec) ctx.fillText(`+${f.spec} XP`, x + 150, y + 36);
+      ctx.globalAlpha = 1;
+    }
+    ctx.textAlign = "left";
+    ctx.font = pend ? "bold 12px Georgia, serif" : "12px Georgia, serif";
+    ctx.fillStyle = pend ? `rgba(123,216,143,${0.65 + 0.35 * Math.sin(performance.now() / 220)})` : "#8d836b";
+    ctx.fillText(pend ? `K  Skill tree: ${pend} bonus pick${pend > 1 ? "s" : ""} available!` : "K  Skill tree", x, y + 72);
+  }
+
+  drawBanners(ctx, w, h) {
+    ctx.textAlign = "center";
+    this.banners.forEach((b, i) => {
+      const a = Math.min(1, b.t / 0.25, (b.life - b.t) / 0.8),
+        y = h * 0.2 + i * 66 - Math.min(1, b.t * 3) * 0;
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.font = "bold 32px Georgia, serif";
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(30,8,0,.9)";
+      ctx.strokeText(b.title, w / 2, y);
+      ctx.fillStyle = "#f2c46d";
+      ctx.fillText(b.title, w / 2, y);
+      ctx.font = "16px Georgia, serif";
+      ctx.fillStyle = "#eadfc8";
+      ctx.fillText(b.sub, w / 2, y + 26);
+    });
+    ctx.globalAlpha = 1;
+  }
+
   drawHud(ctx, w, h) {
     const p = this.player,
       v = p.vitals,
@@ -206,7 +370,7 @@ export class WorldScene extends Scene {
     ctx.font = "13px Georgia, serif";
     ctx.fillStyle = "rgba(234,223,200,.85)";
     ctx.fillText(
-      "WASD move  ·  Mouse aim  ·  Hold LMB / Space to charge fireball  ·  RMB / E flame shield (press again to drop)  ·  Hold Q burn resistance  ·  Esc pause",
+      "WASD move  ·  Mouse aim  ·  K skill tree  ·  Esc pause",
       18,
       26,
     );
@@ -292,9 +456,15 @@ export class WorldScene extends Scene {
 
     // skill slots
     const slots = p.caster.slots,
+      locked = Object.entries(p.cls.specialization.unlocks).filter(([, id]) => !p.caster.has(id)),
       gap = 92,
-      x0 = w / 2 - (slots.length * gap - 10) / 2;
+      x0 = w / 2 - ((slots.length + locked.length) * gap - 10) / 2;
     slots.forEach((sl, i) => this.drawSlot(ctx, x0 + i * gap, h - 100, sl, p, v));
+    locked.forEach(([lv, id], i) =>
+      this.drawLockedSlot(ctx, x0 + (slots.length + i) * gap, h - 100, SkillRegistry.get(id), Number(lv)),
+    );
+    this.drawProgress(ctx, w, h);
+    this.drawBanners(ctx, w, h);
 
     if (p.downed) {
       // death overlay
