@@ -19,6 +19,8 @@ import { AudioSystem } from "../systems/AudioSystem.js";
 import { ExplosionSystem } from "../systems/ExplosionSystem.js";
 import { ExplosionFx } from "../systems/ExplosionFx.js";
 import { XpSystem } from "../systems/XpSystem.js";
+import { RaidSystem } from "../systems/RaidSystem.js";
+import { drawEnhance } from "../render/drawEnhance.js";
 import { Progression } from "../progression/Progression.js";
 import { SkillTreePanel } from "../ui/SkillTreePanel.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
@@ -57,6 +59,7 @@ export class WorldScene extends Scene {
     this.explosions = new ExplosionSystem(this);
     this.explosionFx = new ExplosionFx(this);
     const cls = ClassRegistry.get(this.classId);
+    this.cls = cls;
     this.progression = new Progression(cls);
     this.player = this.spawn(new Player(cls, this.progression));
     this.xp = new XpSystem(this); // after HitEffects + StatusSystem: a killing blow has already downed the target
@@ -72,10 +75,12 @@ export class WorldScene extends Scene {
         cls,
       }),
     );
+    this.raid = new RaidSystem(this);
     this.audio = new AudioSystem(this);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
     this.buildPauseMenu();
+    this.buildRaidButton();
     this.tree = new SkillTreePanel(this);
   }
 
@@ -87,6 +92,7 @@ export class WorldScene extends Scene {
     this.explosions.dispose();
     this.explosionFx.dispose();
     this.xp.dispose();
+    this.raid.dispose();
     this.offLevel();
   }
 
@@ -145,6 +151,51 @@ export class WorldScene extends Scene {
     this.hitstopTimer = Math.max(this.hitstopTimer, t);
   }
 
+  /** Big centred banner (same queue as level-ups). */
+  pushBanner(title, sub, life = 3.4) {
+    this.banners.push({ title, sub, t: 0, life });
+    if (this.banners.length > 4) this.banners.shift();
+  }
+
+  /** Mock raid start: the training dummy leaves. */
+  removeDummy() {
+    if (!this.dummy) return;
+    this.dummy.dead = true;
+    this.dummy = null;
+    this.audio.silence(); // a charge voice owned by the dummy would otherwise hang
+  }
+  /** Mock raid end: a fresh dummy, built from the current Settings. */
+  restoreDummy() {
+    if (this.dummy) return;
+    this.dummy = this.spawn(
+      new TrainingDummy(340, 0, {
+        attack: Settings.get("dummyAttacks"),
+        move: Settings.get("dummyMovement"),
+        skills: Settings.get("dummySkills"),
+        cls: this.cls,
+      }),
+    );
+  }
+
+  /** DOM button under the kills panel. tabIndex -1 and no focus on press: Space is the fireball key and would "click" a focused button. */
+  buildRaidButton() {
+    this.raidHidden = false;
+    this.raidBtn = document.createElement("button");
+    this.raidBtn.className = "btn sm raid-btn";
+    this.raidBtn.tabIndex = -1;
+    this.raidBtn.addEventListener("mousedown", (e) => e.preventDefault());
+    this.raidBtn.addEventListener("click", () => {
+      if (this.raid.active) this.raid.stop();
+      else this.raid.start();
+      this.refreshRaidButton();
+    });
+    this.ui.appendChild(this.raidBtn);
+    this.refreshRaidButton();
+  }
+  refreshRaidButton() {
+    this.raidBtn.textContent = this.raid.active ? "Stop Mock Raid" : "Start Mock Raid";
+  }
+
   buildPauseMenu() {
     this.pauseEl = document.createElement("div");
     this.pauseEl.className = "panel";
@@ -175,6 +226,10 @@ export class WorldScene extends Scene {
       else this.openTree();
     }
     this.fps += (1 / Math.max(dt, 0.0001) - this.fps) * 0.1;
+    if (this.paused !== this.raidHidden) {
+      this.raidHidden = this.paused; // the raid button hides behind the pause menu and the skill tree
+      this.raidBtn.style.display = this.paused ? "none" : "";
+    }
     if (this.paused) return;
     this.xpFlash.t -= dt;
     for (const b of this.banners) b.t += dt;
@@ -192,6 +247,7 @@ export class WorldScene extends Scene {
     const list = this.entities.slice();
     for (const e of list) e.update(edt, this);
     this.entities = this.entities.filter((e) => !e.dead);
+    this.raid.update(dt);
     this.status.update(edt);
     this.burnFx.update(edt); // after lights.update: its one-frame lights must survive to render
     this.particles.update(pdt);
@@ -360,6 +416,47 @@ export class WorldScene extends Scene {
     ctx.globalAlpha = 1;
   }
 
+  /** Top-right panel while a mock raid runs (same spot and size as the dummy panel). */
+  drawRaidPanel(ctx, w) {
+    const r = this.raid;
+    ctx.fillStyle = "rgba(12,14,20,.72)";
+    ctx.strokeStyle = "rgba(242,196,109,.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(w - 238, 16, 222, 126, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#f2c46d";
+    ctx.font = "bold 13px Georgia, serif";
+    ctx.fillText("MOCK RAID", w - 224, 38);
+    ctx.fillStyle = "#eadfc8";
+    ctx.font = "13px Georgia, serif";
+    ctx.fillText(`Raid ${r.number}`, w - 224, 60);
+    ctx.fillText(`Enemies left: ${r.alive()} / ${r.total}`, w - 224, 80);
+    ctx.fillText(r.tier ? "Enhanced:" : "Base strength", w - 224, 100);
+    drawEnhance(ctx, w - 118, 96, r.tier);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#b9a77f";
+    ctx.fillText(r.wait > 0 ? `Next raid in ${Math.ceil(r.wait)}s` : "Fight!", w - 224, 120);
+  }
+
+  /** Kill counters, under the top-right panel. */
+  drawKillPanel(ctx, w) {
+    ctx.fillStyle = "rgba(12,14,20,.72)";
+    ctx.strokeStyle = "rgba(242,196,109,.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(w - 238, 150, 222, 44, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.font = "13px Georgia, serif";
+    ctx.fillStyle = "#eadfc8";
+    ctx.fillText(`Kills: ${this.raid.kills}`, w - 224, 169);
+    ctx.fillText(`One-shot kills: ${this.raid.oneShots}`, w - 224, 187);
+  }
+
   drawHud(ctx, w, h) {
     const p = this.player,
       v = p.vitals,
@@ -425,9 +522,17 @@ export class WorldScene extends Scene {
       ctx.font = "bold 13px Georgia, serif";
       ctx.fillStyle = "#ff8a2a";
       ctx.fillText(`BURNING  ${Math.max(0, b.dur - b.t).toFixed(1)}s  (${(b.dps * (p.ward ? 1 - p.ward.burnReduction : 1)).toFixed(0)}/s)`, 18, sy + 12);
+      sy += 18;
+    }
+    if (p.stunT > 0) {
+      ctx.font = "bold 13px Georgia, serif";
+      ctx.fillStyle = "#ffe066";
+      ctx.fillText(`STUNNED  ${p.stunT.toFixed(1)}s`, 18, sy + 12);
     }
 
-    // dummy panel
+    // dummy panel (the raid panel takes its place while a mock raid runs)
+    if (!d) this.drawRaidPanel(ctx, w);
+    else {
     ctx.fillStyle = "rgba(12,14,20,.72)";
     ctx.strokeStyle = "rgba(242,196,109,.35)";
     ctx.beginPath();
@@ -453,6 +558,8 @@ export class WorldScene extends Scene {
       w - 224,
       120,
     );
+    }
+    this.drawKillPanel(ctx, w);
 
     // skill slots
     const slots = p.caster.slots,

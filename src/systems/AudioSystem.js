@@ -73,7 +73,7 @@ export class AudioSystem {
 
   casters() {
     const w = this.world;
-    return w.dummy.attack ? [w.player, w.dummy] : [w.player];
+    return w.dummy?.attack ? [w.player, w.dummy] : [w.player];
   }
 
   update() {

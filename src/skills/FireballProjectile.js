@@ -111,6 +111,11 @@ export class FireballProjectile extends Entity {
       }
     }
     for (const e of world.entities) {
+      // swinging arms (Graugr barrage) may bat the ball away before anything else
+      if (!e.deflecting || e === this.owner) continue;
+      if (e.tryDeflect(this, world)) return;
+    }
+    for (const e of world.entities) {
       // flame shields first: the arc is in front of the body it protects
       if (!e.isShield || e.owner === this.owner) continue;
       if (e.blocks(this.x, this.y, this.z, this.radius)) {
