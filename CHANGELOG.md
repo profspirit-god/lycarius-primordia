@@ -2,6 +2,32 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.01 — Server path, server-ready rules, audit tool and tests, home-PC hosting and exe plan (docs and tooling only, no gameplay change)
+
+This is the V1.9.0.01 package, which was not applied before V1.10.0.00 shipped. It is applied here on top of V1.10.0.00 and renumbered (V1.9.0.01 would have been a version older than the code), so every phase version in `SERVER_PATH.md` is one minor higher than in the first draft.
+
+### Added
+
+- **`SERVER_PATH.md`**: the road to online. Thirteen architecture decisions (server-authoritative, same Node code as the browser, WebSocket, fixed 30 Hz simulation, JSON first, SQLite, username + password accounts, rooms, own-PC hosting first then a small VPS, the exe as a wrapper), an audit of the current code (problems P1 to P13), and ten phases S1 to S10 with exact steps, "done when" tests, costs, security and legal flags, a debt log and a "what not to do" list.
+- **Home-PC hosting assessment (S8a)**, from the owner's plan to run a 10 to 50 player server on their own PC: verdict feasible with conditions; estimated CPU, upload, memory and latency for 50 players; requirements (outbound tunnel instead of open ports, limited user, scheduled uptime, tested backups, wired network); electricity cost compared with a VPS; the triggers for moving to a VPS (S8b). All figures are estimates until measured in S3 and S6.
+- **`tools/loadtest.mjs` planned (S6)**: bot clients to measure the 10, 25 and 50 player capacity of the chosen host. A 50-player scale test is now part of the V2.0.0.00 gate (S9).
+- **Desktop build plan (S10)**: answer to "can the game be an exe?". Yes. Options compared (Electron recommended, Tauri, NW.js, installed web app), steps, gotchas (saves do not move between browser and exe until S5, unsigned-app warnings, an exe does not stop cheating) and a done-when. The wrapper lives in its own `desktop/` folder so the repository root stays dependency-free.
+- **Server-ready rules** in `Claude.md` section 5b (R1 to R13) and a session-protocol step for server-path work, so every future session writes code that can later run on a server.
+- **`tools/audit-server-ready.mjs`** and `tools/server-ready-baseline.json`: scans 28 simulation files for browser access, clocks, `Math.random`, `Settings`, presentation calls, input access and single-player assumptions. Fails when any count rises above the baseline. Re-measured on V1.10.0.00 and unchanged (3 browser, 6 clock, 160 random, 4 settings, 227 presentation, 6 input, 6 single-player hits): the HUD, loading and icon work added only client-side code. `--verbose`, `--strict`, `--write-baseline`.
+- **`tests/graugr.test.mjs`**: six headless tests (AI modes, skill damage values, stun, dodge, deflect rate, raid flow). All pass on V1.10.0.00. `npm test` and `npm run audit` shortcuts in `package.json`.
+- ROADMAP gains a "Server path" summary table, the hosting decision and the exe answer; README gains "Developer checks".
+
+### Changed
+
+- `VERSION` 1.10.0.00 → 1.10.0.01. `package.json` gains the `test` and `audit` scripts (still no dependencies).
+- ROADMAP "Later" item 5 (desktop wrapper) now points at phase S10.
+
+### Notes
+
+- Nothing in the game changed. The audit measures today's code honestly: most debt is drawing and particle code inside entities and skills, and gameplay dice that use `Math.random`. Phase S1 removes it step by step.
+- New finding (P13): the DOM HUD and character panel read live sim objects, and the loading screen's world dry run reads the real save through `Progression`. Client-only, so not counted by the audit; scheduled for S1g and S2.
+- Approved future dependencies, named only so nobody adds others: `ws` (phase S3), `better-sqlite3` (phase S5), and, only inside `desktop/` and only after the owner approves, Electron and its packager (phase S10).
+
 ## V1.10.0.00 — Real loading, new HUD, character panel, SVG icons
 
 ### Added

@@ -8,17 +8,18 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 - Stack: HTML5 Canvas + vanilla JS ES modules. No bundler, deps or build step. Run with VS Code Live Server on `index.html` (modules need http).
 - Version: `VERSION` in `src/config.js`. History `CHANGELOG.md`, plan `ROADMAP.md`, full docs `README.md`.
 - Pseudo-3D: characters are cylinders; entities have ground `(x,y)` + height `z`, drawn at `y - z`. Ground rings are drawn squashed (0.5) but hit tests are circles in `(x,y)`.
-- Long-term: factions, guild wars, branching story, real-party missions, server-authoritative multiplayer (V2).
+- Long-term: factions, guild wars, branching story, real-party missions, server-authoritative multiplayer (V2). **Road to online: `SERVER_PATH.md` (incl. hosting on the owner's own PC and the optional exe build); code server-ready from now on (section 5b).**
 
 ## 2. Session protocol (save tokens)
 
 1. **Start:** read this file. Do **not** ask for or unzip the whole repo for a small task. Use the code map (section 4) to name the 3-8 files needed. If the user attached a full zip, unzip once, then `grep -n` / `view_range`; never `cat` big files.
 2. **Work in a copy.** Source files are **CRLF**. Read with `tr -d '\r'`; edit in LF with exact-match replace (assert one match); convert back to CRLF before packaging (`sed -i 's/$/\r/'`). Never leave mixed endings.
-3. **Verify before delivering:** `node --check` on every `src/**/*.js`; for logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
+3. **Verify before delivering:** run `node tests/graugr.test.mjs` and `node tools/audit-server-ready.mjs` (both must pass), `node --check` on every `src/**/*.js`; for new logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
 4. **Deliver a changes-only zip**, never the whole repo: `lycarius-primordia-V<x.y.z.nn>-changes.zip`, paths relative to the repo root (`src/...`, `css/...`, docs), CRLF kept, only new + changed files, docs and `Claude.md` included. List the files in chat. User extracts into the repo root and overwrites. Make the zip with python `zipfile`, forward slashes.
-5. **Chat reply, in order:** design decisions with numbers (only the non-obvious ones, flag ambiguities and the default taken) → what changed (file list) → test checklist (concrete, observable) → GitHub steps (exact commands, section 7) → known difficulties. No code dumps in chat unless the user asks.
+5. **Chat reply, in order:** design decisions with numbers (only the non-obvious ones, flag ambiguities and the default taken) → what changed (file list) → **Server-ready: yes, or debt (file: what)** → test checklist (concrete, observable) → GitHub steps (exact commands, section 7) → known difficulties. No code dumps in chat unless the user asks.
 6. **Ask at most one question**, only if blocked or at a real roadmap fork. Do not bundle unrequested features. Bugs: cause in 1-2 lines, then the fix as the next FIX version.
-7. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
+7. **Server-path work:** read `SERVER_PATH.md` section 0, section 1 and only the phase being built. One phase (or one S1 step) per version; follow its "Done when" literally. Do not start a phase whose predecessor's gates are not green. The exe (S10) and hosting (S8) are planned only; add no dependency or `desktop/` folder without the owner's approval.
+8. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
 
 ## 3. Versioning and git
 
@@ -56,6 +57,8 @@ systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast appl
                    DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, AudioSystem (events → GameAudio)
 audio/AudioEngine  procedural Web Audio, no asset files
 render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
+tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase
+tests/             graugr.test.mjs (headless gameplay tests, pattern for new tests)
 ```
 
 World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `stun`. HitEvent: `{source,target,damage,crit,dir,charge,x,y,z,aoe?,burn?,stun?}`.
@@ -69,6 +72,26 @@ World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `
 5. Settings: default in `Settings.js` + row in `SettingsScene.js`. Shared helpers live once (`scaled as n` for particle counts).
 6. Annotate new skills/classes/events with `@type {import('../types.js').X}`. No dependency or bundler without approval and a roadmap entry.
 7. New features are additions, not edits. Keep damage integers. Constants for tuning go at the top of the file.
+
+## 5b. Server-ready rules (MANDATORY; the plan and phases are in `SERVER_PATH.md`)
+
+Goal: all gameplay code must later run **unchanged** on a headless Node server that is the only authority. These rules apply to every new or edited line of **simulation code**: `entities/ skills/ classes/ progression/ content/ sim/`, `systems/{Vitals,SkillCaster,StatusSystem,ExplosionSystem,XpSystem,RaidSystem}`, `core/{EventBus,Registry,math}` (the exact list is in `tools/audit-server-ready.mjs`).
+
+1. **R1 No browser in the sim:** no `document window navigator localStorage Audio*`, no canvas `ctx`, no `Settings`.
+2. **R2 No clock in the sim:** no `performance.now Date.now setTimeout setInterval requestAnimationFrame`. A timer is a number decremented by `dt`.
+3. **R3 Gameplay randomness** (damage, crit, chances, AI choices, spawn positions) goes through `world.rng` once phase S1b exists. Until then: put it in a function named `roll*` / `pick*`, never call it from drawing code, never at module load.
+4. **R4 Input:** the sim reads only a per-entity command object (`entity.cmd`, from S1e). New entities must not copy `Player`'s `world.input` / camera access.
+5. **R5 Presentation:** the sim emits events with plain data. It never calls `particles / lights / damageNumbers / camera / hitstop / audio`. New effects = a listener that draws, not a call from logic.
+6. **R6 Authority:** health, stamina, mana, status, position and cooldowns change only inside sim code (own `update` or an event). Views never write sim state. Cost and cooldown checks live in the sim, never only in the UI.
+7. **R7 Players are plural:** never write a new `world.player`. Take the target as a parameter or find the nearest in one helper.
+8. **R8 Plain data:** sim state is numbers, strings, booleans, arrays and objects of those, plus **ids** of other entities. Each entity's header comment lists the fields clients would need (replicated fields). Events carry plain data only.
+9. **R9 Order independence:** no result may depend on `Map` / `Set` / object-key order or on one system being created "after" another. Iterate arrays; break ties by `id`.
+10. **R10 Frame-rate independence:** no per-frame counters; use `dt`. Hit-stop and screen shake must never change sim outcomes.
+11. **R11 Untrusted input:** any value that can come from a client has its allowed range as a constant at the top of the file and is validated at the boundary.
+12. **R12 Node-importable:** a sim file must import in Node with no globals defined. Check it in your headless test (no `window` / `document` stubs).
+13. **R13 Dependencies** only as approved in `SERVER_PATH.md` (`ws` in S3, `better-sqlite3` in S5; Electron only inside `desktop/` in S10, after the owner approves).
+
+**Gate:** `node tools/audit-server-ready.mjs` must print `PASS`. A **new file must have zero hits** (it is not in the baseline). If a rule truly cannot be met, add one line to the debt log (`SERVER_PATH.md` section 6) and say so in the reply. When you reduce debt, run `--write-baseline` in the same branch. Debt never goes up. `--verbose` lists `file:line` for each hit.
 
 ## 6. Performance and tokens
 
@@ -97,6 +120,7 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 
 - [ ] Works; console clean; no gameplay regression. `node --check` passes. No duplicate helpers.
 - [ ] `VERSION` bumped; CHANGELOG, README, ROADMAP, this file updated if a rule or the code map changed.
+- [ ] Server-ready gate (5b) passes; debt log and baseline updated if debt changed.
 - [ ] Changes-only zip, test checklist, GitHub steps delivered.
 
 ## 9. Gotchas
@@ -106,7 +130,7 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 - `Lights` with `once:true` live one frame; re-add every update. Hit-stop scales entity `dt` to 8% and particle `dt` to 40%; real-time code uses the raw `dt`.
 - Toggle skills: caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)`. Cast-time skills: `autoRelease` fires at charge 1; `self:true` skills are skipped by AI `wantsCast`.
 - Projectiles: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; skip `update` work if `dead`; call `clashProjectiles`, then the deflect loop (`e.deflecting` → `e.tryDeflect(proj, world)`), then shields (`isShield` `blocks/absorb`), then bodies. Fire projectiles call `target.ward.resist(dmg)` before emitting `hit`.
-- Status: burn on `entity.burn` (ignition offered by `hit.burn`); stun on `entity.stunT` (offered by `hit.stun`, always applies, refreshes not stacks). Create `StatusSystem` and `BurnFx` AFTER `HitEffects`; `BurnFx.update` after `lights.update`. Entities that can burn implement `onDot(e)`; a stunned entity must honour `stunT` itself (Player, Graugr do).
+- Status: burn on `entity.burn` (ignition offered by `hit.burn`); stun on `entity.stunT` (offered by `hit.stun`, always applies, refreshes not stacks). Create `StatusSystem` and `BurnFx` AFTER `HitEffects` (this ordering dependency disappears in S1d); `BurnFx.update` after `lights.update`. Entities that can burn implement `onDot(e)`; a stunned entity must honour `stunT` itself (Player, Graugr do).
 - Create `XpSystem` AFTER `HitEffects` + `StatusSystem`. It pays kill XP for `downed && attack && !xpGiven`, so enemies that die set `downed = true` and `attack = true` (Graugr does).
 - `world.dummy` is `null` during a mock raid. Anything touching it must use `?.` (AudioSystem does). `restoreDummy()` rebuilds it from Settings.
 - Graugr: emits `kill {target, source, oneShot, tier}` on the first update after death (it has no world in `onHit`). One-shot = it died on its first damage event. Barrage ticks are `aoe` hits (no hit-stop spam). A deflected projectile gets `owner = Graugr`.
@@ -120,4 +144,4 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 
 ## 10. Next
 
-See `ROADMAP.md` (lobby path L1-L11; combat depth; world; classes; NPCs/quests; V2.0.0.00 online). Ask the user which fork when starting; one lobby feature per version.
+See `ROADMAP.md` (server path S1-S10 in `SERVER_PATH.md`; lobby path L1-L11; combat depth; world; classes; NPCs/quests; V2.0.0.00 online). Ask the user which fork when starting; one lobby feature per version.

@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.10.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.10.0.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.10.0.00
+## 1. What is in V1.10.0.01
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -425,6 +425,14 @@ src/
 
 ---
 
+## 4b. Developer checks (optional, needs Node.js)
+
+| Command | What it does |
+| ------- | ------------ |
+| `node tests/graugr.test.mjs` | Headless gameplay tests (Graugr AI, skills, stun, deflect, raid). Exit 0 = pass |
+| `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
+| `npm test` and `npm run audit` | Shortcuts for the two commands above |
+
 ## 5. Git workflow
 
 Branches:
@@ -455,12 +463,12 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.10.0.00)
+## 6. Known limitations (V1.10.0.01)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
-- Single-player only; the networking layer is planned (see `ROADMAP.md`).
+- Single-player only. The road to online (server, accounts, co-op, hosting on the owner's own PC, an optional exe build) is planned phase by phase in `SERVER_PATH.md`; the code is being kept server-ready (see `Claude.md` section 5b).
 - Changing **Dummy attacks** or **Dummy uses skills** takes effect the next time you press Training Ground.
 - Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is driven by real tasks, but they are small today; Campaign and Live have no loading screen. The Home character is still a cylinder placeholder; shop item images and the profile avatar are still placeholders.
 - Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
