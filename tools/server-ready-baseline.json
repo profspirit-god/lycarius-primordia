@@ -1,0 +1,64 @@
+{
+  "core/math.js": {
+    "random": 1
+  },
+  "entities/Entity.js": {
+    "present": 1
+  },
+  "entities/Graugr.js": {
+    "settings": 2,
+    "random": 25,
+    "present": 88,
+    "singlePlayer": 3,
+    "clock": 1
+  },
+  "entities/Player.js": {
+    "settings": 2,
+    "input": 6,
+    "present": 23
+  },
+  "entities/TrainingDummy.js": {
+    "random": 6,
+    "clock": 5,
+    "singlePlayer": 2,
+    "present": 29
+  },
+  "progression/Progression.js": {
+    "dom": 3
+  },
+  "skills/BurnResistance.js": {
+    "random": 9,
+    "present": 1
+  },
+  "skills/BurnWardEffect.js": {
+    "random": 41,
+    "present": 6
+  },
+  "skills/Fireball.js": {
+    "random": 27,
+    "present": 6
+  },
+  "skills/FireballProjectile.js": {
+    "random": 21,
+    "present": 22
+  },
+  "skills/FlameShieldEffect.js": {
+    "present": 44,
+    "random": 25
+  },
+  "systems/ExplosionSystem.js": {
+    "random": 1
+  },
+  "systems/RaidSystem.js": {
+    "random": 3
+  },
+  "systems/SkillCaster.js": {
+    "present": 7
+  },
+  "systems/StatusSystem.js": {
+    "random": 1
+  },
+  "systems/XpSystem.js": {
+    "singlePlayer": 1
+  }
+}
