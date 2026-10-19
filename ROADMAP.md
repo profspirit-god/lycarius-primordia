@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.10.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -18,6 +18,30 @@ Current version: **V1.10.0.00**. Completed work is recorded in `CHANGELOG.md`; t
 | V1.8.0.00 | Lobby art: Home scenery, Mode Select video, mode card pictures, training loading art (L1 partly done) |
 | V1.9.0.00 | Graugr melee enemy (smart AI, 3 skills), stun status, projectile deflect, mock raid with enhancement tiers, kill and one-shot counters |
 | V1.10.0.00 | Real task-based loading screen, stamina resource, DOM HUD (profile circle, compact bars, status effects, skill circles), character panel, SVG icon set |
+| V1.10.0.01 | Docs and tooling (no gameplay change): `SERVER_PATH.md` (road to online, home-PC hosting, exe build), server-ready rules in `Claude.md`, `tools/audit-server-ready.mjs`, `tests/graugr.test.mjs`. This is the V1.9.0.01 package, applied on top of V1.10.0.00 |
+
+## Server path (road to online)
+
+The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decisions, an audit of today's code, ten phases with exact steps and "done when" tests, hosting, costs, security and legal flags. Summary:
+
+| Phase | Version | Goal | Sessions (rough) |
+| ----- | ------- | ---- | ---------------- |
+| S1 | V1.10.0.02 to V1.10.0.xx, closing **V1.11.0.00** | Separate simulation from view; seeded RNG, damage and input out of the view, many players, fixed timestep. Behaviour unchanged | 14 to 20 |
+| S2 | V1.12.0.00 | Message protocol and a loopback "network" with fake latency inside one browser | 3 to 5 |
+| S3 | V1.13.0.00 | Real Node WebSocket server, two players in one room, garbage-input test, server address setting | 3 to 5 |
+| S4 | V1.14.0.00 | Client prediction and smoothing | 3 to 5 |
+| S5 | V1.15.0.00 | Accounts (username + password) and SQLite saving | 3 to 5 |
+| S6 | V1.16.0.00 | Rooms, co-op raid by invite code, interest management, **50-bot load test** | 3 to 5 |
+| S7 | V1.17.0.00 | Security hardening | 2 to 3 |
+| S8 | V1.18.0.00 | Deployment: **S8a on the owner's own PC** (default, through an outbound tunnel), S8b on a small VPS when a trigger fires; backups, rollback | 2 to 4 |
+| S9 | V1.19.0.00, then **V2.0.0.00** | Closed alpha with friends, then a 50-player scale test | 2 weeks of testing |
+| S10 | next free minor (optional, any time after S3) | **Desktop build (exe)**: Electron wrapper in its own `desktop/` folder, real Exit Game | 2 to 3 |
+
+Gates for every step: `node tests/graugr.test.mjs`, `node tools/audit-server-ready.mjs` (debt may never go up), manual play check, docs updated. Feature work in other areas may continue in between, but must follow the server-ready rules (`Claude.md` 5b). Art style is undecided and does not block any phase.
+
+**Hosting decision (owner, V1.10.0.01):** run the 10 to 50 player server on the owner's own PC to save rent. Assessed as feasible with conditions (the CPU tick budget is the real limit, not the PC; upload is about 8 to 24 Mbps at 50 players; use an outbound tunnel, never open router ports; a 100 W desktop on 24/7 costs about as much electricity as a small VPS). Details and the triggers for moving to a VPS are in `SERVER_PATH.md` S8a.
+
+**Exe packaging (answer, V1.10.0.01):** yes. Recommended path is Electron in `desktop/` (S10); a Tauri build is smaller but needs a Rust toolchain; an installed web app (PWA) is a zero-dependency stopgap. Needs owner approval before any dependency is added. See `SERVER_PATH.md` S10.
 
 ## Lobby path (for the next sessions)
 
@@ -63,7 +87,7 @@ Rules for this area: keep content as data in `lobbyData.js` (or registries once 
 2b. **Campaign** (single-player story) and **Live Server** (online open world) replace the menu placeholders.
 3. NPCs, dialogue, quests and branching story.
 4. Enemies and bosses with reusable AI built on `SkillCaster`.
-5. Desktop wrapper (real "Exit Game").
-6. **V2.0.0.00**: server-authoritative multiplayer, parties and co-op missions.
+5. Desktop wrapper (real "Exit Game"): planned as phase S10 in `SERVER_PATH.md` (Electron in `desktop/`).
+6. **V2.0.0.00**: server-authoritative multiplayer, parties and co-op missions (see the Server path above).
 7. Factions, guilds, guild wars and territory wars.
 8. **Proto**: the refined second edition, as a separate repository.
