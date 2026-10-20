@@ -10,16 +10,32 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 - Pseudo-3D: characters are cylinders; entities have ground `(x,y)` + height `z`, drawn at `y - z`. Ground rings are drawn squashed (0.5) but hit tests are circles in `(x,y)`.
 - Long-term: factions, guild wars, branching story, real-party missions, server-authoritative multiplayer (V2). **Road to online: `SERVER_PATH.md` (incl. hosting on the owner's own PC and the optional exe build); code server-ready from now on (section 5b).**
 
+## 1b. Doc map (open a section, never a whole doc)
+
+`node tools/sec.mjs <file>` lists headings; `node tools/sec.mjs <file> <id|text>` prints one section (`5b`, `S1f`, `M2`, `V1.9.0.00`, `Burn Resistance`).
+
+| File | Open when | Sections |
+| ---- | --------- | -------- |
+| `Claude.md` | every session | 1 snapshot, 2 protocol, 3 git, 4 code map, 5/5b rules, 6 perf, 7 GitHub, 8 done, 9 gotchas |
+| `ROADMAP.md` | choosing or planning work | Done, Server path, **Proposals**, Lobby path, combat depth, world, Later |
+| `SERVER_PATH.md` | any server-path work | 0 gates, 1 decisions, 2 audit, S1..S10 (`S1f`), 4 cost, 5 flags, 6 debt, 7 not-to-do, 8 proposal hooks |
+| `docs/proposals/ASSESSMENT.md` | any M or W work, **first** | 1 verdicts, 2 findings, 3-4 Marble plan, 5-6 World plan, 7 risks, 8 rules |
+| `docs/proposals/Marble-bag-engine.md` | randomness, crit, loot, gates, hidden or item-instance state, crafting secrets, NPC memory, discoveries | 1 goal, 3 config, 4 bags, 5 gates, 6 bow, 7 data, 8 state/security, 9 archive, 10 parts, 11 tests, 12 phases, 13 laws |
+| `docs/proposals/World-Division-and-Lag-Management.md` | zones, maps, instances, rooms, spatial cells, interest management, NPC population or tiers, tick budget, load or lag | 2 hierarchy, 4 cells, 5 tiers, 6 NPCs, 7 loop, 8 net, 9 capacity, 10 persistence, 11 metrics, 12 tests, 13 phases, 14 rules |
+| `README.md` | player-facing docs of a feature | one heading per feature, 4 architecture, 4b checks |
+| `CHANGELOG.md` | what shipped in a version | one heading per `V<x.y.z.nn>` |
+
 ## 2. Session protocol (save tokens)
 
-1. **Start:** read this file. Do **not** ask for or unzip the whole repo for a small task. Use the code map (section 4) to name the 3-8 files needed. If the user attached a full zip, unzip once, then `grep -n` / `view_range`; never `cat` big files.
+1. **Start:** read this file. Do **not** ask for or unzip the whole repo for a small task, and read docs by section (1b). Use the code map (section 4) to name the 3-8 files needed. If the user attached a full zip, unzip once, then `grep -n` / `view_range`; never `cat` big files.
 2. **Work in a copy.** Source files are **CRLF**. Read with `tr -d '\r'`; edit in LF with exact-match replace (assert one match); convert back to CRLF before packaging (`sed -i 's/$/\r/'`). Never leave mixed endings.
 3. **Verify before delivering:** run `node tests/graugr.test.mjs` and `node tools/audit-server-ready.mjs` (both must pass), `node --check` on every `src/**/*.js`; for new logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
 4. **Deliver a changes-only zip**, never the whole repo: `lycarius-primordia-V<x.y.z.nn>-changes.zip`, paths relative to the repo root (`src/...`, `css/...`, docs), CRLF kept, only new + changed files, docs and `Claude.md` included. List the files in chat. User extracts into the repo root and overwrites. Make the zip with python `zipfile`, forward slashes.
 5. **Chat reply, in order:** design decisions with numbers (only the non-obvious ones, flag ambiguities and the default taken) → what changed (file list) → **Server-ready: yes, or debt (file: what)** → test checklist (concrete, observable) → GitHub steps (exact commands, section 7) → known difficulties. No code dumps in chat unless the user asks.
 6. **Ask at most one question**, only if blocked or at a real roadmap fork. Do not bundle unrequested features. Bugs: cause in 1-2 lines, then the fix as the next FIX version.
 7. **Server-path work:** read `SERVER_PATH.md` section 0, section 1 and only the phase being built. One phase (or one S1 step) per version; follow its "Done when" literally. Do not start a phase whose predecessor's gates are not green. The exe (S10) and hosting (S8) are planned only; add no dependency or `desktop/` folder without the owner's approval.
-8. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
+8. **Proposal work (Marble Bag Engine M, World Division W):** if a task touches random outcomes or crit, loot, item or hidden state, gates, crafting secrets, zones or maps, instances, rooms, spatial queries, interest management, NPC population or AI tiers, tick budget, load or lag: first open `docs/proposals/ASSESSMENT.md` section 1 and the stage section (3-4 or 5-6), then only the proposal sections it names. The proposals are **not code**: verify in the repo, claim nothing without tests, one stage per version, owner approves each stage, start a stage only when its Needs are green (ROADMAP "Proposals"; hooks in `SERVER_PATH.md` section 8). Where a proposal conflicts with this file, `SERVER_PATH.md` or a decision in the assessment, the proposal loses; flag it.
+9. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
 
 ## 3. Versioning and git
 
@@ -57,7 +73,8 @@ systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast appl
                    DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, AudioSystem (events → GameAudio)
 audio/AudioEngine  procedural Web Audio, no asset files
 render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
-tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase
+tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase; sec.mjs: print one doc section
+docs/proposals/    ASSESSMENT + the two proposals (Marble bag, World division); design only, no code
 tests/             graugr.test.mjs (headless gameplay tests, pattern for new tests)
 ```
 

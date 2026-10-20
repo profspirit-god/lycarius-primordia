@@ -2,6 +2,23 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.02 — Design proposals assessed, proposals roadmap, section reader (docs and tooling only, no gameplay change)
+
+### Added
+
+- **`docs/proposals/`**: `Marble-bag-engine.md` and `World-Division-and-Lag-Management.md` kept verbatim for reference, plus `ASSESSMENT.md`: Phase 0 inspection findings, verdicts (both feasible in stages; WDL's 100 players / 400 NPCs is a design ceiling, not a target), conflicts and default decisions, staged plans M1 to M5 and W1 to W5, risks and session rules.
+- **ROADMAP "Proposals"** tracks M and W with prerequisites; **`SERVER_PATH.md` section 8** lists the hooks S1b, S1c, S1d, S1h, S1k, S2, S5 and S6 must provide.
+- **`tools/sec.mjs`** (`npm run sec -- <file> [id]`): lists headings or prints one section (by id such as `5b`, `S1f`, `M2`, `V1.9.0.00`, or heading text), so sessions read a section instead of a whole file.
+- **`Claude.md` doc map (1b)** and session-protocol rule 9: which doc and section to open for which kind of work, and when the proposal files must be opened.
+
+### Changed
+
+- `VERSION` 1.10.0.01 → 1.10.0.02. S1 sub-step versions now start at V1.10.0.03.
+
+### Notes
+
+- Nothing from either proposal is implemented. Gates unchanged: `node tests/graugr.test.mjs` 6 passed, audit PASS (3, 6, 160, 4, 227, 6, 6).
+
 ## V1.10.0.01 — Server path, server-ready rules, audit tool and tests, home-PC hosting and exe plan (docs and tooling only, no gameplay change)
 
 This is the V1.9.0.01 package, which was not applied before V1.10.0.00 shipped. It is applied here on top of V1.10.0.00 and renumbered (V1.9.0.01 would have been a version older than the code), so every phase version in `SERVER_PATH.md` is one minor higher than in the first draft.

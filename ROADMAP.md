@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.10.0.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.02**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -19,6 +19,7 @@ Current version: **V1.10.0.01**. Completed work is recorded in `CHANGELOG.md`; t
 | V1.9.0.00 | Graugr melee enemy (smart AI, 3 skills), stun status, projectile deflect, mock raid with enhancement tiers, kill and one-shot counters |
 | V1.10.0.00 | Real task-based loading screen, stamina resource, DOM HUD (profile circle, compact bars, status effects, skill circles), character panel, SVG icon set |
 | V1.10.0.01 | Docs and tooling (no gameplay change): `SERVER_PATH.md` (road to online, home-PC hosting, exe build), server-ready rules in `Claude.md`, `tools/audit-server-ready.mjs`, `tests/graugr.test.mjs`. This is the V1.9.0.01 package, applied on top of V1.10.0.00 |
+| V1.10.0.02 | Docs and tooling (no gameplay change): two design proposals kept in `docs/proposals/` with a feasibility assessment, roadmap tracks M and W, `tools/sec.mjs` section reader, doc map in `Claude.md`. S1 sub-steps now start at V1.10.0.03 |
 
 ## Server path (road to online)
 
@@ -26,7 +27,7 @@ The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decision
 
 | Phase | Version | Goal | Sessions (rough) |
 | ----- | ------- | ---- | ---------------- |
-| S1 | V1.10.0.02 to V1.10.0.xx, closing **V1.11.0.00** | Separate simulation from view; seeded RNG, damage and input out of the view, many players, fixed timestep. Behaviour unchanged | 14 to 20 |
+| S1 | V1.10.0.03 to V1.10.0.xx, closing **V1.11.0.00** | Separate simulation from view; seeded RNG, damage and input out of the view, many players, fixed timestep. Behaviour unchanged | 14 to 20 |
 | S2 | V1.12.0.00 | Message protocol and a loopback "network" with fake latency inside one browser | 3 to 5 |
 | S3 | V1.13.0.00 | Real Node WebSocket server, two players in one room, garbage-input test, server address setting | 3 to 5 |
 | S4 | V1.14.0.00 | Client prediction and smoothing | 3 to 5 |
@@ -42,6 +43,32 @@ Gates for every step: `node tests/graugr.test.mjs`, `node tools/audit-server-rea
 **Hosting decision (owner, V1.10.0.01):** run the 10 to 50 player server on the owner's own PC to save rent. Assessed as feasible with conditions (the CPU tick budget is the real limit, not the PC; upload is about 8 to 24 Mbps at 50 players; use an outbound tunnel, never open router ports; a 100 W desktop on 24/7 costs about as much electricity as a small VPS). Details and the triggers for moving to a VPS are in `SERVER_PATH.md` S8a.
 
 **Exe packaging (answer, V1.10.0.01):** yes. Recommended path is Electron in `desktop/` (S10); a Tauri build is smaller but needs a Rust toolchain; an installed web app (PWA) is a zero-dependency stopgap. Needs owner approval before any dependency is added. See `SERVER_PATH.md` S10.
+
+## Proposals (assessed in V1.10.0.02, not built)
+
+Sources and full analysis: `docs/proposals/` (`ASSESSMENT.md` sections 1 to 8). Both are **feasible in stages**; neither needs a dependency. Each stage is its own version, needs owner approval, and starts only when its prerequisites are green. Open the proposal sections with `node tools/sec.mjs`.
+
+**Marble Bag Engine (M)**: controlled randomness (bags of outcome tokens), gates, nested bags, persistent hidden item-instance secrets.
+
+| Stage | Work | Needs |
+| ----- | ---- | ----- |
+| M1 | Pure bag primitive + validator + seeded-RNG tests in `src/sim/bag/` (new files, not wired in). May ship before S1 closes | none |
+| M2 | Fireball crit drawn from a per-caster bag (rate decision pending: default keeps 12%) | S1b, S1d |
+| M3 | Gates (`ALL/ANY/NOT`, counts, bounded sequences) | M1, S1h |
+| M4 | Item-instance secrets, one-time effects, first data-driven item (masterwork bow) | L2, S1h, S5 |
+| M5 | Crafting gates, NPC memory, world mysteries, discovery archive | M4, NPCs, accounts |
+
+**World Division and Lag Management (W)**: zones, instances, spatial cells, interest management, tiered NPC simulation. The 100 players + 400 NPCs figure is a design ceiling only; the committed targets stay 10 to 50 players (S6, S9) until measured.
+
+| Stage | Work | Needs |
+| ----- | ---- | ----- |
+| W1 | Design note for this codebase (zone, room, cell shapes, tick budget, overload policy) written into `SERVER_PATH.md` | S1k |
+| W2 | Spatial grid in `src/sim/spatial/`; used by S6 interest management (hysteresis, snapshot on enter, deltas after) | S1h, S2 |
+| W3 | Active / reduced / dormant tiers for a small NPC set, elapsed-time catch-up | NPC type, S1c, S5 |
+| W4 | Zone copies, private instances, capacity limits, cleanup | S6, zones |
+| W5 | Automated load tests and tuning, limits recorded | S6 `loadtest.mjs` |
+
+Hooks into the server path (which S1/S2/S5/S6 step must expose what): `SERVER_PATH.md` section 8.
 
 ## Lobby path (for the next sessions)
 
