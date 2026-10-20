@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node tests/graugr.test.mjs",
     "audit": "node tools/audit-server-ready.mjs",
-    "sec": "node tools/sec.mjs"
+    "sec": "node tools/sec.mjs",
+    "docs": "node tools/check-docs.mjs"
   },
   "description": "Lycarius MMORPG: Primordia. 2D open-world MMORPG (MVP). Game version lives in src/config.js (V1.0.0.00 scheme)."
 }
