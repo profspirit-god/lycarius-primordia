@@ -2,6 +2,24 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.04 — MMORPG guideline, work-choosing rule, doc structure check (docs and tooling only, no gameplay change)
+
+### Added
+
+- **`docs/MMORPG_GUIDELINE.md`**: the Gemini seven-part MMORPG sequence (G1-G7) reconciled with this repository. Each part has the source idea, the source evidence tagged common practice / anecdotal / measured, a verdict (ADOPT, ADAPT, REJECT-PART), do, do not, repo hooks and a gate. G8 lists conflicts with project rules (30 Hz not 20 Hz, no `Date.now()` or `Map` in sim state, no Socket.io, Prisma, Knex, Phaser, Pixi, ESLint or workspaces without approval, 10-50 players not 100+). G9 gives the order from today. It is a guide, not the truth.
+- **ROADMAP "Choosing work"**: what any Claude does when the user does not know what to work on (candidates with Needs and a default, S1a).
+- **`Claude.md`** session rules 10 (read the roadmap, then use the guideline as a guide only) and 11 (doc structure rule), a doc-map row, and a definition-of-done line.
+- **`tools/check-docs.mjs`** (`npm run docs`): fails on a missing title or sections, mixed line endings or a missing doc-map file; warns on a leaf section over 60 lines.
+
+### Changed
+
+- `SERVER_PATH.md` S1: sub-step versions now start at `V1.10.0.05`.
+- `VERSION` 1.10.0.03 → 1.10.0.04. README version strings, ROADMAP Done row.
+
+### Notes
+
+- Nothing built; no dependency added. Gates unchanged: tests pass, audit PASS, docs check PASS.
+
 ## V1.10.0.03 — Art style decided, art intake and map plan (docs only, no gameplay change)
 
 ### Added

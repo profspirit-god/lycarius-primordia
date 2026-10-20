@@ -1,6 +1,21 @@
 # Roadmap
 
-Current version: **V1.10.0.03**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.04**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+
+## Choosing work (read this when the user does not know what to work on)
+
+Procedure for any Claude session: (1) read this section, (2) check the `Needs` of the candidate in its table below, (3) recommend one item and name two alternatives, (4) before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`node tools/sec.mjs docs/MMORPG_GUIDELINE.md G2`). The guideline is **a guide, not the truth**: its evidence is unmeasured, and the authority order is `Claude.md` > `SERVER_PATH.md` decisions > `ASSESSMENT.md` > guideline. Keep this table current: when a step ships, update its row.
+
+| Candidate | Needs | Guideline | Why pick it |
+| --------- | ----- | --------- | ----------- |
+| **S1a Safety net** (characterization tests, `SERVER_PATH.md` S1a) | none | G5, G6 | **Default.** Critical path: every later server step needs these tests green first |
+| S1b Seeded RNG (after S1a) | S1a | G1, G5 | Unlocks deterministic tests and the bag engine (M2) |
+| L2 Items and inventory data model | none | G1, G5 | No server dependency; unlocks L3, L4, L5 and M4 |
+| M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | May ship before S1 closes; owner approves the stage |
+| A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
+| Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
+
+Default when the user says "you decide": **S1a**. Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -21,6 +36,7 @@ Current version: **V1.10.0.03**. Completed work is recorded in `CHANGELOG.md`; t
 | V1.10.0.01 | Docs and tooling (no gameplay change): `SERVER_PATH.md` (road to online, home-PC hosting, exe build), server-ready rules in `Claude.md`, `tools/audit-server-ready.mjs`, `tests/graugr.test.mjs`. This is the V1.9.0.01 package, applied on top of V1.10.0.00 |
 | V1.10.0.02 | Docs and tooling (no gameplay change): two design proposals kept in `docs/proposals/` with a feasibility assessment, roadmap tracks M and W, `tools/sec.mjs` section reader, doc map in `Claude.md`. S1 sub-steps now start at V1.10.0.03 |
 | V1.10.0.03 | Docs only (no gameplay change): art style decided (semi-pixelated), `docs/ART_AND_MAPS.md` with art intake track A and tile/map track T (Tiled), D12 updated |
+| V1.10.0.04 | Docs and tooling (no gameplay change): `docs/MMORPG_GUIDELINE.md` (Gemini seven-part sequence reconciled with this repo, guide not truth), roadmap "Choosing work", `Claude.md` rules 10 and 11, `tools/check-docs.mjs`. S1 sub-step versions now start at V1.10.0.05 |
 
 ## Server path (road to online)
 
