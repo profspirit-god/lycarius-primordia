@@ -76,7 +76,7 @@ Effort is counted in **sessions** (one focused chat that ends with a delivered z
 
 ### S1: Separate the simulation from the view (the big one)
 
-Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.03`, `.04`, ...; `V1.10.0.02` was the proposals docs release). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
+Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.05`, `.06`, ...; `V1.10.0.02` to `.04` were docs releases). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
 
 - **S1a. Safety net.** Extend `tests/` with characterization tests that pin today's behaviour: Fireball damage by charge, cooldowns and mana cost, burn ticks, Flame Shield absorb, explosion falloff, clash outcomes, XP and level math. Done when the tests are green on the unmodified code. Every later step must keep them green.
 - **S1b. Seeded RNG.** Add `src/sim/rng.js` (mulberry32: `next()`, `range(a,b)`, `chance(p)`), create it in `WorldScene.enter` as `world.rng` with a seed. Classify every `rand(` / `Math.random` in a sim file as **G** (gameplay-affecting) or **V** (visual only). Replace every **G** with `world.rng`. **V** stays and moves out in S1f. Done when a test running the same seed twice gives identical Fireball damage lists, and different seeds differ.

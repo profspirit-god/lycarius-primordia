@@ -12,12 +12,13 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 
 ## 1b. Doc map (open a section, never a whole doc)
 
-`node tools/sec.mjs <file>` lists headings; `node tools/sec.mjs <file> <id|text>` prints one section (`5b`, `S1f`, `M2`, `V1.9.0.00`, `Burn Resistance`).
+`node tools/sec.mjs <file>` lists headings; `node tools/sec.mjs <file> <id|text>` prints one section (`5b`, `S1f`, `M2`, `G2`, `V1.9.0.00`, `Burn Resistance`). `npm run docs` checks that every doc keeps this structure.
 
 | File | Open when | Sections |
 | ---- | --------- | -------- |
 | `Claude.md` | every session | 1 snapshot, 2 protocol, 3 git, 4 code map, 5/5b rules, 6 perf, 7 GitHub, 8 done, 9 gotchas |
-| `ROADMAP.md` | choosing or planning work | Done, Server path, **Proposals**, Lobby path, combat depth, world, Later |
+| `ROADMAP.md` | **user does not know what to work on**, choosing or planning work | **Choosing work**, Done, Server path, **Proposals**, Lobby path, combat depth, art and maps, world, Later |
+| `docs/MMORPG_GUIDELINE.md` | after picking work from the roadmap, for ideas and risks on the same topic (a guide, never the truth) | G0 use, G1 shared data, G2 server loop, G3 rendering, G4 sessions and saves, G5 entities and combat, G6 AI rules, G7 load tests, G8 conflicts, G9 order |
 | `SERVER_PATH.md` | any server-path work | 0 gates, 1 decisions, 2 audit, S1..S10 (`S1f`), 4 cost, 5 flags, 6 debt, 7 not-to-do, 8 proposal hooks |
 | `docs/proposals/ASSESSMENT.md` | any M or W work, **first** | 1 verdicts, 2 findings, 3-4 Marble plan, 5-6 World plan, 7 risks, 8 rules |
 | `docs/proposals/Marble-bag-engine.md` | randomness, crit, loot, gates, hidden or item-instance state, crafting secrets, NPC memory, discoveries | 1 goal, 3 config, 4 bags, 5 gates, 6 bow, 7 data, 8 state/security, 9 archive, 10 parts, 11 tests, 12 phases, 13 laws |
@@ -37,6 +38,11 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 7. **Server-path work:** read `SERVER_PATH.md` section 0, section 1 and only the phase being built. One phase (or one S1 step) per version; follow its "Done when" literally. Do not start a phase whose predecessor's gates are not green. The exe (S10) and hosting (S8) are planned only; add no dependency or `desktop/` folder without the owner's approval.
 8. **Proposal work (Marble Bag Engine M, World Division W):** if a task touches random outcomes or crit, loot, item or hidden state, gates, crafting secrets, zones or maps, instances, rooms, spatial queries, interest management, NPC population or AI tiers, tick budget, load or lag: first open `docs/proposals/ASSESSMENT.md` section 1 and the stage section (3-4 or 5-6), then only the proposal sections it names. The proposals are **not code**: verify in the repo, claim nothing without tests, one stage per version, owner approves each stage, start a stage only when its Needs are green (ROADMAP "Proposals"; hooks in `SERVER_PATH.md` section 8). Where a proposal conflicts with this file, `SERVER_PATH.md` or a decision in the assessment, the proposal loses; flag it.
 9. If the chat gets long, end with a <10 line state summary (version, branch, last change, next step).
+10. **The user does not know what to work on** (or says "what next", "continue", "you decide"): do this, in order, and do not ask an open question.
+    1. `node tools/sec.mjs ROADMAP.md "Choosing work"` and follow it: it lists the unblocked candidates and a default.
+    2. Verify the pick's `Needs` are green (`SERVER_PATH.md` section 0, `ASSESSMENT.md` section 1 for M and W items). Pick at most 3 candidates, recommend one, ask at most one question (rule 6), or start the recommended one if the user said to decide.
+    3. Before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`G1`-`G7`). It is **a guide, not the absolute truth**: its evidence is mostly unmeasured, so verify claims in the repo or with a test, and where it conflicts with this file, `SERVER_PATH.md` or the assessment, it loses (G0, G8). Flag the conflict in one line.
+11. **Doc structure (every doc, every edit):** a `#` title, numbered `##` sections with stable ids, one topic per section, sections of at most 60 lines (split or add `###` above that), tables and lists over long paragraphs, and a doc-map row here when a doc is added. New or changed docs must pass `npm run docs`. Source files: keep the code map (section 4) current, one purpose per file, short header comment saying what the file is for.
 
 ## 3. Versioning and git
 
@@ -141,6 +147,7 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 - [ ] Works; console clean; no gameplay regression. `node --check` passes. No duplicate helpers.
 - [ ] `VERSION` bumped; CHANGELOG, README, ROADMAP, this file updated if a rule or the code map changed.
 - [ ] Server-ready gate (5b) passes; debt log and baseline updated if debt changed.
+- [ ] `node tools/check-docs.mjs` passes (doc structure, section 2 rule 11).
 - [ ] Changes-only zip, test checklist, GitHub steps delivered.
 
 ## 9. Gotchas
@@ -164,4 +171,4 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 
 ## 10. Next
 
-See `ROADMAP.md` (server path S1-S10 in `SERVER_PATH.md`; lobby path L1-L11; combat depth; world; classes; NPCs/quests; V2.0.0.00 online). Ask the user which fork when starting; one lobby feature per version.
+If the user has no preference, run session rule 10 (ROADMAP "Choosing work"). Plan: `ROADMAP.md` (server path S1-S10 in `SERVER_PATH.md`; lobby path L1-L11; combat depth; world; classes; NPCs/quests; V2.0.0.00 online). Ask the user which fork when starting; one lobby feature per version.
