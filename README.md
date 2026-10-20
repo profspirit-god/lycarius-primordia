@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.10.0.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.10.0.02** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.10.0.01
+## 1. What is in V1.10.0.02
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -431,7 +431,12 @@ src/
 | ------- | ------------ |
 | `node tests/graugr.test.mjs` | Headless gameplay tests (Graugr AI, skills, stun, deflect, raid). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
-| `npm test` and `npm run audit` | Shortcuts for the two commands above |
+| `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
+| `npm test`, `npm run audit`, `npm run sec -- <file> [id]` | Shortcuts for the commands above |
+
+### Design proposals (not built)
+
+`docs/proposals/` keeps two design proposals for reference, with a feasibility assessment and staged plan: `Marble-bag-engine.md` (controlled randomness, persistent hidden conditions, item secrets) and `World-Division-and-Lag-Management.md` (zones, instances, spatial cells, interest management, tiered NPC simulation). Neither is implemented. Verdicts and prerequisites: `docs/proposals/ASSESSMENT.md`; plan: ROADMAP "Proposals".
 
 ## 5. Git workflow
 
@@ -463,7 +468,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.10.0.01)
+## 6. Known limitations (V1.10.0.02)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
