@@ -22,6 +22,7 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 | `docs/proposals/ASSESSMENT.md` | any M or W work, **first** | 1 verdicts, 2 findings, 3-4 Marble plan, 5-6 World plan, 7 risks, 8 rules |
 | `docs/proposals/Marble-bag-engine.md` | randomness, crit, loot, gates, hidden or item-instance state, crafting secrets, NPC memory, discoveries | 1 goal, 3 config, 4 bags, 5 gates, 6 bow, 7 data, 8 state/security, 9 archive, 10 parts, 11 tests, 12 phases, 13 laws |
 | `docs/proposals/World-Division-and-Lag-Management.md` | zones, maps, instances, rooms, spatial cells, interest management, NPC population or tiers, tick budget, load or lag | 2 hierarchy, 4 cells, 5 tiers, 6 NPCs, 7 loop, 8 net, 9 capacity, 10 persistence, 11 metrics, 12 tests, 13 phases, 14 rules |
+| `docs/ART_AND_MAPS.md` | sprites, animation, tiles, maps, camera scale, pixel rendering, Tiled | 1 decisions, 2 pixel rules, 3 track A, 4 track T, 5 map format, 6 Tiled setup, 7 risks |
 | `README.md` | player-facing docs of a feature | one heading per feature, 4 architecture, 4b checks |
 | `CHANGELOG.md` | what shipped in a version | one heading per `V<x.y.z.nn>` |
 
@@ -75,6 +76,7 @@ audio/AudioEngine  procedural Web Audio, no asset files
 render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
 tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase; sec.mjs: print one doc section
 docs/proposals/    ASSESSMENT + the two proposals (Marble bag, World division); design only, no code
+docs/ART_AND_MAPS.md  art style, sprite manifest, Tiled maps; plan only
 tests/             graugr.test.mjs (headless gameplay tests, pattern for new tests)
 ```
 
@@ -88,7 +90,8 @@ World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `
 4. Entities extend `Entity`; optional `hittable`, `solid`, `onHit(e)`, `onDot(e)`, `damageColor`. Scenes extend `Scene`, call `super.enter(game)`, register via `game.register`; they talk via `game.goto`, never by importing each other.
 5. Settings: default in `Settings.js` + row in `SettingsScene.js`. Shared helpers live once (`scaled as n` for particle counts).
 6. Annotate new skills/classes/events with `@type {import('../types.js').X}`. No dependency or bundler without approval and a roadmap entry.
-7. New features are additions, not edits. Keep damage integers. Constants for tuning go at the top of the file.
+7. **Art:** semi-pixelated (D12). Before touching sprites, tiles, manifests, camera scale or maps, open `docs/ART_AND_MAPS.md` sections 1 and 2 plus the stage. 32 px tiles, 32x48 px frames, integer scale, smoothing off for sprites/tiles only; missing art falls back to the cylinder; map collision is sim code (server-ready).
+8. New features are additions, not edits. Keep damage integers. Constants for tuning go at the top of the file.
 
 ## 5b. Server-ready rules (MANDATORY; the plan and phases are in `SERVER_PATH.md`)
 
