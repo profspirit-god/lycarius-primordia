@@ -76,7 +76,7 @@ Effort is counted in **sessions** (one focused chat that ends with a delivered z
 
 ### S1: Separate the simulation from the view (the big one)
 
-Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.02`, `.03`, ...). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
+Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.03`, `.04`, ...; `V1.10.0.02` was the proposals docs release). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
 
 - **S1a. Safety net.** Extend `tests/` with characterization tests that pin today's behaviour: Fireball damage by charge, cooldowns and mana cost, burn ticks, Flame Shield absorb, explosion falloff, clash outcomes, XP and level math. Done when the tests are green on the unmodified code. Every later step must keep them green.
 - **S1b. Seeded RNG.** Add `src/sim/rng.js` (mulberry32: `next()`, `range(a,b)`, `chance(p)`), create it in `WorldScene.enter` as `world.rng` with a seed. Classify every `rand(` / `Math.random` in a sim file as **G** (gameplay-affecting) or **V** (visual only). Replace every **G** with `world.rng`. **V** stays and moves out in S1f. Done when a test running the same seed twice gives identical Fireball damage lists, and different seeds differ.
@@ -293,3 +293,20 @@ The audit tool counts the mechanical debt. This list holds debt a script cannot 
 - No Electron (or any other) dependency in the repository root `package.json`. The exe lives in `desktop/` (D13).
 - No game feature that reads `world.input`, the DOM, `localStorage`, the clock or `Math.random` inside simulation code (`Claude.md` 5b).
 - Do not skip a gate to save a session. A skipped gate costs several sessions later.
+
+---
+
+## 8. Proposal hooks (added V1.10.0.02)
+
+Small obligations so the two proposals in `docs/proposals/` stay buildable. They add no steps and change no "done when". Plan and prerequisites: `ROADMAP.md` "Proposals"; analysis: `docs/proposals/ASSESSMENT.md`.
+
+| Step | Obligation | For |
+| ---- | ---------- | --- |
+| S1b | `world.rng` is passed into sim objects as a parameter (never an imported global) and exposes `next()` in [0,1) | M1 to M3 bags |
+| S1c | `world.time` is the only time source for gate windows and dormant catch-up | M3, W3 |
+| S1d | `DamageSystem` is the single place where hit-driven random draws and token consumption happen | M2 |
+| S1h | Integer entity `id`; `snapshot()` omits fields marked hidden (bag order, gates, secrets) | M3, M4, W2 |
+| S1k | New sim folders: `src/sim/bag/`, `src/sim/spatial/` (both covered by the audit list and `import-sim`) | M1, W2 |
+| S2 | `snap` and `ev` payloads carry no hidden state; a test asserts it | M4 |
+| S5 | Item-instance state gets its own table only when M4 starts; do not add it earlier | M4 |
+| S6 | Interest management uses the W2 grid; room soft/hard capacity are constants; `loadtest.mjs` also logs entities per room | W2, W5 |
