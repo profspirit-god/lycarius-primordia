@@ -2,6 +2,23 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.03 — Art style decided, art intake and map plan (docs only, no gameplay change)
+
+### Added
+
+- **`docs/ART_AND_MAPS.md`**: owner decision **semi-pixelated** (32 px tiles, 32x48 px frames, 1 world unit = 1 art pixel, integer `PIXEL_SCALE` 2 or 3); pixel rendering rules; track A (sprite manifest, `drawSprite`, cylinder fallback, camera scale, animation state, optional effect art); track T (Tiled JSON loader, collision grid in the sim, objects layer, two zones, dev overlay); fixed map format; Tiled setup steps; risks.
+- **ROADMAP "Art and maps"**: stages A1-A4 and T1-T5 with prerequisites; "Then: world" now points to track T.
+- `Claude.md`: doc-map row, architecture rule 7 (art) and code-map line.
+
+### Changed
+
+- `SERVER_PATH.md` D12: "art undecided" replaced by the semi-pixelated decision. No phase is blocked.
+- `VERSION` 1.10.0.02 → 1.10.0.03.
+
+### Notes
+
+- Nothing built; characters stay cylinders until A1. Gates unchanged: 6 tests pass, audit PASS (3, 6, 160, 4, 227, 6, 6).
+
 ## V1.10.0.02 — Design proposals assessed, proposals roadmap, section reader (docs and tooling only, no gameplay change)
 
 ### Added

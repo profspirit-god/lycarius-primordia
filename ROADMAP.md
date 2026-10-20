@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.10.0.02**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.03**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Done
 
@@ -20,6 +20,7 @@ Current version: **V1.10.0.02**. Completed work is recorded in `CHANGELOG.md`; t
 | V1.10.0.00 | Real task-based loading screen, stamina resource, DOM HUD (profile circle, compact bars, status effects, skill circles), character panel, SVG icon set |
 | V1.10.0.01 | Docs and tooling (no gameplay change): `SERVER_PATH.md` (road to online, home-PC hosting, exe build), server-ready rules in `Claude.md`, `tools/audit-server-ready.mjs`, `tests/graugr.test.mjs`. This is the V1.9.0.01 package, applied on top of V1.10.0.00 |
 | V1.10.0.02 | Docs and tooling (no gameplay change): two design proposals kept in `docs/proposals/` with a feasibility assessment, roadmap tracks M and W, `tools/sec.mjs` section reader, doc map in `Claude.md`. S1 sub-steps now start at V1.10.0.03 |
+| V1.10.0.03 | Docs only (no gameplay change): art style decided (semi-pixelated), `docs/ART_AND_MAPS.md` with art intake track A and tile/map track T (Tiled), D12 updated |
 
 ## Server path (road to online)
 
@@ -38,7 +39,7 @@ The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decision
 | S9 | V1.19.0.00, then **V2.0.0.00** | Closed alpha with friends, then a 50-player scale test | 2 weeks of testing |
 | S10 | next free minor (optional, any time after S3) | **Desktop build (exe)**: Electron wrapper in its own `desktop/` folder, real Exit Game | 2 to 3 |
 
-Gates for every step: `node tests/graugr.test.mjs`, `node tools/audit-server-ready.mjs` (debt may never go up), manual play check, docs updated. Feature work in other areas may continue in between, but must follow the server-ready rules (`Claude.md` 5b). Art style is undecided and does not block any phase.
+Gates for every step: `node tests/graugr.test.mjs`, `node tools/audit-server-ready.mjs` (debt may never go up), manual play check, docs updated. Feature work in other areas may continue in between, but must follow the server-ready rules (`Claude.md` 5b). Art style is decided (semi-pixelated, D12) and does not block any phase.
 
 **Hosting decision (owner, V1.10.0.01):** run the 10 to 50 player server on the owner's own PC to save rent. Assessed as feasible with conditions (the CPU tick budget is the real limit, not the PC; upload is about 8 to 24 Mbps at 50 players; use an outbound tunnel, never open router ports; a 100 W desktop on 24/7 costs about as much electricity as a small VPS). Details and the triggers for moving to a VPS are in `SERVER_PATH.md` S8a.
 
@@ -102,10 +103,28 @@ Rules for this area: keep content as data in `lobbyData.js` (or registries once 
 - Make character level matter (stat growth per level) and add a respec option for the specialization tree.
 - Second class and a second specialization element; explosions that can ignite; clash rules for other projectile types.
 
+## Art and maps (V1.10.0.03, plan only)
+
+Style: **semi-pixelated** (pixel-art sprites and tiles, smooth effects); 32 px tiles, 32x48 px characters, integer scale 2 or 3. Details, rules and map format: `docs/ART_AND_MAPS.md`. Maps are made in **Tiled** (no custom editor); art enters through a data manifest (no per-asset code).
+
+| Stage | Work | Needs |
+| ----- | ---- | ----- |
+| A1 | Sprite manifest, loader, `drawSprite`, cylinder fallback | S1f |
+| A2 | `PIXEL_SCALE` camera + Settings row, pixel rules | A1 |
+| A3 | Animation state from sim data (idle, walk, cast, hurt, dead) | A1, S1h |
+| A4 | Effect/status art (optional) | A1 |
+| T1 | Tiled JSON loader + validator, placeholder tileset, tile render layer | A2 |
+| T2 | Collision grid in the sim (server-ready) | T1, S1h |
+| T3 | Objects layer: spawn points, exits, NPC points | T2 |
+| T4 | Two zones, transitions, lazy zone loading | T3, L10 |
+| T5 | Dev overlay: collision, spawns, grid cells | T2 |
+
+Art production can start now (sizes are fixed); nothing in A or T blocks S1.
+
 ## Then: world
 
-- Tilemap and collision replacing the infinite placeholder ground.
-- Two zones and zone transitions; lazy-load zone data with dynamic `import()`.
+- Tilemap and collision replacing the infinite placeholder ground: track T above.
+- Two zones and zone transitions; lazy-load zone data with dynamic `import()`: T4.
 
 ## Later
 

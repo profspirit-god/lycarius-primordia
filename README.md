@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.10.0.02** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.10.0.03** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.10.0.02
+## 1. What is in V1.10.0.03
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -438,6 +438,10 @@ src/
 
 `docs/proposals/` keeps two design proposals for reference, with a feasibility assessment and staged plan: `Marble-bag-engine.md` (controlled randomness, persistent hidden conditions, item secrets) and `World-Division-and-Lag-Management.md` (zones, instances, spatial cells, interest management, tiered NPC simulation). Neither is implemented. Verdicts and prerequisites: `docs/proposals/ASSESSMENT.md`; plan: ROADMAP "Proposals".
 
+### Art style and maps (planned)
+
+The game's art style is **semi-pixelated**: pixel-art sprites and tiles with smooth effects, 32 px tiles, 32x48 px characters, integer screen scale. Sprites will be added through a data manifest and maps made in Tiled; see `docs/ART_AND_MAPS.md` and the ROADMAP "Art and maps" section. Nothing of this is built yet; characters are still cylinders.
+
 ## 5. Git workflow
 
 Branches:
@@ -468,7 +472,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.10.0.02)
+## 6. Known limitations (V1.10.0.03)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
