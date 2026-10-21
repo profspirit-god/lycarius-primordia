@@ -77,6 +77,7 @@ export class TrainingDummy extends Entity {
   }
   /** Toggle skills: ask for a press whenever the real state differs from what the AI wants. */
   wantsToggle(slot) {
+    if (slot.skill.instant) return false; // Mana Regen / Dodge are player abilities; the dummy never uses them
     return this.skills && !this.downed && this.ai.shield !== !!slot.skill.isActive(this);
   }
   applyImpulse(x, y) {

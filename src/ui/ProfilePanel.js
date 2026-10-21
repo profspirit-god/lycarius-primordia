@@ -1,6 +1,7 @@
 import { icon } from "./icons.js";
 import { PROFILE } from "../lobby/lobbyData.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { UNIVERSAL } from "../classes/Universal.js";
 
 const pct = (v) => `${v >= 0 ? "+" : ""}${Math.round(v * 100)}%`;
 const PLACEHOLDER = "--";
@@ -71,7 +72,7 @@ export class ProfilePanel {
 
   skillsTab(p) {
     const spec = p.cls.specialization,
-      ids = [spec.start[0], ...Object.values(spec.unlocks)].filter((id, i, a) => a.indexOf(id) === i);
+      ids = [...spec.start, ...Object.values(spec.unlocks), ...UNIVERSAL.skills].filter((id, i, a) => a.indexOf(id) === i);
     const rows = ids
       .map((id) => {
         const sk = SkillRegistry.get(id),
@@ -79,7 +80,7 @@ export class ProfilePanel {
           lv = Object.entries(spec.unlocks).find(([, s]) => s === id)?.[0],
           lo = sk.manaCost(sk.minCharge),
           hi = sk.manaCost(1),
-          cost = lo === hi ? `${lo} MP` : `${lo}-${hi} MP`;
+          cost = sk.costText ?? (lo === hi ? `${lo} MP` : `${lo}-${hi} MP`);
         return `<div class="pr-skill${has ? "" : " locked"}">
           <span class="pr-sic">${icon(has ? sk.icon : "lock")}</span>
           <div><b>${sk.name}</b><small>${sk.hint ?? ""} · ${cost} · ${sk.cooldown}s cooldown</small></div>

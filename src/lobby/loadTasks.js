@@ -5,6 +5,7 @@
 // To make loading wait for something new (a zone file, a texture atlas), add a task to the array below.
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
+import { UNIVERSAL } from "../classes/Universal.js";
 import { Progression } from "../progression/Progression.js";
 import { Player } from "../entities/Player.js";
 import { GameAudio } from "../audio/AudioEngine.js";
@@ -29,7 +30,7 @@ export function buildTasks(cfg, params = {}) {
         const cls = ClassRegistry.get(classId); // throws on an unknown class
         for (const id of cls.skills) SkillRegistry.get(id);
         for (const id of Object.values(cls.specialization.unlocks)) SkillRegistry.get(id);
-        for (const id of cls.skills) if (!ICONS[SkillRegistry.get(id).icon]) throw new Error(`Skill "${id}" has no icon`);
+        for (const id of [...cls.skills, ...UNIVERSAL.skills]) if (!ICONS[SkillRegistry.get(id).icon]) throw new Error(`Skill "${id}" has no icon`);
       },
     },
     {
