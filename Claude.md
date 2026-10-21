@@ -20,6 +20,7 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 | `ROADMAP.md` | **user does not know what to work on**, choosing or planning work | **Choosing work**, Done, Server path, **Proposals**, Lobby path, combat depth, art and maps, world, Later |
 | `docs/MMORPG_GUIDELINE.md` | after picking work from the roadmap, for ideas and risks on the same topic (a guide, never the truth) | G0 use, G1 shared data, G2 server loop, G3 rendering, G4 sessions and saves, G5 entities and combat, G6 AI rules, G7 load tests, G8 conflicts, G9 order |
 | `SERVER_PATH.md` | any server-path work | 0 gates, 1 decisions, 2 audit, S1..S10 (`S1f`), 4 cost, 5 flags, 6 debt, 7 not-to-do, 8 proposal hooks |
+| `docs/ENGINES_AND_SYSTEMS.md` | **creating, planning or reviewing any system or engine** (loop, transport, registry, saves, spatial grid, pipeline): find its row, Status and Where first. A guideline, not the truth | E0 use, E1 early, E2 mid, E3 scale, E4 differences, E5 checklist |
 | `docs/proposals/ASSESSMENT.md` | any M or W work, **first** | 1 verdicts, 2 findings, 3-4 Marble plan, 5-6 World plan, 7 risks, 8 rules |
 | `docs/proposals/Marble-bag-engine.md` | randomness, crit, loot, gates, hidden or item-instance state, crafting secrets, NPC memory, discoveries | 1 goal, 3 config, 4 bags, 5 gates, 6 bow, 7 data, 8 state/security, 9 archive, 10 parts, 11 tests, 12 phases, 13 laws |
 | `docs/proposals/World-Division-and-Lag-Management.md` | zones, maps, instances, rooms, spatial cells, interest management, NPC population or tiers, tick budget, load or lag | 2 hierarchy, 4 cells, 5 tiers, 6 NPCs, 7 loop, 8 net, 9 capacity, 10 persistence, 11 metrics, 12 tests, 13 phases, 14 rules |
@@ -42,7 +43,8 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
     1. `node tools/sec.mjs ROADMAP.md "Choosing work"` and follow it: it lists the unblocked candidates and a default.
     2. Verify the pick's `Needs` are green (`SERVER_PATH.md` section 0, `ASSESSMENT.md` section 1 for M and W items). Pick at most 3 candidates, recommend one, ask at most one question (rule 6), or start the recommended one if the user said to decide.
     3. Before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`G1`-`G7`). It is **a guide, not the absolute truth**: its evidence is mostly unmeasured, so verify claims in the repo or with a test, and where it conflicts with this file, `SERVER_PATH.md` or the assessment, it loses (G0, G8). Flag the conflict in one line.
-11. **Doc structure (every doc, every edit):** a `#` title, numbered `##` sections with stable ids, one topic per section, sections of at most 60 lines (split or add `###` above that), tables and lists over long paragraphs, and a doc-map row here when a doc is added. New or changed docs must pass `npm run docs`. Source files: keep the code map (section 4) current, one purpose per file, short header comment saying what the file is for.
+11. **Systems and engines:** before creating, planning or reviewing one, open `docs/ENGINES_AND_SYSTEMS.md` E0 and the row in E1-E3, and run its E5 checklist. It is **a guideline, not the absolute truth**: where it conflicts with this file, `SERVER_PATH.md` or the assessment, it loses (flag it in E4). Update its `Status` when a system ships.
+12. **Doc structure (every doc, every edit):** a `#` title, numbered `##` sections with stable ids, one topic per section, sections of at most 60 lines (split or add `###` above that), tables and lists over long paragraphs, and a doc-map row here when a doc is added. New or changed docs must pass `npm run docs`. Source files: keep the code map (section 4) current, one purpose per file, short header comment saying what the file is for.
 
 ## 3. Versioning and git
 
@@ -148,7 +150,7 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 - [ ] Works; console clean; no gameplay regression. `node --check` passes. No duplicate helpers.
 - [ ] `VERSION` bumped; CHANGELOG, README, ROADMAP, this file updated if a rule or the code map changed.
 - [ ] Server-ready gate (5b) passes; debt log and baseline updated if debt changed.
-- [ ] `node tools/check-docs.mjs` passes (doc structure, section 2 rule 11).
+- [ ] `node tools/check-docs.mjs` passes (doc structure, section 2 rule 12).
 - [ ] Changes-only zip, test checklist, GitHub steps delivered.
 
 ## 9. Gotchas

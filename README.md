@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.12.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.12.0.00
+## 1. What is in V1.12.0.01
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -533,7 +533,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.12.0.00)
+## 6. Known limitations (V1.12.0.01)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

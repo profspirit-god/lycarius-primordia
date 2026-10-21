@@ -2,6 +2,11 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.01 — Docs: engines and systems guideline (cleanup, no code change)
+
+- **`docs/ENGINES_AND_SYSTEMS.md`** (new): the Gemini engine and system roadmap, reconciled with this repo. Early (E1), mid (E2) and scale (E3) tables give each system, what it does, its `Status` (Built, Planned with a step, Not planned) and `Where` it lands; E4 lists known differences from the source; E5 is a checklist for creating a system. Stated everywhere as a guideline, not the truth.
+- `Claude.md`: doc-map row, new session rule 11 (open it before creating or reviewing a system or engine); the doc-structure rule is now rule 12. `VERSION` 1.12.0.00 to 1.12.0.01. No game code changed.
+
 ## V1.12.0.00 — Modal X fix, buff visual language, sectioned Settings with a fixed footer
 
 ### Fixed
