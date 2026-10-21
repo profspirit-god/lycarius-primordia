@@ -98,7 +98,7 @@ test("tuning constants of the Mage kit", () => {
   assert.deepEqual(Mage.stats, {
     speed: 230, radius: 16, height: 46, maxHp: 50, maxMana: 100, hpRegen: 0.1, manaRegen: 1, maxStamina: 100, staminaRegen: 8,
   });
-  assert.deepEqual(Mage.skills, ["fireball", "flameShield", "burnResistance"]);
+  assert.deepEqual(Mage.skills, ["fireball", "flameShield", "burnResistance", "fireBlast"]); // fireBlast added in V1.11.0.00
 });
 
 test("Vitals: regeneration caps, damage and spend floor at zero, dead stops regen", () => {
@@ -739,7 +739,7 @@ test("Progression events: xp, then one levelup per level gained, unlocks reporte
 test("Specialization: skill unlocks, choice levels, picks, folded modifiers", () => {
   const p = new Progression(Mage);
   assert.deepEqual(p.unlockedSkills(), ["fireball"]);
-  assert.deepEqual(p.choiceLevels(), [2, 3, 4, 6, 7, 8, 9]);
+  assert.deepEqual(p.choiceLevels(), [2, 3, 4, 6, 7, 9]); // level 8 became the Fire Blast unlock in V1.11.0.00
   assert.deepEqual(p.pendingLevels(), []);
   assert.equal(p.pick("mana"), false, "nothing to pick at level 1");
   p.specXp = 50 + 132 + 233 + 348; p.recalc(); // level 5
@@ -754,7 +754,7 @@ test("Specialization: skill unlocks, choice levels, picks, folded modifiers", ()
   const m = p.mods();
   assert.deepEqual([m.element, m.stats.maxMana, m.castTimeMult, m.cooldownMult, m.elementDamage, m.skillDamage], ["fire", 20, 0.95, 1, 0, 0]);
   p.specXp = 1e9; p.recalc();
-  assert.deepEqual(p.unlockedSkills(), ["fireball", "flameShield", "burnResistance"]);
+  assert.deepEqual(p.unlockedSkills(), ["fireball", "flameShield", "fireBlast", "burnResistance"]);
 });
 
 test("Specialization bonuses: each one folds into the modifier object", () => {

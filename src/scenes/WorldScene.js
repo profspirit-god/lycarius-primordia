@@ -17,6 +17,7 @@ import { VERSION_LABEL } from "../config.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
 import { ExplosionSystem } from "../systems/ExplosionSystem.js";
 import { ExplosionFx } from "../systems/ExplosionFx.js";
+import { BlastFx } from "../systems/BlastFx.js";
 import { XpSystem } from "../systems/XpSystem.js";
 import { RaidSystem } from "../systems/RaidSystem.js";
 import { drawEnhance } from "../render/drawEnhance.js";
@@ -59,6 +60,7 @@ export class WorldScene extends Scene {
     this.burnFx = new BurnFx(this);
     this.explosions = new ExplosionSystem(this);
     this.explosionFx = new ExplosionFx(this);
+    this.blastFx = new BlastFx(this);
     const cls = ClassRegistry.get(this.classId);
     this.cls = cls;
     this.progression = new Progression(cls);
@@ -103,6 +105,7 @@ export class WorldScene extends Scene {
     this.burnFx.dispose();
     this.explosions.dispose();
     this.explosionFx.dispose();
+    this.blastFx.dispose();
     this.xp.dispose();
     this.raid.dispose();
     this.offLevel();
