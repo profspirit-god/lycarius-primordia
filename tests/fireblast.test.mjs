@@ -8,8 +8,13 @@ import { StatusSystem } from "../src/systems/StatusSystem.js";
 import { Vitals } from "../src/systems/Vitals.js";
 import { FireBlast } from "../src/skills/FireBlast.js";
 import { Mage } from "../src/classes/Mage.js";
+import { SkillRegistry } from "../src/skills/SkillRegistry.js";
 import { TrainingDummy } from "../src/entities/TrainingDummy.js";
 import { BlastFx } from "../src/systems/BlastFx.js";
+import { Player } from "../src/entities/Player.js";
+import { ParticleSystem } from "../src/systems/ParticleSystem.js";
+import { Lights } from "../src/systems/Lights.js";
+import { Camera } from "../src/systems/Camera.js";
 
 const DT = 1 / 60;
 function mkWorld() {
@@ -165,6 +170,67 @@ test("BlastFx emits finite particle numbers and a bounded amount", () => {
   for (const p of seen) for (const v of Object.values(p)) if (typeof v === "number") assert.ok(Number.isFinite(v), JSON.stringify(p));
   assert.ok(w.camera.trauma > 0 && w.camera.trauma <= 1);
   fx.dispose();
+});
+
+/** Canvas stand-in: every method is a no-op that rejects NaN / Infinity arguments; gradients accept colour stops. */
+function mkCtx() {
+  const bad = [];
+  const ctx = new Proxy({}, {
+    get: (t, k) => {
+      if (k === "bad") return bad;
+      if (k === "createRadialGradient" || k === "createLinearGradient") return () => ({ addColorStop() {} });
+      if (k in t) return t[k];
+      return (...a) => { for (const v of a) if (typeof v === "number" && !Number.isFinite(v)) bad.push(String(k)); };
+    },
+    set: (t, k, v) => ((t[k] = v), true),
+  });
+  return ctx;
+}
+
+test("regression: the player draws while charging and while holding Fire Blast (V1.11.1.00 crash on R)", () => {
+  const p = new Player(Mage);
+  p.x = 100; p.y = 100;
+  const slot = p.caster.slots.find((s) => s.skill.id === "fireBlast");
+  assert.ok(slot, "the player owns Fire Blast without a progression object");
+  assert.ok(slot.skill.palette, "a self skill must carry its own circle palette");
+  for (const charge of [0, 0.3, 1]) {
+    slot.charging = true; slot.charge = charge; slot.t = charge * 0.5;
+    const ctx = mkCtx();
+    p.draw(ctx);
+    assert.deepEqual(ctx.bad, [], "non-finite draw arguments at charge " + charge);
+  }
+  slot.charging = false;
+  p.draw(mkCtx());
+});
+
+test("every self skill of the class has a palette (draw code reads palette.main)", () => {
+  for (const id of Mage.skills) {
+    const sk = SkillRegistry.get(id);
+    if (sk.self) assert.ok(sk.palette?.main && sk.palette?.core && sk.palette?.deep, id + " has no complete palette");
+  }
+});
+
+test("integration: a full cast with the real particles, lights and camera updates and renders 2 s without a bad value", () => {
+  const w = mkWorld();
+  w.input = { isDown: () => false, wasPressed: () => false };
+  w.particles = new ParticleSystem(); w.lights = new Lights(); w.camera = new Camera(); w.hitstop = () => {};
+  const p = new Player(Mage);
+  p.x = 0; p.y = 0; p.vitals.mana = 100;
+  w.player = p; w.entities.push(p);
+  new BlastFx(w);
+  const t = mkTarget(w, 120, 0);
+  const slot = p.caster.slots.find((s) => s.skill.id === "fireBlast");
+  p.wantsCast = (s) => s === slot; // key held
+  for (let i = 0; i < 150; i++) {
+    p.caster.update(DT, w);
+    w.particles.update(DT); w.lights.update(DT); w.camera.update(DT, p);
+    const ctx = mkCtx();
+    p.draw(ctx); w.particles.render(ctx); w.lights.render(ctx);
+    assert.deepEqual(ctx.bad, [], "frame " + i);
+  }
+  assert.equal(w.blasts.length, 1, "exactly one blast: holding R does not recast");
+  assert.ok(w.hits.some((h) => h.target === t && h.damage === 70));
+  assert.ok(slot.cooldown > 55, "cooldown running");
 });
 
 console.log(`\n${passed} tests passed`);

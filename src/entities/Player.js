@@ -6,7 +6,7 @@ import { drawChargeOrb } from "../render/drawChargeOrb.js";
 import { drawAura } from "../render/drawAura.js";
 import { drawStun } from "../render/drawStun.js";
 import { drawBar } from "../render/drawBar.js";
-import { WARD_CIRCLE } from "../render/drawMagicCircle.js";
+import { WARD_CIRCLE, FIRE_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
 import { Settings } from "../core/Settings.js";
@@ -211,7 +211,7 @@ export class Player extends Entity {
       color: this.cls.color,
       flash: this.flash * 0.6,
       tint: casting?.self
-        ? { c: casting.palette.main, a: charge * 0.5 }
+        ? { c: (casting.palette ?? FIRE_CIRCLE).main, a: charge * 0.5 }
         : this.ward ? { c: WARD_CIRCLE.main, a: 0.45 * this.ward.level() } : null, // glows red-orange while casting / warded
       lean: [-c * this.kick * 8, -s * this.kick * 4 + moving * 1.5],
     });

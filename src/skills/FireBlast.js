@@ -2,6 +2,7 @@
 // no drawing, no audio. It emits a 'blast' event (BlastFx draws it, AudioSystem plays it) and 'hit' events (damage).
 import { dist } from "../core/math.js";
 import { elementMult, skillMult } from "../progression/Mods.js";
+import { FIRE_CIRCLE } from "../render/drawMagicCircle.js"; // colour data only, same as BurnResistance
 
 // Tuning (all numbers live here).
 const DAMAGE = 70; // flat, to every target in range (no falloff)
@@ -22,6 +23,7 @@ export const FireBlast = {
   icon: "blast",
   element: "fire",
   hint: "R (hold)",
+  palette: FIRE_CIRCLE, // read by Player.draw (tint) and drawAura: a self skill without one crashed the render loop
   self: true,
   noAi: true, // enemy / dummy AI does not know this skill
   autoRelease: true,
