@@ -49,6 +49,9 @@
  * @property {object|null} [shield]                   Active FlameShieldEffect, if the owner has raised one.
  * @property {object|null} [burn]                     Running burn { t, dur, dps, ticks, fx, source }, owned by StatusSystem.
  * @property {number} [stunT]                         Seconds of stun left (0 = none), owned by StatusSystem.
+ * @property {object|null} [manaBuff]                Running ManaRegenEffect { life, maxLife, mult, age }, if the owner used Mana Regen.
+ * @property {object|null} [dodge]                    Running dodge { t, dur, iFr, fx, fy, tx, ty } (Player only).
+ * @property {number} [lowStaminaFlash]               Set > 0 when a Dodge is refused for lack of stamina.
  * @property {object|null} [ward]                     Active BurnWardEffect, if the owner has cast Burn Resistance.
  * @property {(e: { damage: number, kind: string, source: object }) => void} [onDot]  Damage over time (burn tick).
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
@@ -85,6 +88,12 @@
  * @property {(ctx: SkillContext) => void} onRelease
  * @property {string} [hint]                          Key hint shown on the HUD slot.
  * @property {boolean} [toggle]                       Toggle skill: press on, press off. Needs isActive, onActivate, onDeactivate.
+ * @property {boolean} [instant]                      One key press fires it, no charge (Mana Regen, Dodge). SkillCaster checks cooldown, canStart(mana) and canUse(owner).
+ * @property {(owner: CasterOwner) => boolean} [canUse]   Extra affordability check for instant skills (Dodge: stamina).
+ * @property {(owner: CasterOwner) => void} [onDenied]    Called when canUse refuses (flash the stamina bar).
+ * @property {(owner: CasterOwner) => number} [activeFrac] 0..1 shown on the HUD ring while the skill is active.
+ * @property {string} [color]                         CSS colour for the HUD circle and ring (default orange).
+ * @property {string} [costText]                      Cost shown in the character panel instead of the mana range.
  * @property {boolean} [self]                         Targets the caster only. AI casters skip it; Player draws an aura instead of the charge orb.
  * @property {boolean} [noAi]                        Player-only: enemy / dummy AI is not given this skill (Fire Blast).
  * @property {boolean} [autoRelease]                  Cast-time skill: fires the moment charge hits 1 (hold until the bar fills; releasing early cancels).
@@ -153,6 +162,30 @@
  * @property {number} y
  * @property {number} z
  * @property {string} [reason]                        'expired' | 'spent' | 'downed' ('down').
+ */
+
+/**
+ * Emitted on world.events as 'manaRegen' by ManaRegen / ManaRegenEffect.
+ * @typedef {Object} ManaRegenEvent
+ * @property {'up'|'down'} type
+ * @property {CasterOwner} owner
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {string} [reason]                        'expired' | 'downed' ('down').
+ */
+
+/**
+ * Emitted on world.events as 'dodge' by Dodge when a dodge starts. DodgeFx draws the trail from owner.dodge.
+ * @typedef {Object} DodgeEvent
+ * @property {'start'} type
+ * @property {CasterOwner} owner
+ * @property {number} x                               Start point.
+ * @property {number} y
+ * @property {number} z
+ * @property {{ x: number, y: number }} dir           Unit vector of the evade (backwards from the aim).
+ * @property {number} distance
+ * @property {number} duration
  */
 
 /**
