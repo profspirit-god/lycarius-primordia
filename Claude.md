@@ -74,17 +74,17 @@ skills/            SkillRegistry; defs Fireball FlameShield BurnResistance FireB
                    shield → body; roll(); hit()), FlameShieldEffect, BurnWardEffect, ProjectileClash
 progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (skillMult, elementMult)
 ui/                PlayerHud (top-left card, status icons, bottom-left skill circles), ProfilePanel (character panel), SkillTreePanel,
-                   Modal (openModal), icons (`icon(name)` SVG set; skills / bonuses store the icon NAME)
+                   SettingsPanel (SECTIONS rows; staged edit: live preview, Save persists, Back asks Save/Discard; ctx home|game), Modal (openModal), icons (`icon(name)` SVG set; skills / bonuses store the icon NAME)
 systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast applyImpulse kick lowManaFlash), Vitals (hp/mana/stamina),
                    HitEffects ('hit' → target.onHit → VFX), StatusSystem (burn + stun), ExplosionSystem, XpSystem,
                    RaidSystem (start/stop/nextRaid/update; kills, oneShots), ParticleSystem (emit; `scaled as n`), Lights, Camera,
-                   DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, BlastFx (Fire Blast visuals), ManaRegenFx (glow, 'manaRegen'), DodgeFx (yellow trail, 'dodge'), AudioSystem (events → GameAudio)
+                   DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, BlastFx (Fire Blast visuals), ManaRegenFx (bubbles, 'manaRegen'), DodgeFx (yellow trail, 'dodge'), AudioSystem (events → GameAudio)
 audio/AudioEngine  procedural Web Audio, no asset files
-render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
+render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawRibbons drawCover drawEnhance drawStun
 tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase; sec.mjs: print one doc section
 docs/proposals/    ASSESSMENT + the two proposals (Marble bag, World division); design only, no code
 docs/ART_AND_MAPS.md  art style, sprite manifest, Tiled maps; plan only
-tests/             graugr.test.mjs (Graugr, raid, stun, deflect), mage.test.mjs (S1a safety net: Mage kit, burn, shield, explosions, clash, XP and levels), helpers.mjs (stub world with a seeded `rng`, step, capture, ScriptedRng, withRng, dice, memoryStorage; pattern for new tests) fireblast.test.mjs (Fire Blast), abilities.test.mjs (Mana Regen, Dodge), rng.test.mjs (S1b: Rng, same-seed fights, Math.random independence)
+tests/             graugr.test.mjs (Graugr, raid, stun, deflect), mage.test.mjs (S1a safety net: Mage kit, burn, shield, explosions, clash, XP and levels), helpers.mjs (stub world with a seeded `rng`, step, capture, ScriptedRng, withRng, dice, memoryStorage; pattern for new tests) fireblast.test.mjs (Fire Blast), abilities.test.mjs (Mana Regen, Dodge), rng.test.mjs (S1b: Rng, same-seed fights, Math.random independence), visuals-settings.test.mjs (particle shapes, ribbons, staged Settings)
 ```
 
 World events: `hit` `cast` `explosion` `blast` `burn` `ward` `shield` `levelup` `kill` `stun` `manaRegen` `dodge`. HitEvent: `{source,target,damage,crit,dir,charge,x,y,z,aoe?,burn?,stun?}`.
@@ -95,7 +95,7 @@ World events: `hit` `cast` `explosion` `blast` `burn` `ward` `shield` `levelup` 
 2. **Events over calls.** Combat emits; VFX, audio, UI, quests subscribe. Never call audio/VFX from combat logic.
 3. **Any entity can cast** through `SkillCaster` + the `CasterOwner` shape. Melee enemies (Graugr) run their own small state machine instead.
 4. Entities extend `Entity`; optional `hittable`, `solid`, `onHit(e)`, `onDot(e)`, `damageColor`. Scenes extend `Scene`, call `super.enter(game)`, register via `game.register`; they talk via `game.goto`, never by importing each other.
-5. Settings: default in `Settings.js` + row in `SettingsScene.js`. Shared helpers live once (`scaled as n` for particle counts).
+5. Settings: default in `Settings.js` + one row in `SECTIONS` of `ui/SettingsPanel.js` (`ctx:"game"` for dummy / developer items; the lobby shows player preferences only). Shared helpers live once (`scaled as n` for particle counts).
 6. Annotate new skills/classes/events with `@type {import('../types.js').X}`. No dependency or bundler without approval and a roadmap entry.
 7. **Art:** semi-pixelated (D12). Before touching sprites, tiles, manifests, camera scale or maps, open `docs/ART_AND_MAPS.md` sections 1 and 2 plus the stage. 32 px tiles, 32x48 px frames, integer scale, smoothing off for sprites/tiles only; missing art falls back to the cylinder; map collision is sim code (server-ready).
 8. New features are additions, not edits. Keep damage integers. Constants for tuning go at the top of the file.
@@ -154,7 +154,9 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 ## 9. Gotchas
 
 - Opening `index.html` directly fails (modules). Use Live Server or `npx serve .`. Audio unlocks on the first gesture. "Exit Game" cannot close a tab.
-- Dummy "attacks" and "skills" settings are read at world start (and again by `restoreDummy`). Dummy skills AI needs both.
+- Dummy "attacks" and "skills" settings are read when the dummy is built (world start, `restoreDummy`, and when in-game Settings saves a `dummy*` key). Dummy skills AI needs both.
+- **Buff visuals have a language, never stack glows:** circles (`bubble` particles) = regen, ribbons (`drawRibbons`) = resistance, dashes (`dash` particles) = motion / haze. `drawAura` is for cast charge only.
+- **Click handlers on DOM buttons that hold an icon must use `e.target.closest("[data-a]")`**; `e.target.dataset.a` misses clicks on the SVG (the V1.12.0.00 modal X bug). Text-only buttons are safe.
 - `Lights` with `once:true` live one frame; re-add every update. Hit-stop scales entity `dt` to 8% and particle `dt` to 40%; real-time code uses the raw `dt`.
 - Toggle skills: caster calls `isActive/onActivate/onDeactivate`; owner needs `wantsToggle(slot, world)`. Cast-time skills: `autoRelease` fires at charge 1; `self:true` skills are skipped by AI `wantsCast`.
 - Projectiles: set `isProjectile`, `owner`, `charge`, `weaken(ratio)`; skip `update` work if `dead`; call `clashProjectiles`, then the deflect loop (`e.deflecting` → `e.tryDeflect(proj, world)`), then shields (`isShield` `blocks/absorb`), then bodies. Fire projectiles call `target.ward.resist(dmg)` before emitting `hit`.

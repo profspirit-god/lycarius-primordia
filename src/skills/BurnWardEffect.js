@@ -1,10 +1,10 @@
 import { Entity } from "../entities/Entity.js";
 import { scaled as n, quality } from "../systems/ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
-import { drawAura } from "../render/drawAura.js";
+import { drawRibbons } from "../render/drawRibbons.js";
 import { WARD_CIRCLE } from "../render/drawMagicCircle.js";
 
-const FADE = 0.9; // seconds the glow takes to die down
+const FADE = 0.9; // seconds the ribbons take to die down
 const WARN = 4; // the glow flickers during the last seconds of its life
 const { main: C_MAIN, core: C_CORE, deep: C_DEEP } = WARD_CIRCLE;
 
@@ -206,20 +206,20 @@ export class BurnWardEffect extends Entity {
       x: o.x,
       y: o.y,
       z: o.height * 0.5,
-      radius: 110 + this.hitFlash * 60,
-      intensity: 0.35 + this.hitFlash * 0.5,
+      radius: 80 + this.hitFlash * 50,
+      intensity: 0.12 + this.hitFlash * 0.5,
       color: C_MAIN,
       once: true,
       life: 1,
     });
   }
 
-  /** Embers around the body, plus a trail dropped along the path while the owner moves. */
+  /** Embers around the body, plus short thin dashes streaking behind the owner while it moves. */
   shed(dt) {
     const o = this.owner,
       P = this.world.particles,
       q = quality();
-    this.emberAcc += 22 * dt * q;
+    this.emberAcc += 10 * dt * q;
     while (this.emberAcc >= 1) {
       this.emberAcc -= 1;
       const a = rand(0, TAU);
@@ -239,30 +239,32 @@ export class BurnWardEffect extends Entity {
     }
     const sp = Math.hypot(o.vx || 0, o.vy || 0);
     if (sp > 25) {
-      this.trailAcc += (sp * dt * q) / 9; // one mote per ~9 px travelled
+      this.trailAcc += (sp * dt * q) / 14; // one dash per ~14 px travelled
       while (this.trailAcc >= 1) {
         this.trailAcc -= 1;
         P.emit({
           x: o.x + rand(-1, 1) * o.radius * 0.5,
           y: o.y + rand(-1, 1) * o.radius * 0.25,
           z: rand(3, o.height * 0.7),
-          vx: -(o.vx || 0) * 0.05,
-          vy: -(o.vy || 0) * 0.05,
-          vz: rand(10, 50),
-          gravity: -20,
-          drag: 2.5,
-          life: rand(0.7, 1.3),
-          size: rand(3, 6),
-          sizeEnd: 0.4,
-          color: [255, 130, 70],
+          vx: -(o.vx || 0) * 0.35,
+          vy: -(o.vy || 0) * 0.35,
+          vz: 0,
+          gravity: 0,
+          drag: 3,
+          life: rand(0.25, 0.5),
+          size: 1,
+          sizeEnd: 1,
+          len: rand(6, 12),
+          shape: "dash",
+          color: [255, 150, 90],
           colorEnd: [160, 24, 10],
-          alpha: 0.85,
+          alpha: 0.8,
         });
       }
     }
   }
 
-  /** Glow strength 0..1.3: pulses, flares on pulse(), flickers when about to expire, fades out when ended. */
+  /** Ribbon strength 0..1.3: pulses, flares on pulse(), flickers when about to expire, fades out when ended. */
   level() {
     if (this.state === "fading") return 1 - this.fadeT / FADE;
     let a = 0.9 + 0.1 * Math.sin(this.t * 5) + this.hitFlash * 0.4;
@@ -273,7 +275,7 @@ export class BurnWardEffect extends Entity {
   draw(ctx) {
     const o = this.owner;
     if (o.downed) ctx.globalAlpha = 0.3;
-    drawAura(ctx, o.x, o.y, o.height, o.radius, this.level(), this.t, WARD_CIRCLE);
+    drawRibbons(ctx, o.x, o.y, o.height, o.radius, this.level(), this.t, WARD_CIRCLE); // ribbons, not a glow: stacks with other buffs
     ctx.globalAlpha = 1;
   }
 }

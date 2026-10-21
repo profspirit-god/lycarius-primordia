@@ -1,5 +1,5 @@
 const KEY = 'lycarius.primordia.settings';
-const DEFAULTS = { masterVolume: 0.8, particleQuality: 1, screenShake: true, damageNumbers: true, showDebug: false, dummyAttacks: false, dummyMovement: 'off', dummySkills: false, debugCastTimer: false };
+export const DEFAULTS = { masterVolume: 0.8, particleQuality: 1, screenShake: true, damageNumbers: true, showDebug: false, dummyAttacks: false, dummyMovement: 'off', dummySkills: false, debugCastTimer: false };
 
 /** Persistent user settings. Add a key to DEFAULTS and it is saved/loaded automatically. */
 export const Settings = {
@@ -11,4 +11,8 @@ export const Settings = {
   get(k) { return this.data[k]; },
   set(k, v) { this.data[k] = v; this.save(); },
   reset() { this.data = { ...DEFAULTS }; this.save(); },
+  // Staged editing (SettingsPanel): preview changes the live value without saving, a snapshot lets the panel discard them.
+  preview(k, v) { this.data[k] = v; },
+  snapshot() { return { ...this.data }; },
+  restore(snap) { Object.assign(this.data, snap); },
 };

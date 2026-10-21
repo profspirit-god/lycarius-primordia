@@ -2,6 +2,7 @@ import { Scene } from "../core/Scene.js";
 import { EventBus } from "../core/EventBus.js";
 import { Rng } from "../sim/rng.js";
 import { Settings } from "../core/Settings.js";
+import { SettingsPanel } from "../ui/SettingsPanel.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { Player } from "../entities/Player.js";
 import { TrainingDummy } from "../entities/TrainingDummy.js";
@@ -108,6 +109,7 @@ export class WorldScene extends Scene {
   }
 
   exit() {
+    this.settingsPanel?.discard(); // leaving with unsaved previews: put the saved values back
     this.audio.dispose();
     this.hitEffects.dispose();
     this.status.dispose();
@@ -244,13 +246,35 @@ export class WorldScene extends Scene {
     this.pauseEl.className = "panel";
     this.pauseEl.style.display = "none";
     this.pauseEl.innerHTML = `<h2 class="title" style="font-size:28px">PAUSED</h2><div class="subtitle">${VERSION_LABEL}</div>
-      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="menu">Home</button>`;
+      <button class="btn" data-a="resume">Resume</button><button class="btn" data-a="settings">Settings</button><button class="btn" data-a="menu">Home</button>`;
     this.pauseEl.addEventListener("click", (e) => {
       const a = e.target.dataset?.a;
       if (a === "resume") this.setPaused(false);
+      if (a === "settings") this.openSettings();
       if (a === "menu") this.game.goto("home");
     });
     this.ui.appendChild(this.pauseEl);
+  }
+  /** In-game settings (with Training Dummy and Developer sections). Replaces the pause menu until Back. */
+  openSettings() {
+    this.pauseEl.style.display = "none";
+    this.settingsPanel = new SettingsPanel({
+      parent: this.ui,
+      context: "game",
+      progression: this.progression,
+      onProgression: () => this.player.syncProgression(),
+      onSaved: (keys) => {
+        // The dummy reads its settings when it is built: rebuild it so a saved change shows up now (during a raid it comes back with the raid's end).
+        if (keys.some((k) => k.startsWith("dummy")) && this.dummy) {
+          this.removeDummy();
+          this.restoreDummy();
+        }
+      },
+      onExit: () => {
+        this.settingsPanel = null;
+        if (this.paused) this.pauseEl.style.display = "";
+      },
+    });
   }
   setPaused(p) {
     this.paused = p;
@@ -262,7 +286,8 @@ export class WorldScene extends Scene {
   update(dt) {
     const inp = this.input;
     if (inp.wasPressed("Escape")) {
-      if (this.profile.isOpen) this.closeProfile();
+      if (this.settingsPanel) this.settingsPanel.requestBack();
+      else if (this.profile.isOpen) this.closeProfile();
       else if (this.tree.isOpen) this.closeTree();
       else this.setPaused(!this.paused);
     } else if (inp.wasPressed("KeyK") && (!this.paused || this.tree.isOpen)) {
@@ -313,7 +338,6 @@ export class WorldScene extends Scene {
     this.dodgeFx.render(ctx); // under the bodies
     for (const e of [...this.entities].sort((a, b) => a.y - b.y))
       e.draw(ctx, this);
-    this.manaRegenFx.render(ctx);
     this.particles.render(ctx);
     this.lights.render(ctx);
     this.damageNumbers.render(ctx);
