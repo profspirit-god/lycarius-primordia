@@ -2,6 +2,34 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.10.0.05 — S1a safety net: characterization tests for the Mage kit (tests only, no gameplay change)
+
+First step of the server path (`SERVER_PATH.md` S1a). The tests pin what the code does today, so every later S1 step can prove it changed nothing.
+
+### Added
+
+- **`tests/mage.test.mjs`** (52 tests) and **`tests/helpers.mjs`** (stub world, fixed stepping, event capture, controlled randomness, in-memory storage). Covered:
+  - Fireball: mana cost by charge (5 to 20), affordable charge, damage by charge (8 to 30, exponent 1.3), crit (12%, x1.75, half-up rounding), spread 0.9 to 1.1, specialization multipliers, damage rolled once, projectile speed and size, height gate, range 1200, burn chance and duration by charge, Burn Resistance on hits.
+  - Cooldowns and casting through the real `SkillCaster`: 0.7 s cooldown, minimum charge 0.12 (10 frames), mana cap on charge, low-mana flash, cast-time and cooldown modifiers, recoil, Flame Shield toggle (cost 10, upkeep 5/s, instant drop, 0.6 s re-raise), Burn Resistance cast (1.2 s, 25 mana, refresh).
+  - Burn: ignition gate, one tick per whole second, refresh instead of stacking, ward halving and nullify, snuffing a running burn, stopping on a downed target.
+  - Flame Shield: absorb and leftover, break, blocking geometry (arc, range, height, 35% rise), shield versus Fireball.
+  - Explosions: radius and centre damage by charge, linear falloff to 30%, spread, multipliers, caster hurt, ward applies, shields do not stop it.
+  - Clashes: tie window 0.12, survivor weakening, explosion charge, one explosion per clash in flight, same owner and height gap.
+  - XP and levels: both XP curves, level thresholds and caps, events, specialization unlocks and picks, folded modifiers, save and load, `XpSystem` rules (1 XP per damage point, kill bonus 50 once, burn ticks, cast XP 2 to 5).
+- **`npm test`** now runs both test files.
+
+### Changed
+
+- `VERSION` 1.10.0.04 → 1.10.0.05. README, ROADMAP (Done row, "Choosing work" default is now S1b), `SERVER_PATH.md` (gate 1, S1a marked done, debt log), `Claude.md` (verify step, code map), guideline status line.
+
+### Notes
+
+- No file under `src/` changed except `config.js`. Gates: `node tests/graugr.test.mjs` 6 passed, `node tests/mage.test.mjs` 52 passed, audit PASS with the counts unchanged (3, 6, 160, 4, 227, 6, 6), docs check PASS.
+- The tests have teeth: 23 single-number mutations of the source (damage, cost, cooldown, crit, tie window, falloff, tick length, upkeep, XP curve, and more) were each caught.
+- Behaviour pinned as found, not as designed: a burn tick can land one frame late because 120 accumulated 1/60 steps sit a hair under 2.0 s; crit damage rounds half up (52.5 becomes 53); dropping Flame Shield ignores its cooldown; an explosion hurts its own caster.
+- The tests stub `Math.random` and a global `localStorage`. Both stubs are removed when S1b (seeded RNG) and S1g (storage adapter) land (debt log).
+- Not covered on purpose: `HitEffects` and `Player.onHit` (presentation and input, split in S1d), drawing and audio.
+
 ## V1.10.0.04 — MMORPG guideline, work-choosing rule, doc structure check (docs and tooling only, no gameplay change)
 
 ### Added
