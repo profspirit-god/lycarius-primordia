@@ -2,7 +2,7 @@ import { icon } from "./icons.js";
 
 /**
  * Small DOM modal used by lobby scenes. `parent` is the scene's overlay element.
- * Returns { el, close }. Clicking the backdrop or the close button closes it.
+ * Returns { el, close }. Clicking the backdrop or the close button closes it (the icon inside the button counts).
  */
 export function openModal(parent, { title, html, wide = false, onClose } = {}) {
   const back = document.createElement("div");
@@ -13,7 +13,7 @@ export function openModal(parent, { title, html, wide = false, onClose } = {}) {
       <div class="modal-body">${html}</div></div>`;
   const close = () => { back.remove(); onClose?.(); };
   back.addEventListener("click", (e) => {
-    if (e.target === back || e.target.dataset?.a === "close") close();
+    if (e.target === back || e.target.closest?.("[data-a=close]")) close(); // closest: the click lands on the SVG inside the button
   });
   parent.appendChild(back);
   return { el: back, close };

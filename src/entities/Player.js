@@ -245,7 +245,7 @@ export class Player extends Entity {
       flash: this.flash * 0.6,
       tint: casting?.self
         ? { c: (casting.palette ?? FIRE_CIRCLE).main, a: charge * 0.5 }
-        : this.ward ? { c: WARD_CIRCLE.main, a: 0.45 * this.ward.level() } : null, // glows red-orange while casting / warded
+        : this.ward ? { c: WARD_CIRCLE.main, a: 0.18 * this.ward.level() } : null, // glows red-orange while casting / warded
       lean: [-c * this.kick * 8, -s * this.kick * 4 + moving * 1.5],
     });
     ctx.fillStyle = "#ffe9b0"; // facing marker

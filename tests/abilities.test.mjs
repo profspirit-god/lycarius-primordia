@@ -165,6 +165,8 @@ test("FX: glow and trail draw with finite numbers only", () => {
           },
     set: () => true,
   });
+  const emitted = [];
+  w.particles = { emit: (o) => emitted.push(o) };
   const mf = new ManaRegenFx(w),
     df = new DodgeFx(w);
   press(w, "KeyF");
@@ -174,12 +176,14 @@ test("FX: glow and trail draw with finite numbers only", () => {
     mf.update(DT);
     df.update(DT);
     df.render(ctx);
-    mf.render(ctx);
   }
   step(w, 60 * 31);
   for (let i = 0; i < 40; i++) df.update(DT);
   assert.equal(df.trails.length, 0, "trail removed once it faded");
   assert.deepEqual(bad, []);
+  const bubbles = emitted.filter((o) => o.shape === "bubble");
+  assert.ok(bubbles.length > 5, "Mana Regen is drawn with circle (bubble) particles");
+  assert.ok(emitted.every((o) => Object.values(o).every((v) => typeof v !== "number" || Number.isFinite(v))), "finite particle numbers");
   mf.dispose();
   df.dispose();
 });
