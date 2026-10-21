@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.10.0.04**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.10.0.05**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -8,14 +8,13 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **S1a Safety net** (characterization tests, `SERVER_PATH.md` S1a) | none | G5, G6 | **Default.** Critical path: every later server step needs these tests green first |
-| S1b Seeded RNG (after S1a) | S1a | G1, G5 | Unlocks deterministic tests and the bag engine (M2) |
+| **S1b Seeded RNG** (`SERVER_PATH.md` S1b) | S1a (done in V1.10.0.05) | G1, G5 | **Default.** Critical path: the next server step; unlocks deterministic tests and the bag engine (M2). Removes the `Math.random` stubs from `tests/mage.test.mjs` |
 | L2 Items and inventory data model | none | G1, G5 | No server dependency; unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | May ship before S1 closes; owner approves the stage |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **S1a**. Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **S1b**. Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -37,6 +36,7 @@ Default when the user says "you decide": **S1a**. Never start an item whose `Nee
 | V1.10.0.02 | Docs and tooling (no gameplay change): two design proposals kept in `docs/proposals/` with a feasibility assessment, roadmap tracks M and W, `tools/sec.mjs` section reader, doc map in `Claude.md`. S1 sub-steps now start at V1.10.0.03 |
 | V1.10.0.03 | Docs only (no gameplay change): art style decided (semi-pixelated), `docs/ART_AND_MAPS.md` with art intake track A and tile/map track T (Tiled), D12 updated |
 | V1.10.0.04 | Docs and tooling (no gameplay change): `docs/MMORPG_GUIDELINE.md` (Gemini seven-part sequence reconciled with this repo, guide not truth), roadmap "Choosing work", `Claude.md` rules 10 and 11, `tools/check-docs.mjs`. S1 sub-step versions now start at V1.10.0.05 |
+| V1.10.0.05 | Tests only (no gameplay change): **S1a safety net**, `tests/mage.test.mjs` (52 tests) and `tests/helpers.mjs` pin Fireball, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels; `npm test` runs both files. S1 sub-step versions now start at V1.10.0.06 |
 
 ## Server path (road to online)
 
@@ -55,7 +55,7 @@ The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decision
 | S9 | V1.19.0.00, then **V2.0.0.00** | Closed alpha with friends, then a 50-player scale test | 2 weeks of testing |
 | S10 | next free minor (optional, any time after S3) | **Desktop build (exe)**: Electron wrapper in its own `desktop/` folder, real Exit Game | 2 to 3 |
 
-Gates for every step: `node tests/graugr.test.mjs`, `node tools/audit-server-ready.mjs` (debt may never go up), manual play check, docs updated. Feature work in other areas may continue in between, but must follow the server-ready rules (`Claude.md` 5b). Art style is decided (semi-pixelated, D12) and does not block any phase.
+Gates for every step: `node tests/graugr.test.mjs`, `node tests/mage.test.mjs` (or `npm test`), `node tools/audit-server-ready.mjs` (debt may never go up), manual play check, docs updated. Feature work in other areas may continue in between, but must follow the server-ready rules (`Claude.md` 5b). Art style is decided (semi-pixelated, D12) and does not block any phase.
 
 **Hosting decision (owner, V1.10.0.01):** run the 10 to 50 player server on the owner's own PC to save rent. Assessed as feasible with conditions (the CPU tick budget is the real limit, not the PC; upload is about 8 to 24 Mbps at 50 players; use an outbound tunnel, never open router ports; a 100 W desktop on 24/7 costs about as much electricity as a small VPS). Details and the triggers for moving to a VPS are in `SERVER_PATH.md` S8a.
 
