@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.10.0.05**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.11.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -37,6 +37,7 @@ Default when the user says "you decide": **S1b**. Never start an item whose `Nee
 | V1.10.0.03 | Docs only (no gameplay change): art style decided (semi-pixelated), `docs/ART_AND_MAPS.md` with art intake track A and tile/map track T (Tiled), D12 updated |
 | V1.10.0.04 | Docs and tooling (no gameplay change): `docs/MMORPG_GUIDELINE.md` (Gemini seven-part sequence reconciled with this repo, guide not truth), roadmap "Choosing work", `Claude.md` rules 10 and 11, `tools/check-docs.mjs`. S1 sub-step versions now start at V1.10.0.05 |
 | V1.10.0.05 | Tests only (no gameplay change): **S1a safety net**, `tests/mage.test.mjs` (52 tests) and `tests/helpers.mjs` pin Fireball, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels; `npm test` runs both files. S1 sub-step versions now start at V1.10.0.06 |
+| V1.11.0.00 | Fire Blast: fourth Mage skill (`R`, hold; 70 damage AOE, knockback, 40% burn, 40 mana, 60 s cooldown), unlocks at specialization level 8; `SkillDef.noAi`, `blast` event, `tests/fireblast.test.mjs`. S1 sub-steps now start at V1.11.0.01, S1 closes at V1.12.0.00 |
 
 ## Server path (road to online)
 
@@ -44,7 +45,7 @@ The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decision
 
 | Phase | Version | Goal | Sessions (rough) |
 | ----- | ------- | ---- | ---------------- |
-| S1 | V1.10.0.03 to V1.10.0.xx, closing **V1.11.0.00** | Separate simulation from view; seeded RNG, damage and input out of the view, many players, fixed timestep. Behaviour unchanged | 14 to 20 |
+| S1 | V1.10.0.03 to V1.10.0.xx, closing **V1.12.0.00** (Fire Blast took V1.11.0.00 in between) | Separate simulation from view; seeded RNG, damage and input out of the view, many players, fixed timestep. Behaviour unchanged | 14 to 20 |
 | S2 | V1.12.0.00 | Message protocol and a loopback "network" with fake latency inside one browser | 3 to 5 |
 | S3 | V1.13.0.00 | Real Node WebSocket server, two players in one room, garbage-input test, server address setting | 3 to 5 |
 | S4 | V1.14.0.00 | Client prediction and smoothing | 3 to 5 |
