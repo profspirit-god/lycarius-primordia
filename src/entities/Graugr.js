@@ -49,7 +49,8 @@ const HOP = 0.22; // visual hop time of a leap
  * Enhancement tier (raids): max HP and damage x (1 + 0.2 tier).
  */
 export class Graugr extends Entity {
-  constructor(x, y, { tier = 0 } = {}) {
+  /** `rng` (the world's) seeds the first strafe choice; without it the start is fixed (left, 3 s). Later rolls use `world.rng`. */
+  constructor(x, y, { tier = 0, rng = null } = {}) {
     super();
     const G = GRAUGR;
     Object.assign(this, { x, y, radius: G.radius, height: G.height, hittable: true, solid: true });
@@ -70,8 +71,8 @@ export class Graugr extends Entity {
     this.act = null; // running skill: { type: 'barrage'|'poke', phase, t, ... }
     this.deflecting = false; // true while the barrage swings; FireballProjectile asks tryDeflect()
     this.deflectSeen = new WeakSet();
-    this.strafeDir = Math.random() < 0.5 ? 1 : -1;
-    this.strafeT = rand(2, 4);
+    this.strafeDir = rng && !rng.chance(0.5) ? -1 : 1;
+    this.strafeT = rng ? rng.range(2, 4) : 3;
     this.swingA = rand(0, TAU);
     this.lockT = 0; // short pause after a leap or a finished skill
     this.hopT = 0;
@@ -130,8 +131,8 @@ export class Graugr extends Entity {
     if (Math.hypot(proj.x - this.x, proj.y - this.y) - proj.radius > this.radius + B.reach) return false;
     if (this.deflectSeen.has(proj)) return false; // one roll per projectile
     this.deflectSeen.add(proj);
-    if (Math.random() >= B.deflect) return false;
-    const a = Math.atan2(proj.y - this.y, proj.x - this.x) + rand(-0.5, 0.5),
+    if (!world.rng.chance(B.deflect)) return false;
+    const a = Math.atan2(proj.y - this.y, proj.x - this.x) + world.rng.range(-0.5, 0.5),
       sp = Math.hypot(proj.vx, proj.vy);
     proj.vx = Math.cos(a) * sp;
     proj.vy = Math.sin(a) * sp;
@@ -208,7 +209,7 @@ export class Graugr extends Entity {
       this.strafeT -= dt;
       if (this.strafeT <= 0) {
         this.strafeDir = -this.strafeDir;
-        this.strafeT = rand(2, 4);
+        this.strafeT = world.rng.range(2, 4);
       }
       const rad = edge < G.buyDistance - 40 ? -1 : edge > G.buyDistance + 80 ? 0.7 : 0;
       this.steer(ux * rad - uy * this.strafeDir * 0.7, uy * rad + ux * this.strafeDir * 0.7, G.buySpeed);
@@ -230,7 +231,7 @@ export class Graugr extends Entity {
         side = rx * vy - ry * vx;
       if (along <= 0 || along > 360 || along / sp > 0.42) continue; // behind it, too far, or not imminent
       if (Math.abs(side) > e.radius + this.radius + 16) continue; // will miss anyway
-      const s = side === 0 ? (Math.random() < 0.5 ? 1 : -1) : side > 0 ? -1 : 1;
+      const s = side === 0 ? (world.rng.chance(0.5) ? 1 : -1) : side > 0 ? -1 : 1;
       this.leap(world, -vy * s, vx * s);
       return true;
     }

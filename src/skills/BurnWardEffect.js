@@ -73,7 +73,7 @@ export class BurnWardEffect extends Entity {
   tryNullify() {
     if (this.state !== "active") return false;
     this.pulse();
-    if (Math.random() >= this.nullifyChance) return false;
+    if (!this.world.rng.chance(this.nullifyChance)) return false;
     this.end("spent");
     return true;
   }

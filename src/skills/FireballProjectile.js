@@ -119,7 +119,7 @@ export class FireballProjectile extends Entity {
       // flame shields first: the arc is in front of the body it protects
       if (!e.isShield || e.owner === this.owner) continue;
       if (e.blocks(this.x, this.y, this.z, this.radius)) {
-        this.hitShield(e);
+        this.hitShield(e, world);
         return;
       }
     }
@@ -135,9 +135,10 @@ export class FireballProjectile extends Entity {
     }
   }
 
-  roll() {
+  /** Rolled once per projectile (crit, then the 0.9 to 1.1 spread) from `world.rng`. */
+  roll(world) {
     if (!this.rolled) {
-      const crit = Math.random() < 0.12;
+      const crit = world.rng.chance(0.12);
       const damage = Math.round(
         Math.round(
           lerp(
@@ -146,7 +147,7 @@ export class FireballProjectile extends Entity {
             Math.pow(this.charge, 1.3),
           ),
         ) *
-          rand(0.9, 1.1) *
+          world.rng.range(0.9, 1.1) *
           (crit ? 1.75 : 1) *
           this.potency *
           skillMult(this.owner) *
@@ -158,8 +159,8 @@ export class FireballProjectile extends Entity {
   }
 
   /** The shield soaks what it can. Leftover damage keeps flying (smaller) toward the body. */
-  hitShield(shield) {
-    const r = this.roll(),
+  hitShield(shield, world) {
+    const r = this.roll(world),
       left = shield.absorb(r.damage, this);
     if (left <= 0) {
       this.dead = true;
@@ -172,7 +173,7 @@ export class FireballProjectile extends Entity {
   hit(target, world) {
     const len = Math.hypot(this.vx, this.vy) || 1,
       dir = { x: this.vx / len, y: this.vy / len };
-    const rolled = this.roll(),
+    const rolled = this.roll(world),
       crit = rolled.crit,
       damage = target.ward ? target.ward.resist(rolled.damage) : rolled.damage; // fire resistance
     const bd = this.burnDef;
@@ -185,7 +186,7 @@ export class FireballProjectile extends Entity {
       resisted: rolled.damage - damage,
       burn: bd && {
         chance: lerp(bd.chance[0], bd.chance[1], this.charge),
-        duration: rand(bd.duration[0], bd.duration[1]),
+        duration: world.rng.range(bd.duration[0], bd.duration[1]),
         dps: bd.dps * elementMult(this.owner, this.element), // element damage also boosts the burn
       },
       dir,

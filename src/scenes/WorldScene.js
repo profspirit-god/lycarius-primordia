@@ -1,5 +1,6 @@
 import { Scene } from "../core/Scene.js";
 import { EventBus } from "../core/EventBus.js";
+import { Rng } from "../sim/rng.js";
 import { Settings } from "../core/Settings.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { Player } from "../entities/Player.js";
@@ -36,11 +37,12 @@ import { rand, TAU } from "../core/math.js";
  * { game, input, events, camera, particles, lights, damageNumbers, entities, spawn(), hitstop() }
  */
 export class WorldScene extends Scene {
-  /** @param {{ classId?: string, mode?: 'training' }} params `mode` is the game mode; only the training ground exists so far. */
-  constructor({ classId = "mage", mode = "training" } = {}) {
+  /** @param {{ classId?: string, mode?: 'training', seed?: number }} params `mode` is the game mode; only the training ground exists so far. `seed` fixes every gameplay roll (tests, replays); omitted = a fresh one per run. */
+  constructor({ classId = "mage", mode = "training", seed = null } = {}) {
     super();
     this.classId = classId;
     this.mode = mode;
+    this.seedParam = seed;
   }
 
   enter(game) {
@@ -53,6 +55,8 @@ export class WorldScene extends Scene {
     this.damageNumbers = new DamageNumbers();
     this.toasts = new Toasts();
     this.entities = [];
+    this.seed = (this.seedParam ?? Date.now()) >>> 0; // client side: the clock is fine here, the sim only ever sees `world.rng`
+    this.rng = new Rng(this.seed);
     this.hitstopTimer = 0;
     this.paused = false;
     this.fps = 60;
@@ -80,6 +84,7 @@ export class WorldScene extends Scene {
         move: Settings.get("dummyMovement"),
         skills: Settings.get("dummySkills"),
         cls,
+        rng: this.rng,
       }),
     );
     this.raid = new RaidSystem(this);
@@ -210,6 +215,7 @@ export class WorldScene extends Scene {
         move: Settings.get("dummyMovement"),
         skills: Settings.get("dummySkills"),
         cls: this.cls,
+        rng: this.rng,
       }),
     );
   }

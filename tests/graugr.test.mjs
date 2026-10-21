@@ -3,6 +3,7 @@
 // Pattern for new tests: build a stub world (events, entities, player, particles, damageNumbers, lights), step entities with a fixed dt, assert.
 import assert from "node:assert/strict";
 import { EventBus } from "../src/core/EventBus.js";
+import { Rng } from "../src/sim/rng.js";
 import { Graugr, GRAUGR } from "../src/entities/Graugr.js";
 import { RaidSystem } from "../src/systems/RaidSystem.js";
 import { StatusSystem } from "../src/systems/StatusSystem.js";
@@ -10,7 +11,7 @@ import { FireballProjectile } from "../src/skills/FireballProjectile.js";
 
 const DT = 1 / 60;
 function mkWorld() {
-  const w = { events: new EventBus(), entities: [], banners: [], dummyGone: 0, dummyBack: 0 };
+  const w = { events: new EventBus(), entities: [], banners: [], dummyGone: 0, dummyBack: 0, rng: new Rng(7) }; // S1b: gameplay dice come from world.rng
   w.particles = { emit() {} };
   w.damageNumbers = { spawn() {} };
   w.lights = { add() {} };
