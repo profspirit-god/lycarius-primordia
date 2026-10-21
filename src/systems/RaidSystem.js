@@ -1,5 +1,5 @@
 import { Graugr } from "../entities/Graugr.js";
-import { rand, TAU } from "../core/math.js";
+import { TAU } from "../core/math.js";
 
 const INTERMISSION = 4; // seconds between a cleared raid and the next
 const SPAWN_RING = [420, 560]; // enemies appear this far from the player
@@ -59,11 +59,11 @@ export class RaidSystem {
       p = w.player;
     this.number++;
     this.total = this.number + 1;
-    const a0 = rand(0, TAU);
+    const a0 = w.rng.range(0, TAU);
     for (let i = 0; i < this.total; i++) {
-      const a = a0 + (i * TAU) / this.total + rand(-0.3, 0.3),
-        r = rand(SPAWN_RING[0], SPAWN_RING[1]);
-      w.spawn(new Graugr(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, { tier: this.tier }));
+      const a = a0 + (i * TAU) / this.total + w.rng.range(-0.3, 0.3),
+        r = w.rng.range(SPAWN_RING[0], SPAWN_RING[1]);
+      w.spawn(new Graugr(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, { tier: this.tier, rng: w.rng }));
     }
     w.pushBanner(`RAID ${this.number}`, `${this.total} Graugr${this.tier ? ` · enhanced x${this.tier}` : ""}`);
   }

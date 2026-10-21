@@ -24,7 +24,7 @@ export class StatusSystem {
       t = e.target;
     if (e.stun && t.hittable && !t.dead && !t.downed) this.stun(t, e.stun.duration);
     if (!b || !t.hittable || t.dead) return;
-    if (Math.random() >= b.chance) return;
+    if (!this.world.rng.chance(b.chance)) return;
     this.ignite(t, b, e.source);
   }
 
