@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.11.2.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.11.2.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -8,13 +8,13 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **S1b Seeded RNG** (`SERVER_PATH.md` S1b) | S1a (done in V1.10.0.05) | G1, G5 | **Default.** Critical path: the next server step; unlocks deterministic tests and the bag engine (M2). Removes the `Math.random` stubs from `tests/mage.test.mjs` |
+| **S1c Sim clock** (`SERVER_PATH.md` S1c) | S1a (done in V1.10.0.05), S1b (done in V1.11.2.01) | G2 | **Default.** Critical path: the next server step; `world.time` replaces `performance.now` in sim code (the dummy DPS log) and is the time source M3 and W3 need. Small: the audit `clock` count must reach 0 |
 | L2 Items and inventory data model | none | G1, G5 | No server dependency; unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | May ship before S1 closes; owner approves the stage |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **S1b**. Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **S1c**. Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -40,6 +40,7 @@ Default when the user says "you decide": **S1b**. Never start an item whose `Nee
 | V1.11.0.00 | Fire Blast: fourth Mage skill (`R`, hold; 70 damage AOE, knockback, 40% burn, 40 mana, 60 s cooldown), unlocks at specialization level 8; `SkillDef.noAi`, `blast` event, `tests/fireblast.test.mjs`. S1 sub-steps now start at V1.11.0.01, S1 closes at V1.12.0.00 |
 | V1.11.1.00 | Fix: Fire Blast froze the game on `R` (a self skill without a `palette` crashed `Player.draw`); fallback palette, draw and full-cast regression tests (15) |
 | V1.11.2.00 | Mana Regen (Mage passive, `F`, x5 mana regen for 30 s, 3 min cooldown), Dodge (universal, `Shift`, 20 stamina, 25 s), `instant` skill type, yellow dodge trail, blue regen glow |
+| V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 
 ## Server path (road to online)
 

@@ -54,7 +54,7 @@ Measured by `tools/audit-server-ready.mjs` on 28 simulation files, plus a manual
 
 | #  | Problem | Where | Fixed in |
 | -- | ------- | ----- | -------- |
-| P1 | Gameplay dice use `Math.random` / `rand()`: crit and damage jitter, ignition chance, explosion jitter, Graugr AI, raid spawn, dummy AI. A server needs one controlled source (and tests need a fixed seed). 160 hits, but many are visual-only particles. | `FireballProjectile.roll`, `ExplosionSystem`, `StatusSystem.onHit`, `Graugr`, `RaidSystem`, `TrainingDummy` | S1b |
+| P1 | Gameplay dice use `Math.random` / `rand()`: crit and damage jitter, ignition chance, explosion jitter, Graugr AI, raid spawn, dummy AI. A server needs one controlled source (and tests need a fixed seed). 160 hits, but many are visual-only particles. | `FireballProjectile.roll`, `ExplosionSystem`, `StatusSystem.onHit`, `Graugr`, `RaidSystem`, `TrainingDummy` | S1b (done in V1.11.2.01) |
 | P2 | Real-time clock inside sim code (`performance.now` in the dummy's DPS log). | `TrainingDummy` | S1c |
 | P3 | **Damage is applied inside a presentation system.** `HitEffects.onHit` calls `target.onHit(e)`. A server has no `HitEffects`, so nothing would take damage. The "create X after HitEffects" ordering rule exists because of this. | `HitEffects`, `WorldScene.enter` | S1d |
 | P4 | `onHit` mixes gameplay (health, stagger/`freeze` that cancels enemy casts) with cosmetics (`flash`, `glow`, knock spring). | `Player`, `TrainingDummy`, `Graugr` | S1d |
@@ -76,10 +76,10 @@ Effort is counted in **sessions** (one focused chat that ends with a delivered z
 
 ### S1: Separate the simulation from the view (the big one)
 
-Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.05`, `.06`, ...; `V1.10.0.02` to `.04` were docs releases; S1a took `V1.10.0.05`; Fire Blast shipped as the feature release `V1.11.0.00`, so S1b starts at `V1.11.1.01` (Fire Blast `V1.11.0.00`, its crash fix `V1.11.1.00`)). The closing release is **V1.12.0.00**. About 14 to 20 sessions.
+Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.05`, `.06`, ...; `V1.10.0.02` to `.04` were docs releases; S1a took `V1.10.0.05`; Fire Blast shipped as the feature release `V1.11.0.00`, so S1b took `V1.11.2.01` (Fire Blast `V1.11.0.00`, its crash fix `V1.11.1.00`, Mana Regen and Dodge `V1.11.2.00`) and S1c starts at `V1.11.2.02`). The closing release is **V1.12.0.00**. About 14 to 20 sessions.
 
 - **S1a. Safety net.** Extend `tests/` with characterization tests that pin today's behaviour: Fireball damage by charge, cooldowns and mana cost, burn ticks, Flame Shield absorb, explosion falloff, clash outcomes, XP and level math. Done when the tests are green on the unmodified code. Every later step must keep them green. **Done in V1.10.0.05** (`tests/mage.test.mjs`, 52 tests, plus `tests/helpers.mjs`; 23 mutations of the source were all caught).
-- **S1b. Seeded RNG.** Add `src/sim/rng.js` (mulberry32: `next()`, `range(a,b)`, `chance(p)`), create it in `WorldScene.enter` as `world.rng` with a seed. Classify every `rand(` / `Math.random` in a sim file as **G** (gameplay-affecting) or **V** (visual only). Replace every **G** with `world.rng`. **V** stays and moves out in S1f. Done when a test running the same seed twice gives identical Fireball damage lists, and different seeds differ.
+- **S1b. Seeded RNG.** Add `src/sim/rng.js` (mulberry32: `next()`, `range(a,b)`, `chance(p)`), create it in `WorldScene.enter` as `world.rng` with a seed. Classify every `rand(` / `Math.random` in a sim file as **G** (gameplay-affecting) or **V** (visual only). Replace every **G** with `world.rng`. **V** stays and moves out in S1f. Done when a test running the same seed twice gives identical Fireball damage lists, and different seeds differ. **Done in V1.11.2.01** (`src/sim/rng.js`, `world.rng`, `tests/rng.test.mjs`; 21 sites moved, audit `random` 160 to 139, the rest is visual and leaves in S1f).
 - **S1c. Sim clock.** `world.time` (seconds, advanced by the sim step). Replace `performance.now` in sim code (the dummy DPS log). Done when the audit `clock` count is 0 outside draw code.
 - **S1d. Damage out of the view.** Create `systems/DamageSystem.js` (sim): on `hit`, calls `target.onHit`. `HitEffects` keeps only VFX and no longer calls `onHit`. Split every `onHit` into `onHit` (health, stagger timer `staggerT`, knock velocity) and view-side reactions (flash, glow) that the view derives from events. Stagger must stay a sim value because it cancels enemy casts. Systems are created in an explicit ordered list in one place, and the ordering gotcha in `Claude.md` is rewritten. Done when the tests pass with a world that has **no** `HitEffects`.
 - **S1e. Input command layer.** Define `InputCommand = { seq, mx, my, aim, btn }` (`mx`, `my` in -1..1, `aim` in radians, `btn` a bitmask). A client-only `PlayerController` turns keyboard and mouse (and the camera) into a command each tick; `Player` reads only `this.cmd`. Done when `Player.js` has zero `input` and `camera` hits and a test can drive a player with scripted commands.
@@ -272,7 +272,7 @@ Capacity is **not** promised. It is measured in S3 and S6 and written into the C
 The audit tool counts the mechanical debt. This list holds debt a script cannot see. Add a line when you knowingly leave a shortcut; delete it when fixed. Format: `file: what, fix phase`.
 
 - `systems/HitEffects.js`: applies damage via `target.onHit` (P3), S1d
-- `entities/Graugr.js`: `tryDeflect` spawns particles and damage numbers; uses `world.player`; AI uses `rand`; `draw()` in the entity (added in V1.9.0.00), S1b/S1f/S1i
+- `entities/Graugr.js`: `tryDeflect` spawns particles and damage numbers; uses `world.player`; `draw()` and its particle sprays (visual `rand`) are in the entity (added in V1.9.0.00), S1f/S1i
 - `entities/Player.js`, `TrainingDummy.js`: read input / mix `onHit` effects (P4, P5), S1d/S1e
 - `scenes/WorldScene.js`: is both view and sim container (P11), S1d to S1k
 - `skills/FlameShieldEffect.js`, `BurnWardEffect.js`: heavy drawing inside the effect classes (P6), S1f
@@ -280,7 +280,7 @@ The audit tool counts the mechanical debt. This list holds debt a script cannot 
 - `lobby/loadTasks.js`: the world dry run creates a real `Progression`, so loading reads the real save (P13), S1g
 - `ui/PlayerHud.js`, `ui/ProfilePanel.js`: read `world.player` and `world.raid` directly (P13, added in V1.10.0.00), S2
 - `core/Game.js`: variable timestep and hit-stop time scaling (P10), S1j
-- `tests/mage.test.mjs`: stubs `Math.random` (`withRandom`) and a global `localStorage`; switch to `world.rng` in S1b and to the storage adapter in S1g, then delete the stubs
+- `tests/mage.test.mjs`: stubs a global `localStorage`; switch to the storage adapter in S1g, then delete the stub (the `Math.random` stub went away in S1b: tests script `world.rng` with `withRng` / `dice`)
 
 ---
 
@@ -304,6 +304,7 @@ Small obligations so the two proposals in `docs/proposals/` stay buildable. They
 | Step | Obligation | For |
 | ---- | ---------- | --- |
 | S1b | `world.rng` is passed into sim objects as a parameter (never an imported global) and exposes `next()` in [0,1) | M1 to M3 bags |
+| S1b (met) | `world.rng` is an `Rng` (`src/sim/rng.js`) with `next`, `range`, `chance`, `state`; constructors take `{ rng }`, runtime code reads `world.rng` | M1 to M3 bags |
 | S1c | `world.time` is the only time source for gate windows and dormant catch-up | M3, W3 |
 | S1d | `DamageSystem` is the single place where hit-driven random draws and token consumption happen | M2 |
 | S1h | Integer entity `id`; `snapshot()` omits fields marked hidden (bag order, gates, secrets) | M3, M4, W2 |

@@ -15,7 +15,7 @@ Both fit D1 (server-authoritative), D2 (same sim files in Node) and `Claude.md` 
 
 | Needed by | Exists? | Evidence |
 | --------- | ------- | -------- |
-| MBE: RNG source | Partial | `Math.random` only; `world.rng` is S1b. Crit = one site: `FireballProjectile.roll`, 12% flat, x1.75, damage jitter `rand(0.9,1.1)` |
+| MBE: RNG source | Partial | `Math.random` only at V1.10.0.01; `world.rng` shipped in S1b (V1.11.2.01). Crit = one site: `FireballProjectile.roll`, 12% flat, x1.75, damage jitter `rand(0.9,1.1)` |
 | MBE: token consumption point | Partial | Hits are `hit` events; damage still applied in `HitEffects` (P3, S1d). Consumption must live in the sim, after S1d |
 | MBE: instance IDs | No | Entities have no `id` (S1h). Skills have a definition `id` only |
 | MBE: items / instance state | No | `ItemRegistry` is L2, not built |
@@ -35,7 +35,7 @@ Both fit D1 (server-authoritative), D2 (same sim files in Node) and `Claude.md` 
 1. **Balance change.** A 4-normal/2-crit bag makes crit 33%, not 12%. To keep 12% use a 22/3 style pool (about 12%) or accept a new rate. Needs owner approval ("preserve behaviour unless approved"). Default: keep 12% via a pool of 22 NORMAL + 3 CRIT (rate 12%, short clusters possible).
 2. **Bag scope for combat.** Per attacker (character/entity id) is the default; per skill is an option. Decide before M2.
 3. **Consumption rule (MBE section 4).** Default: one token per landed Fireball hit that rolls damage (`FireballProjectile.roll`); misses and deflects consume nothing; explosion/AoE and burn ticks consume nothing. Today only Fireball crits, so one code path.
-4. **RNG.** The bag takes an injected RNG with `next()`. It must not call `Math.random`. Use `world.rng` once S1b exists; before that tests inject a stub.
+4. **RNG.** The bag takes an injected RNG with `next()`. It must not call `Math.random`. Use `world.rng` (S1b shipped in V1.11.2.01); tests script it with `withRng` / `dice` in `tests/helpers.mjs`.
 5. **Hidden state.** Bag order and gates stay out of `snapshot()` (replicated list excludes them). Dev inspector only behind a Settings developer flag, stripped from server builds.
 6. **Concurrency.** Single-threaded Node per room makes draws atomic inside one tick; DB-level idempotency matters only for item-instance writes (S5, one transaction per save).
 7. **Persistence of a unique secret** needs item instance IDs (L2) and the server DB (S5). Do not build the masterwork bow before both.
