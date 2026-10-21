@@ -2,6 +2,31 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.11.2.01 — S1b seeded RNG: every gameplay roll comes from `world.rng` (cleanup, no gameplay change)
+
+Second step of the server path (`SERVER_PATH.md` S1b). A server must be the only source of dice, and tests must be able to replay a fight, so gameplay randomness no longer touches `Math.random`.
+
+### Added
+
+- **`src/sim/rng.js`**: class `Rng`, the mulberry32 generator, with `next()` (float in [0, 1)), `range(a, b)`, `chance(p)`, plus `state()` / `setState()` (the whole state is one 32-bit integer). It matches the canonical mulberry32 stream (seed 1 starts 0.62707...). No browser, no clock.
+- **`world.rng`**, created in `WorldScene.enter` from `new WorldScene({ seed })`; with no seed the run takes `Date.now()` (client side, outside the sim). The seed is kept as `world.seed`.
+- **`tests/rng.test.mjs`** (10 tests): the generator itself (pinned stream, bounds, uniformity, state resume), the S1b "done when" (same seed twice gives identical Fireball damage lists, different seeds differ), and three scripted fights (a raid, a Graugr duel, a hostile dummy that dies and respawns). The fights must be identical for the same seed, different for different seeds, and **identical when `Math.random` is replaced by other streams**, which proves no gameplay roll still reads it. Each fight also asserts that it reached the code it guards (crit, burn, nullify, deflect, strafe, respawn).
+- Test helpers: `ScriptedRng`, `withRng(w, seq, fn)` and `dice(seq)` in `tests/helpers.mjs`; `mkWorld()` there now carries a seeded `rng`.
+
+### Changed
+
+- **Classification.** Every `rand(` / `Math.random` in a simulation file was sorted into G (gameplay) or V (visual only). G sites now use `world.rng`: Fireball crit (12%), damage spread (0.9 to 1.1) and burn duration (`FireballProjectile.roll` / `hit`), ignition chance (`StatusSystem.onHit`), Burn Resistance nullify chance (`BurnWardEffect.tryNullify`), explosion spread (`ExplosionSystem`), raid spawn angles and distances (`RaidSystem`), Graugr deflect chance and angle, strafe flips, dodge side and start values, and the dummy's cast timer, charge target and orbit flips. V sites (particles, shake, audio, damage-number drift, `Graugr.swingA`, which only drives the drawing) stay on `rand` and move out of the sim in S1f.
+- **Signatures.** `FireballProjectile.roll(world)`, `hitShield(shield, world)` and `TrainingDummy.respawn(world)` now take the world. `Graugr` and `TrainingDummy` constructors take an optional `{ rng }` for their first values (`RaidSystem` and `WorldScene` pass `world.rng`); without it they start from fixed values (strafe left, 3 s; dummy timers 4.5 s and 2 s) instead of `Math.random`.
+- The order of rolls is unchanged (crit, then spread; ignition chance, then nullify), so every number pinned in `tests/mage.test.mjs` (52 tests) still holds. Its `Math.random` stub (`withRandom`) is gone; `tests/fireblast.test.mjs` and `tests/graugr.test.mjs` give their stub worlds an `rng` (the Graugr file only gained that one field, it stays the pinned baseline).
+- `npm test` runs five files. `VERSION` 1.11.2.00 → 1.11.2.01. README, ROADMAP ("Choosing work" default is now S1c), `SERVER_PATH.md` (S1b done, P1, debt log, hooks), `Claude.md` (R3, code map, verify step, gotchas), guideline and assessment status lines.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `random` hits 160 → 139 (`TrainingDummy`, `ExplosionSystem`, `RaidSystem`, `StatusSystem` are now at 0); baseline rewritten. The 139 left are all visual (particle sprays, `core/math.js` `rand` itself) and leave in S1f.
+- Behaviour for the player is the same: the same chances and ranges, drawn from a seeded stream instead of the browser's. Individual fights differ from run to run as before, because each run picks a fresh seed.
+- Mutation check done by hand: each of the 21 converted sites was put back on `Math.random` one at a time and `tests/rng.test.mjs` failed every time.
+- Not tested: playing the game in a browser (`WorldScene.enter` was syntax-checked only; its new lines are `new Rng(seed)` and passing `rng` to the dummy).
+
 ## V1.11.2.00 — Mana Regen (Mage passive) and Dodge (universal ability)
 
 ### Added

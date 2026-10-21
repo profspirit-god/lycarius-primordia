@@ -1,4 +1,4 @@
-import { dist, lerp, rand } from "../core/math.js";
+import { dist, lerp } from "../core/math.js";
 import { elementMult, skillMult } from "../progression/Mods.js";
 
 export const explosionRadius = (charge) => lerp(70, 190, charge);
@@ -32,7 +32,7 @@ export class ExplosionSystem {
       const d = Math.max(0, dist(e.x, e.y, t.x, t.y) - t.radius);
       if (d > R) continue;
       const fall = lerp(1, EDGE, d / R);
-      const raw = Math.max(1, Math.round(base * fall * mult * rand(0.92, 1.08)));
+      const raw = Math.max(1, Math.round(base * fall * mult * w.rng.range(0.92, 1.08)));
       const damage = t.ward ? t.ward.resist(raw) : raw;
       const len = Math.hypot(t.x - e.x, t.y - e.y) || 1;
       w.events.emit("hit", {

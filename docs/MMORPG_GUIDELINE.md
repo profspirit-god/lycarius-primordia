@@ -12,7 +12,7 @@ A seven-part development sequence for a JavaScript MMORPG, written by Gemini and
 
 **Section shape (grep-friendly):** every G section has the same fields in the same order: Source idea, Source evidence, Verdict, Do, Do not, Repo hooks, Gate. Verdict is ADOPT, ADAPT (idea kept, method changed) or REJECT-PART.
 
-**Status at V1.10.0.05:** no server exists. S1a (safety net) shipped in V1.10.0.05; S1b (seeded RNG) is the next critical-path step. Nothing below is built by this file; it adds no code and no dependency.
+**Status at V1.11.2.01:** no server exists. S1a (safety net) shipped in V1.10.0.05 and S1b (seeded RNG) in V1.11.2.01; S1c (sim clock) is the next critical-path step. Nothing below is built by this file; it adds no code and no dependency.
 
 | Id | Topic | Verdict | Where it lands |
 | -- | ----- | ------- | -------------- |
@@ -32,7 +32,7 @@ A seven-part development sequence for a JavaScript MMORPG, written by Gemini and
 - **Source evidence:** keeping definitions in two places desynchronizes state (**common practice**).
 - **Verdict:** ADAPT. The goal is right; workspaces and folder names are not needed.
 - **Do:** keep definitions as data registered in `content/index.js` (rule 1). Move simulation, data and shared math under `src/sim/` (S1k); the browser imports them as ES modules and the Node server imports the same files. Put pure formulas (damage, stat growth, distance, line of sight) in one place; tests import them from Node.
-- **Do not:** add npm workspaces, a bundler or a second copy of any formula (D10, R13). Do not let `core/math.js` keep `rand` in sim paths (audit: 1 `random` hit); gameplay dice go through `world.rng` (S1b).
+- **Do not:** add npm workspaces, a bundler or a second copy of any formula (D10, R13). Do not let `core/math.js` keep `rand` in sim paths (audit: 1 `random` hit); gameplay dice go through `world.rng` (S1b, done in V1.11.2.01; the remaining `random` hits are visual and leave in S1f).
 - **Repo hooks:** `content/index.js`, `core/math.js`, `src/sim/` (future), `tools/audit-server-ready.mjs`.
 - **Gate:** `node tools/audit-server-ready.mjs` PASS; `tests/import-sim.mjs` (S1k) imports every sim file in Node with no `window` / `document`.
 

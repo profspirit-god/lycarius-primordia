@@ -7,7 +7,7 @@
   },
   "entities/Graugr.js": {
     "settings": 2,
-    "random": 25,
+    "random": 19,
     "present": 88,
     "singlePlayer": 3,
     "clock": 1
@@ -18,7 +18,6 @@
     "present": 23
   },
   "entities/TrainingDummy.js": {
-    "random": 6,
     "clock": 5,
     "singlePlayer": 2,
     "present": 29
@@ -31,7 +30,7 @@
     "present": 1
   },
   "skills/BurnWardEffect.js": {
-    "random": 41,
+    "random": 40,
     "present": 6
   },
   "skills/Fireball.js": {
@@ -39,24 +38,15 @@
     "present": 6
   },
   "skills/FireballProjectile.js": {
-    "random": 21,
+    "random": 18,
     "present": 22
   },
   "skills/FlameShieldEffect.js": {
     "present": 44,
     "random": 25
   },
-  "systems/ExplosionSystem.js": {
-    "random": 1
-  },
-  "systems/RaidSystem.js": {
-    "random": 3
-  },
   "systems/SkillCaster.js": {
     "present": 7
-  },
-  "systems/StatusSystem.js": {
-    "random": 1
   },
   "systems/XpSystem.js": {
     "singlePlayer": 1

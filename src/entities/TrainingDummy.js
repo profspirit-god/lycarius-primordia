@@ -8,7 +8,7 @@ import { drawBar } from "../render/drawBar.js";
 import { drawChargeOrb } from "../render/drawChargeOrb.js";
 import { drawGroundCircle, WARD_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawAura } from "../render/drawAura.js";
-import { rand, TAU } from "../core/math.js";
+import { TAU } from "../core/math.js";
 
 const RESPAWN_TIME = 3;
 const MOVE_SPEED = 130; // max walking speed (px/s)
@@ -24,7 +24,8 @@ const ORBIT_RATE = 0.35; // rad/s around the player
  * and casts Burn Resistance whenever it has no ward and enough mana.
  */
 export class TrainingDummy extends Entity {
-  constructor(x, y, { attack = false, cls = null, move = "off", skills = false } = {}) {
+  /** `rng` (the world's) seeds the first timers; without it they start fixed. Later rolls use `world.rng`. */
+  constructor(x, y, { attack = false, cls = null, move = "off", skills = false, rng = null } = {}) {
     super();
     Object.assign(this, {
       x,
@@ -41,7 +42,7 @@ export class TrainingDummy extends Entity {
     this.pathT = 0;
     this.orbitA = 0;
     this.orbitDir = 1;
-    this.orbitTimer = rand(3, 6);
+    this.orbitTimer = rng ? rng.range(3, 6) : 4.5;
     this.attack = attack && !!cls;
     this.cls = cls;
     this.vitals = this.attack ? new Vitals(cls.stats) : null;
@@ -51,7 +52,7 @@ export class TrainingDummy extends Entity {
     this.kick = 0;
     this.knock = { x: 0, y: 0 };
     this.lowManaFlash = 0;
-    this.ai = { cast: false, timer: rand(1.5, 2.5), target: 1, t: 0, ward: false, shield: false, shieldTimer: 0 };
+    this.ai = { cast: false, timer: rng ? rng.range(1.5, 2.5) : 2, target: 1, t: 0, ward: false, shield: false, shieldTimer: 0 };
     this.xpGiven = false; // XpSystem pays the kill bonus once per defeat
     this.downed = false;
     this.downedTimer = 0;
@@ -135,7 +136,7 @@ export class TrainingDummy extends Entity {
     this.ai.ward = false;
     this.ai.shield = false;
   }
-  respawn() {
+  respawn(world) {
     this.vitals.configure(this.cls.stats);
     this.x = this.home.x;
     this.y = this.home.y;
@@ -147,7 +148,7 @@ export class TrainingDummy extends Entity {
     this.hittable = true;
     this.solid = true;
     this.ai.cast = false;
-    this.ai.timer = rand(1.5, 2.5);
+    this.ai.timer = world.rng.range(1.5, 2.5);
     this.xpGiven = false;
   }
   dps() {
@@ -168,7 +169,7 @@ export class TrainingDummy extends Entity {
       this.orbitTimer -= dt;
       if (this.orbitTimer <= 0) {
         this.orbitDir = -this.orbitDir;
-        this.orbitTimer = rand(3, 6);
+        this.orbitTimer = world.rng.range(3, 6);
       }
       this.orbitA += this.orbitDir * ORBIT_RATE * dt;
       tx = p.x + Math.cos(this.orbitA) * ORBIT_R;
@@ -204,7 +205,7 @@ export class TrainingDummy extends Entity {
       ai.timer -= dt;
       if (ai.timer <= 0 && this.vitals.mana >= 8 && !ai.ward) {
         ai.cast = true;
-        ai.target = rand(0.4, 1);
+        ai.target = world.rng.range(0.4, 1);
         ai.t = 0;
       }
     } else {
@@ -214,7 +215,7 @@ export class TrainingDummy extends Entity {
         ai.t > 2.5
       ) {
         ai.cast = false;
-        ai.timer = rand(1.2, 2.6);
+        ai.timer = world.rng.range(1.2, 2.6);
       }
     }
   }
@@ -241,7 +242,7 @@ export class TrainingDummy extends Entity {
     this.lowManaFlash = Math.max(0, this.lowManaFlash - dt);
     if (this.downed) {
       this.downedTimer -= dt;
-      if (this.downedTimer <= 0) this.respawn();
+      if (this.downedTimer <= 0) this.respawn(world);
       return;
     }
     if (this.attack) this.vitals.update(dt);

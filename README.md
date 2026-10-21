@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.11.2.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.11.2.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.11.2.00
+## 1. What is in V1.11.2.01
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -418,7 +418,9 @@ src/
     EventBus.js               pub/sub between systems
     Registry.js               id -> definition store
     Settings.js               persisted settings
-    math.js                   helpers (lerp, rand, hash2, colour)
+    math.js                   helpers (lerp, rand for visuals only, hash2, colour)
+  sim/
+    rng.js                    Rng: seeded mulberry32 (`world.rng`), the only source of gameplay dice
   scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
   lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders), loadTasks (loading-screen readiness tasks)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
@@ -443,6 +445,7 @@ src/
 - **Progression.** `Progression` owns XP, levels and bonus picks; `XpSystem` feeds it from `hit`, `burn` and `cast` events. The class declares `specialization { element, maxLevel, start, unlocks }`; bonuses are data in `SpecBonuses.js` (registered through `SpecBonusRegistry` in `content/index.js`). `Player.syncProgression()` turns it into `player.stats`, `player.mods` and new `SkillCaster` slots (`addSkill`). Casters apply `mods.castTimeMult` and `mods.cooldownMult`; damage code uses `progression/Mods.js`.
 - **Projectile clash and explosions.** Projectiles set `isProjectile = true` and call `clashProjectiles()` when they touch a foreign projectile. That emits `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true`, `ExplosionFx` draws it and `AudioSystem` plays it.
 - **Reusable vitals.** `Vitals` holds health, mana, regeneration and damage/spend helpers.
+- **Seeded gameplay randomness.** Every roll that changes an outcome (crit, damage spread, ignition and nullify chances, explosion spread, raid spawns, enemy and dummy AI choices) is drawn from `world.rng` (`next()`, `range(a, b)`, `chance(p)`), a seeded generator created in `WorldScene.enter`. The same seed and the same inputs give the same fight, which is what tests and a future server need. Visual randomness (particles, shake, audio) keeps `rand()` from `core/math.js`; it must never decide a gameplay result.
 - **Scene factory.** `game.register(name, factory)` and `game.goto(name, params)`.
 - **Audio is a listener, not a caller.** Combat code never plays sounds; `AudioSystem` reads events and entity state. `AudioEngine` can be swapped for real sound files without touching gameplay code.
 
@@ -481,11 +484,12 @@ src/
 | ------- | ------------ |
 | `node tests/graugr.test.mjs` | Headless gameplay tests (Graugr AI, skills, stun, deflect, raid). Exit 0 = pass |
 | `node tests/mage.test.mjs` | Safety-net tests that pin the Mage kit: Fireball numbers, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels (52 tests). Shared helpers in `tests/helpers.mjs` |
+| `node tests/rng.test.mjs` | Seeded RNG tests: the generator, same-seed Fireball damage lists, and three scripted fights that must repeat exactly for one seed and must not change when `Math.random` does (10 tests). Exit 0 = pass |
 | `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (all three test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all five test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -529,7 +533,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.11.2.00)
+## 6. Known limitations (V1.11.2.01)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
@@ -543,5 +547,6 @@ git checkout dev && git pull
 - Graugr has no sounds of its own yet. Barrage damage (12 per 0.5 s) is very high against 50 HP: outrun it (you walk 230 px/s, it walks 105 while spinning). Raids are not saved, and kill counts reset when a raid session starts.
 - A deflected fireball keeps its burn, so it can ignite you. Flame Shield does not stop Graugr's melee.
 - Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`. Fire Blast is tuned by the constants at the top of `FireBlast.js`.
+- Every run starts from a fresh random seed. There is no seed setting in the UI yet; `new WorldScene({ seed })` fixes it for tests and replays.
 
 See **[ROADMAP.md](ROADMAP.md)** for what comes next and **[CHANGELOG.md](CHANGELOG.md)** for history.

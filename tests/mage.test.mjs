@@ -2,7 +2,7 @@
 //   node tests/mage.test.mjs        (exit 0 = all passed)
 // These pin what the code does TODAY (numbers, rounding, ordering), on unmodified gameplay code. They are not a design
 // statement: when a later phase changes a number on purpose, change the pinned value in the same commit and say so in
-// the CHANGELOG. Randomness is controlled with withRandom() until S1b adds a seeded RNG; then these stubs go away.
+// the CHANGELOG. Gameplay dice come from `world.rng` (S1b); withRng(w, seq, fn) and dice(seq) script it, so no test touches Math.random.
 // Not covered here on purpose: HitEffects / Player.onHit (presentation + input, split in S1d), drawing, audio.
 import assert from "node:assert/strict";
 import "../src/content/index.js"; // registers skills, classes, specialization bonuses
@@ -20,7 +20,7 @@ import { ExplosionSystem, explosionRadius } from "../src/systems/ExplosionSystem
 import { XpSystem } from "../src/systems/XpSystem.js";
 import { Progression, charXpForNext, specXpForNext, MAX_CHAR_LEVEL } from "../src/progression/Progression.js";
 import { computeMods, SPEC_BONUSES } from "../src/progression/SpecBonuses.js";
-import { DT, mkWorld, step, capture, withRandom, memoryStorage } from "./helpers.mjs";
+import { DT, mkWorld, step, capture, withRng, dice, memoryStorage } from "./helpers.mjs";
 
 const store = memoryStorage();
 Object.defineProperty(globalThis, "localStorage", { value: store, configurable: true, writable: true });
@@ -136,13 +136,13 @@ test("Fireball: projectile speed and size by charge", () => {
 test("Fireball: damage by charge (no crit, spread at its middle)", () => {
   const table = [[0, 8], [0.12, 9], [0.25, 12], [0.5, 17], [0.75, 23], [1, 30]];
   for (const [c, dmg] of table) {
-    const r = withRandom(0.5, () => ball({ charge: c }).roll());
+    const r = ball({ charge: c }).roll(dice(0.5));
     assert.deepEqual(r, { damage: dmg, crit: false }, `charge ${c}`);
   }
 });
 
 test("Fireball: crit is x1.75 below a 12% roll, spread is 0.9 to 1.1, rounding is half up", () => {
-  const roll = (c, seq, owner) => withRandom(seq, () => ball({ charge: c, owner }).roll());
+  const roll = (c, seq, owner) => ball({ charge: c, owner }).roll(dice(seq));
   assert.deepEqual(roll(1, [0.05, 0.5]), { damage: 53, crit: true }); // 30 x 1.75 = 52.5 -> 53
   assert.equal(roll(1, [0.1199, 0.5]).crit, true);
   assert.equal(roll(1, [0.12, 0.5]).crit, false, "the 12% threshold is exclusive");
@@ -154,16 +154,16 @@ test("Fireball: crit is x1.75 below a 12% roll, spread is 0.9 to 1.1, rounding i
 
 test("Fireball: specialization multipliers (skill damage and matching element)", () => {
   const mods = { element: "fire", elementDamage: 0.05, skillDamage: 0.1 };
-  assert.equal(withRandom([0.5, 0.5], () => ball({ owner: { mods } }).roll().damage), 35); // 30 x 1.1 x 1.05 = 34.65
+  assert.equal(ball({ owner: { mods } }).roll(dice([0.5, 0.5])).damage, 35); // 30 x 1.1 x 1.05 = 34.65
   const ice = { element: "ice", elementDamage: 0.5, skillDamage: 0.1 };
-  assert.equal(withRandom([0.5, 0.5], () => ball({ owner: { mods: ice } }).roll().damage), 33); // element does not match
-  assert.equal(withRandom([0.5, 0.5], () => ball({ owner: {} }).roll().damage), 30, "an owner without mods gets x1");
+  assert.equal(ball({ owner: { mods: ice } }).roll(dice([0.5, 0.5])).damage, 33); // element does not match
+  assert.equal(ball({ owner: {} }).roll(dice([0.5, 0.5])).damage, 30, "an owner without mods gets x1");
 });
 
 test("Fireball: damage is rolled once per projectile", () => {
   const b = ball();
-  const first = withRandom([0.5, 0.5], () => b.roll());
-  const again = withRandom([0.0, 0.0], () => b.roll());
+  const first = b.roll(dice([0.5, 0.5]));
+  const again = b.roll(dice([0.0, 0.0]));
   assert.equal(again, first);
   assert.equal(again.damage, 30);
 });
@@ -172,9 +172,9 @@ test("Fireball: a clash survivor loses power (weaken)", () => {
   const b = ball({ charge: 1 });
   b.weaken(0.5);
   near(b.potency, 0.8); near(b.radius, 19 * 0.875);
-  assert.equal(withRandom([0.5, 0.5], () => b.roll().damage), 24); // 30 x 0.8
+  assert.equal(b.roll(dice([0.5, 0.5])).damage, 24); // 30 x 0.8
   b.weaken(0.5); // already rolled: the rolled damage is scaled in place
-  assert.equal(b.roll().damage, 19); // 24 x 0.8 = 19.2
+  assert.equal(b.roll(dice(0.5)).damage, 19); // 24 x 0.8 = 19.2
   const c = ball({ charge: 1 });
   c.weaken(1);
   near(c.potency, 0.6); near(c.radius, 19 * 0.75);
@@ -185,7 +185,7 @@ test("Fireball flight: body hit event carries damage, burn chance, direction", (
   const w = mkWorld(), hits = capture(w, "hit"), t = mkTarget({ x: 200 });
   w.entities.push(t);
   const p = w.spawn(ball({ charge: 0.5 }));
-  withRandom(0.5, () => step(w, 60));
+  withRng(w, 0.5, () => step(w, 60));
   assert.equal(hits.length, 1);
   const h = hits[0];
   assert.equal(h.target, t);
@@ -204,7 +204,7 @@ test("Fireball flight: burn chance and duration scale with charge, burn dps with
     const w = mkWorld(), hits = capture(w, "hit"), t = mkTarget({ x: 120 });
     w.entities.push(t);
     w.spawn(ball({ charge, owner: { mods } }));
-    withRandom(rnd, () => step(w, 30));
+    withRng(w, rnd, () => step(w, 30));
     return hits[0].burn;
   };
   let b = burnOf(0, 0.5);
@@ -220,7 +220,7 @@ test("Fireball flight: height gate, own caster and non-hittables are skipped", (
     const w = mkWorld(), hits = capture(w, "hit"), t = mkTarget({ x: 150, ...over });
     w.entities.push(t);
     w.spawn(ball({ charge: 0.5, z }));
-    withRandom(0.5, () => step(w, 40));
+    withRng(w, 0.5, () => step(w, 40));
     return hits.length;
   };
   assert.equal(miss(59), 1, "z < height + radius (46 + 13.5 = 59.5) hits");
@@ -230,14 +230,14 @@ test("Fireball flight: height gate, own caster and non-hittables are skipped", (
   const w = mkWorld(), hits = capture(w, "hit"), owner = mkTarget({ x: 0 });
   w.entities.push(owner);
   w.spawn(ball({ charge: 0.5, owner }));
-  withRandom(0.5, () => step(w, 5));
+  withRng(w, 0.5, () => step(w, 5));
   assert.equal(hits.length, 0, "a projectile never hits its own caster");
 });
 
 test("Fireball flight: range limit 1200 then it fizzles", () => {
   const w = mkWorld(), hits = capture(w, "hit"), p = w.spawn(ball({ charge: 1 }));
   let frames = 0;
-  withRandom(0.5, () => { while (!p.dead && frames < 200) (step(w, 1), frames++); });
+  withRng(w, 0.5, () => { while (!p.dead && frames < 200) (step(w, 1), frames++); });
   assert.equal(p.dead, true);
   assert.ok(p.travelled > 1200 && p.travelled <= 1215, `travelled ${p.travelled}`);
   assert.ok(frames === 80 || frames === 81, `frames ${frames}`);
@@ -249,7 +249,7 @@ test("Fireball flight: Burn Resistance cuts fire damage by 30% and reports it", 
   t.ward = mkWard(w, t);
   w.entities.push(t);
   w.spawn(ball({ charge: 1 }));
-  withRandom(0.5, () => step(w, 30));
+  withRng(w, 0.5, () => step(w, 30));
   assert.equal(hits[0].damage, 21); // 30 x 0.7
   assert.equal(hits[0].resisted, 9);
 });
@@ -257,7 +257,7 @@ test("Fireball flight: Burn Resistance cuts fire damage by 30% and reports it", 
 // ================================================================= 4. cooldowns, charging, mana (SkillCaster)
 test("Fireball cast: spends mana by charge, starts the 0.7 s cooldown, recoils, emits cast", () => {
   const w = mkWorld(), o = mkCaster(w), casts = capture(w, "cast");
-  withRandom(0.5, () => cast(w, o, "fireball", 39)); // 39 x DT / 1.3 = 0.5
+  withRng(w, 0.5, () => cast(w, o, "fireball", 39)); // 39 x DT / 1.3 = 0.5
   assert.equal(casts.length, 1);
   near(casts[0].charge, 0.5, 1e-9);
   assert.equal(casts[0].skill, Fireball);
@@ -275,22 +275,22 @@ test("Fireball cast: spends mana by charge, starts the 0.7 s cooldown, recoils, 
 
 test("Fireball cast: charge below 0.12 releases nothing and costs nothing", () => {
   const w = mkWorld(), o = mkCaster(w), casts = capture(w, "cast");
-  withRandom(0.5, () => cast(w, o, "fireball", 9)); // 9 / 78 = 0.115
+  withRng(w, 0.5, () => cast(w, o, "fireball", 9)); // 9 / 78 = 0.115
   assert.equal(casts.length, 0);
   assert.equal(o.vitals.mana, 100);
   assert.equal(slot(o, "fireball").cooldown, 0, "no cooldown for a cancelled charge");
-  withRandom(0.5, () => cast(w, o, "fireball", 10)); // 10 / 78 = 0.128
+  withRng(w, 0.5, () => cast(w, o, "fireball", 10)); // 10 / 78 = 0.128
   assert.equal(casts.length, 1, "10 frames is the shortest cast");
 });
 
 test("Fireball cast: full charge caps at 1 and costs 20; no auto-release", () => {
   const w = mkWorld(), o = mkCaster(w), casts = capture(w, "cast");
   o.hold.add("fireball");
-  withRandom(0.5, () => run(w, o, 200));
+  withRng(w, 0.5, () => run(w, o, 200));
   assert.equal(casts.length, 0, "holding past full charge does not fire by itself");
   assert.equal(slot(o, "fireball").charge, 1);
   o.hold.clear();
-  withRandom(0.5, () => run(w, o, 1));
+  withRng(w, 0.5, () => run(w, o, 1));
   assert.equal(casts[0].charge, 1);
   near(o.vitals.mana, 80, 1e-9);
 });
@@ -298,10 +298,10 @@ test("Fireball cast: full charge caps at 1 and costs 20; no auto-release", () =>
 test("Fireball cast: charge is capped by affordable mana and the cap is paid in full", () => {
   const w = mkWorld(), o = mkCaster(w, { mana: 12 });
   o.hold.add("fireball");
-  withRandom(0.5, () => run(w, o, 100));
+  withRng(w, 0.5, () => run(w, o, 100));
   near(slot(o, "fireball").charge, 7 / 15, 1e-9);
   o.hold.clear();
-  withRandom(0.5, () => run(w, o, 1));
+  withRng(w, 0.5, () => run(w, o, 1));
   near(o.vitals.mana, 0, 1e-9); // cost(7/15) = 12
 });
 
@@ -319,22 +319,22 @@ test("Fireball cast: not enough mana to start flashes the mana bar", () => {
 
 test("Fireball cast: cooldown blocks a new charge until it runs out", () => {
   const w = mkWorld(), o = mkCaster(w);
-  withRandom(0.5, () => cast(w, o, "fireball", 20));
+  withRng(w, 0.5, () => cast(w, o, "fireball", 20));
   o.hold.add("fireball");
-  withRandom(0.5, () => run(w, o, 38));
+  withRng(w, 0.5, () => run(w, o, 38));
   assert.equal(slot(o, "fireball").charging, false, "still cooling down");
-  withRandom(0.5, () => run(w, o, 6));
+  withRng(w, 0.5, () => run(w, o, 6));
   assert.equal(slot(o, "fireball").charging, true, "free again after 0.7 s");
 });
 
 test("Specialization modifiers shorten cooldown and cast time", () => {
   const w = mkWorld(), o = mkCaster(w, { mods: { castTimeMult: 0.9025, cooldownMult: 0.9025 } });
   o.hold.add("fireball");
-  withRandom(0.5, () => run(w, o, 3));
+  withRng(w, 0.5, () => run(w, o, 3));
   near(slot(o, "fireball").need, 1.3 * 0.9025, 1e-9);
-  withRandom(0.5, () => run(w, o, 16)); // 19 frames held so far
+  withRng(w, 0.5, () => run(w, o, 16)); // 19 frames held so far
   o.hold.clear();
-  withRandom(0.5, () => run(w, o, 1)); // release: 19 x DT / 1.17325 = 0.27 charge, above the minimum
+  withRng(w, 0.5, () => run(w, o, 1)); // release: 19 x DT / 1.17325 = 0.27 charge, above the minimum
   near(slot(o, "fireball").cdMax, 0.7 * 0.9025, 1e-9);
   near(slot(o, "fireball").cooldown, 0.7 * 0.9025, 1e-9);
 });
@@ -408,14 +408,14 @@ test("Burn: ignition chance gate, then one tick per second of dps", () => {
   const ignites = (rnd) => {
     const w = mkWorld(), t = mkTarget();
     w.entities.push(t);
-    withRandom(rnd, () => igniteHit(w, t, { chance: 0.5, duration: 5, dps: 8 }));
+    withRng(w, rnd, () => igniteHit(w, t, { chance: 0.5, duration: 5, dps: 8 }));
     return !!t.burn;
   };
   assert.equal(ignites(0.499), true);
   assert.equal(ignites(0.5), false, "random >= chance fails");
   const w = mkWorld(), t = mkTarget(), burns = capture(w, "burn");
   w.entities.push(t);
-  withRandom(0, () => igniteHit(w, t));
+  withRng(w, 0, () => igniteHit(w, t));
   assert.equal(burns[0].type, "ignite");
   step(w, 55);
   assert.equal(t.dots.length, 0, "no tick before 1 s");
@@ -431,7 +431,7 @@ test("Burn: ignition chance gate, then one tick per second of dps", () => {
 test("Burn: only whole seconds tick (5.5 s gives 5), dps below 1 still hurts for 1", () => {
   const w = mkWorld(), t = mkTarget();
   w.entities.push(t);
-  withRandom(0, () => igniteHit(w, t, { chance: 1, duration: 5.5, dps: 0.4 }));
+  withRng(w, 0, () => igniteHit(w, t, { chance: 1, duration: 5.5, dps: 0.4 }));
   step(w, 60 * 7);
   assert.deepEqual(t.dots, [1, 1, 1, 1, 1]);
   assert.equal(t.burn, null);
@@ -440,17 +440,17 @@ test("Burn: only whole seconds tick (5.5 s gives 5), dps below 1 still hurts for
 test("Burn: re-ignite refreshes instead of stacking", () => {
   const w = mkWorld(), t = mkTarget(), burns = capture(w, "burn");
   w.entities.push(t);
-  withRandom(0, () => igniteHit(w, t, { chance: 1, duration: 5, dps: 8 }));
+  withRng(w, 0, () => igniteHit(w, t, { chance: 1, duration: 5, dps: 8 }));
   step(w, 125); // 120 accumulated frames sit a hair under 2.0 s, so the 2nd tick needs a few more
   assert.equal(t.dots.length, 2);
-  withRandom(0, () => igniteHit(w, t, { chance: 1, duration: 3, dps: 5 }));
+  withRng(w, 0, () => igniteHit(w, t, { chance: 1, duration: 3, dps: 5 }));
   assert.equal(burns.filter((e) => e.type === "ignite").length, 1, "no second ignite event");
   assert.equal(t.burn.dps, 8, "keeps the stronger dps");
   near(t.burn.dur, 3, 0.05); // max(5 - 2, 3)
   step(w, 60 * 4);
   assert.equal(t.dots.length, 5, "2 earlier ticks + 3 more from the refreshed burn");
   assert.equal(t.burn, null);
-  withRandom(0, () => igniteHit(w, t, { chance: 1, duration: 4, dps: 12 }));
+  withRng(w, 0, () => igniteHit(w, t, { chance: 1, duration: 4, dps: 12 }));
   assert.equal(t.burn.dps, 12);
 });
 
@@ -458,7 +458,7 @@ test("Burn: Burn Resistance halves ticks and may nullify an ignition (spending t
   let w = mkWorld(), t = mkTarget();
   w.entities.push(t);
   t.ward = mkWard(w, t);
-  withRandom([0, 0.5], () => igniteHit(w, t)); // chance passes, nullify roll 0.5 fails (needs < 0.5)
+  withRng(w, [0, 0.5], () => igniteHit(w, t)); // chance passes, nullify roll 0.5 fails (needs < 0.5)
   assert.ok(t.burn);
   step(w, 70);
   assert.deepEqual(t.dots, [4], "8 dps x (1 - 0.5)");
@@ -468,7 +468,7 @@ test("Burn: Burn Resistance halves ticks and may nullify an ignition (spending t
   w.entities.push(t);
   t.ward = mkWard(w, t);
   const burns = capture(w, "burn");
-  withRandom([0, 0.49], () => igniteHit(w, t));
+  withRng(w, [0, 0.49], () => igniteHit(w, t));
   assert.equal(t.burn, null);
   assert.equal(burns[0].type, "nullify");
   assert.equal(t.ward, null, "the ward is spent");
@@ -477,24 +477,24 @@ test("Burn: Burn Resistance halves ticks and may nullify an ignition (spending t
 test("Burn: a nullified ignition also snuffs a burn that was already running", () => {
   const w = mkWorld(), t = mkTarget();
   w.entities.push(t);
-  withRandom(0, () => igniteHit(w, t));
+  withRng(w, 0, () => igniteHit(w, t));
   assert.ok(t.burn);
   t.ward = mkWard(w, t);
-  withRandom([0, 0.1], () => igniteHit(w, t));
+  withRng(w, [0, 0.1], () => igniteHit(w, t));
   assert.equal(t.burn, null);
 });
 
 test("Burn: stops without an end event when the target goes down; dead and non-hittable do not ignite", () => {
   const w = mkWorld(), t = mkTarget(), burns = capture(w, "burn");
   w.entities.push(t);
-  withRandom(0, () => igniteHit(w, t));
+  withRng(w, 0, () => igniteHit(w, t));
   t.downed = true;
   step(w, 1);
   assert.equal(t.burn, null);
   assert.equal(burns.filter((e) => e.type === "end").length, 0);
   for (const over of [{ dead: true }, { hittable: false }]) {
     const x = mkTarget(over);
-    withRandom(0, () => igniteHit(w, x));
+    withRng(w, 0, () => igniteHit(w, x));
     assert.equal(x.burn, null);
   }
 });
@@ -560,7 +560,7 @@ test("Flame Shield vs Fireball: absorbed ball dies, no hit event; leftover flies
   shield.rise = 1;
   let hits = capture(w, "hit");
   let p = w.spawn(ball({ charge: 0.5, x: 300, angle: Math.PI, owner: { id: "enemy" } }));
-  withRandom(0.5, () => step(w, 40));
+  withRng(w, 0.5, () => step(w, 40));
   assert.equal(p.dead, true);
   assert.equal(shield.points, 33, "17 damage soaked");
   assert.equal(hits.length, 0);
@@ -570,7 +570,7 @@ test("Flame Shield vs Fireball: absorbed ball dies, no hit event; leftover flies
   shield.points = 20;
   hits = capture(w, "hit");
   p = w.spawn(ball({ charge: 1, x: 300, angle: Math.PI, owner: { id: "enemy" } }));
-  withRandom(0.5, () => step(w, 40));
+  withRng(w, 0.5, () => step(w, 40));
   assert.equal(owner.shield, null, "the shield broke");
   assert.equal(hits.length, 1);
   assert.equal(hits[0].target, owner);
@@ -583,7 +583,7 @@ function blast(charge, targets, extra = {}) {
   const w = mkWorld(), hits = capture(w, "hit");
   new ExplosionSystem(w);
   w.entities.push(...targets);
-  withRandom(extra.random ?? 0.5, () =>
+  withRng(w, extra.random ?? 0.5, () =>
     w.events.emit("explosion", { source: extra.source ?? null, x: 0, y: 0, z: 0, charge, kind: "clash", element: "fire" }),
   );
   return { w, hits };
@@ -631,7 +631,7 @@ test("Explosion: Burn Resistance applies, Flame Shield does not stop it", () => 
   const t2 = mkTarget({ x: 100, radius: 10 });
   t2.ward = mkWard(r.w, t2);
   r.w.entities.push(t2);
-  withRandom(0.5, () => r.w.events.emit("explosion", { source: null, x: 100, y: 0, z: 0, charge: 1, kind: "clash", element: "fire" }));
+  withRng(r.w, 0.5, () => r.w.events.emit("explosion", { source: null, x: 100, y: 0, z: 0, charge: 1, kind: "clash", element: "fire" }));
   const onT2 = log.find((h) => h.target === t2);
   assert.deepEqual([onT2.damage, onT2.resisted], [17, 7], "24 x 0.7 = 16.8 -> 17");
   assert.equal(r.shield.points, 50, "shields are not hittable and soak nothing");
@@ -673,7 +673,7 @@ test("Clash in flight: head-on balls clash once; same owner and large height gap
   const run2 = (a, b, frames = 20) => {
     const w = mkWorld(), ex = capture(w, "explosion");
     w.spawn(a); w.spawn(b);
-    withRandom(0.5, () => step(w, frames));
+    withRng(w, 0.5, () => step(w, frames));
     return ex;
   };
   const a = ball({ owner: { id: "A" }, charge: 1, x: 0, angle: 0 }), b = ball({ owner: { id: "B" }, charge: 0.4, x: 200, angle: Math.PI });

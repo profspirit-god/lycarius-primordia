@@ -3,6 +3,8 @@
 import assert from "node:assert/strict";
 import "../src/content/index.js"; // registers skills and classes
 import { EventBus } from "../src/core/EventBus.js";
+import { Rng } from "../src/sim/rng.js";
+import { ScriptedRng } from "./helpers.mjs";
 import { SkillCaster } from "../src/systems/SkillCaster.js";
 import { StatusSystem } from "../src/systems/StatusSystem.js";
 import { Vitals } from "../src/systems/Vitals.js";
@@ -18,7 +20,7 @@ import { Camera } from "../src/systems/Camera.js";
 
 const DT = 1 / 60;
 function mkWorld() {
-  const w = { events: new EventBus(), entities: [] };
+  const w = { events: new EventBus(), entities: [], rng: new Rng(1) };
   w.spawn = (e) => (w.entities.push(e), e);
   w.hits = [];
   w.blasts = [];
@@ -84,20 +86,19 @@ test("target on the caster's centre gets a defined direction (aim)", () => {
 test("burn offer: 40% chance, 6 s, ignition goes through StatusSystem", () => {
   const w = mkWorld(), o = mkCaster(w);
   const t = mkTarget(w, 100, 0);
-  const real = Math.random;
-  try {
-    Math.random = () => 0.9; // the live StatusSystem must not ignite during the cast itself
+  {
+    w.rng = new ScriptedRng(0.9); // the live StatusSystem must not ignite during the cast itself
     cast(w, o);
     assert.deepEqual(w.hits[0].burn, { chance: 0.4, duration: 6, dps: 8 });
     assert.equal(t.burn ?? null, null);
-    Math.random = () => 0.1; // below 0.4 -> ignites
+    w.rng = new ScriptedRng(0.1); // below 0.4 -> ignites
     w.status.onHit(w.hits[0]);
     assert.ok(t.burn && t.burn.dur === 6);
     t.burn = null;
-    Math.random = () => 0.9;
+    w.rng = new ScriptedRng(0.9);
     w.status.onHit(w.hits[0]);
     assert.equal(t.burn ?? null, null);
-  } finally { Math.random = real; }
+  }
 });
 
 test("cost 40 mana at completion, cooldown 60 s, cooldown modifier applies", () => {
