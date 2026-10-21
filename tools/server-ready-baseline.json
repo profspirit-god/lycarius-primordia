@@ -30,7 +30,7 @@
     "present": 1
   },
   "skills/BurnWardEffect.js": {
-    "random": 40,
+    "random": 39,
     "present": 6
   },
   "skills/Fireball.js": {

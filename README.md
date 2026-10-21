@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.11.2.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,12 +8,12 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.11.2.01
+## 1. What is in V1.12.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Menu           | Title menu: Play, Creator Support (placeholder), Exit. Play opens the Home lobby (placeholders), then Mode Select: Live Server (placeholder), Campaign (placeholder), Training Grounds (playable, with a loading screen). Settings is on the Home bottom row |
-| Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), cast-timer debug, dummy attacks toggle, dummy uses skills toggle, dummy movement mode, Developer options test panel. Persisted in `localStorage`. |
+| Settings       | Sectioned (Audio, Graphics, Interface) with a footer that stays put: Reset, Save, Back (Back asks Save / Discard when there are unsaved changes). Pause menu → Settings adds Training Dummy (attacks, skills, movement) and Developer (FPS overlay, cast timer, XP tools). Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
@@ -62,14 +62,14 @@ Rules:
 
 ### Dummy modes
 
-Set in **Settings → Dummy attacks** (applies when you press Training Ground).
+Set in **Pause → Settings → Training Dummy → Dummy attacks** (Save rebuilds the dummy at once).
 
 | Mode          | Behaviour                                                                                                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Off (default) | Passive training dummy with infinite health. Tracks total damage, hits, last hit and 5-second DPS                                                                                                                                       |
 | On            | The dummy takes the player class's stats (50 HP, 100 mana, same regen), leads its target, charges to a random level and fires fireballs at you. A hit staggers it and cancels its cast. It can be defeated and respawns after 3 seconds |
 
-**Settings → Dummy uses skills** (needs Dummy attacks; applies when you press Training Ground). Off: the dummy only fires Fireball. On: it also uses the rest of the Mage kit:
+**Pause → Settings → Training Dummy → Dummy uses skills** (needs Dummy attacks; Save rebuilds the dummy). Off: the dummy only fires Fireball. On: it also uses the rest of the Mage kit:
 
 | Skill           | When the dummy uses it                                                                                                              |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
@@ -169,11 +169,11 @@ Explosion (`src/systems/ExplosionSystem.js`): radius `70 + 120 x strength` px; d
 
 ### Debug: cast timer
 
-**Settings → Show cast timer (debug)** draws `Skill  elapsed / total s` and a small bar above the player while charging. The total is the effective cast time, so cast-time bonuses are visible. The text turns green once the time is full.
+**Pause → Settings → Developer → Show cast timer** draws `Skill  elapsed / total s` and a small bar above the player while charging. The total is the effective cast time, so cast-time bonuses are visible. The text turns green once the time is full.
 
 ### Developer options (test panel)
 
-**Settings → Developer options** edits the saved Mage progression (it applies the next time you enter the Training Ground): add character XP, add specialization XP (amount box, default 100), jump to the next specialization level, or reset all progression. A status line shows both levels and pending picks.
+**Pause → Settings → Developer → XP tools** edit the running Mage progression (the player levels up live; Reset progression asks to confirm): add character XP, add specialization XP (amount box, default 100), jump to the next specialization level, or reset all progression. A status line shows both levels and pending picks.
 
 ### Magic circle casting
 
@@ -249,7 +249,7 @@ Mage-only boost. You own it right after choosing the Mage (no unlock level). **P
 | Effect      | Mana regeneration x5 for 30 seconds (the Mage's base 1/s becomes 5/s). Specialization regen bonuses are multiplied too |
 | Cooldown    | 3 minutes (the specialization cooldown bonus shortens it)                               |
 | Ending      | After 30 s, or when you are downed                                                      |
-| Visual      | Blue glow around the body, rising blue motes, a blue light, a status icon with a time-left bar beside the bars, and a blue glow on the mana bar |
+| Visual      | Hollow blue circles (bubbles) rising around the body, a faint blue light, a status icon with a time-left bar beside the bars, and a blue glow on the mana bar |
 | Skill icon  | Human silhouette with a blue enhancement arrow stack                                    |
 
 ### Dodge (universal ability)
@@ -275,12 +275,12 @@ Self-only buff with a cast time. **Hold `Q`** until the circle completes; releas
 | -------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Cast                 | 1.2 s hold, 25 mana paid when the cast completes (you need 25 mana to start). Movement slows to 55% while casting |
 | While casting        | Red-orange magic circle under the caster, rising and spiralling motes, the body tints red-orange and glows, light grows |
-| Duration             | 30 seconds. The glow flickers in the last 4 seconds                                                           |
+| Duration             | 30 seconds. The ribbons flicker in the last 4 seconds                                                           |
 | Fire skill damage    | Reduced by 30% (Fireball hits on the body, after any Flame Shield absorption). Never below 1                  |
 | Burn damage          | Burn ticks do 50% damage (8 becomes 4) while the ward is up, including a burn that was already running         |
 | Burn ignites         | 50% chance the ward **nullifies** it: no burn (a running burn is snuffed too), the ward is consumed, and a toast shows a burn icon being slashed in two above the target. Otherwise the burn starts, with reduced ticks, and the ward stays |
-| While active         | Red-orange glow on the body, embers rising, and a trail of glowing particles behind you while you move        |
-| Ending               | Expiry, being nullified-and-spent, or being downed. The glow fades over 0.9 s and leaves hanging embers behind |
+| While active         | Long red-orange ribbons winding up the body, a few embers, and short thin dashes streaking behind you while you move |
+| Ending               | Expiry, being nullified-and-spent, or being downed. The ribbons fade over 0.9 s and leaves hanging embers behind |
 | Recast               | Casting again while active refreshes the 30 s timer (full cost)                                               |
 | HUD                  | Third skill slot with the time-left bar, a time-left bar under the mana bar, and a BURNING line with time left and damage per second |
 
@@ -288,7 +288,7 @@ Example: ward up, a fireball hits for 20 → you take 14. It ignites you: half t
 
 ### Dummy movement
 
-Set in **Settings → Dummy movement** (applies when you press Start). Works with both passive and hostile dummies.
+Set in **Pause → Settings → Training Dummy → Dummy movement** (Save rebuilds the dummy). Works with both passive and hostile dummies.
 
 | Mode                 | Behaviour                                                                                                                  |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -424,14 +424,14 @@ src/
   scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
   lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders), loadTasks (loading-screen readiness tasks)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
-  ui/                         PlayerHud (in-game HUD), ProfilePanel (character panel), SkillTreePanel (specialization tree), Modal (lobby modals), icons (SVG icon set)
+  ui/                         PlayerHud (in-game HUD), ProfilePanel (character panel), SkillTreePanel (specialization tree), Modal (lobby modals), SettingsPanel (sectioned settings, staged edit), icons (SVG icon set)
   entities/                   Entity (base), Player, TrainingDummy, Graugr
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
                               FireballProjectile, FlameShieldEffect, BurnWardEffect, ProjectileClash
   systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects,
                               StatusSystem (burn, stun), BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem, RaidSystem
-  render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura, drawEnhance, drawStun
+  render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura, drawRibbons, drawEnhance, drawStun
 ```
 
 ### Core concepts
@@ -470,7 +470,7 @@ src/
 
 **Something the loading screen must wait for** — add a task to `buildTasks` in `src/lobby/loadTasks.js` (`run` returns a promise; mark it `fatal` if the game cannot start without it).
 
-**A new setting** — add a default in `Settings.js` and a row in `SettingsScene.js`.
+**A new setting** — add a default in `Settings.js` and one row object to `SECTIONS` in `src/ui/SettingsPanel.js` (choose its section; `ctx: "game"` keeps it out of the lobby).
 
 **A new specialization bonus** — add an entry to `SPEC_BONUSES` in `src/progression/SpecBonuses.js` (stat add, modifier add, or modifier multiply). The tree lists it automatically; a modifier that is new must also be read where it applies.
 
@@ -533,16 +533,16 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.11.2.01)
+## 6. Known limitations (V1.12.0.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
 - Single-player only. The road to online (server, accounts, co-op, hosting on the owner's own PC, an optional exe build) is planned phase by phase in `SERVER_PATH.md`; the code is being kept server-ready (see `Claude.md` section 5b).
-- Changing **Dummy attacks** or **Dummy uses skills** takes effect the next time you press Training Ground.
+- Dummy settings rebuild the dummy when saved; during a Mock Raid the new dummy appears when the raid ends.
 - Campaign and Live Server are placeholder screens. Home (profile, shop, Genesis Path, messages, inventory, character, season, rank), Creator Support and the Mode Select pictures / video are placeholders. The wallet is in-memory and not saved. The loading bar is driven by real tasks, but they are small today; Campaign and Live have no loading screen. The Home character is still a cylinder placeholder; shop item images and the profile avatar are still placeholders.
 - Character level has no gameplay effect yet. Specialization is Mage / fire only, and capped at level 10.
-- The skill tree has no respec: picks are permanent until you reset progression in Developer options.
+- The skill tree has no respec: picks are permanent until you reset progression in Developer → XP tools.
 - Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
 - Graugr has no sounds of its own yet. Barrage damage (12 per 0.5 s) is very high against 50 HP: outrun it (you walk 230 px/s, it walks 105 while spinning). Raids are not saved, and kill counts reset when a raid session starts.
 - A deflected fireball keeps its burn, so it can ignite you. Flame Shield does not stop Graugr's melee.

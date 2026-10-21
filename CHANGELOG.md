@@ -2,6 +2,35 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.00 — Modal X fix, buff visual language, sectioned Settings with a fixed footer
+
+### Fixed
+
+- **Home scene: the "X" on every modal (Profile, Shop, Genesis Path, Messages and the placeholder panels) did nothing.** Cause: the close handler tested `e.target.dataset.a`, but the click lands on the SVG icon inside the button, which has no `data-a`; only the thin border of the button worked. `ui/Modal.js` now uses `e.target.closest("[data-a=close]")`, and `.ic { pointer-events:none }` makes icons transparent to clicks everywhere.
+- **Two buffs at once over-glowed the character** (Mana Regen plus Burn Resistance stacked two additive radial glows, two lights and a tinted body). Buffs no longer glow; each has its own particle signature (see below).
+
+### Changed (buff visuals: a shared visual language)
+
+| Meaning | Signature | Used by |
+| ------- | --------- | ------- |
+| Regeneration / restoring | Hollow **circles** (bubbles) rising around the body | Mana Regen (blue) |
+| Resistance / protection | Long flexible tinted **ribbons** winding up the body | Burn Resistance (red-orange) |
+| Motion / haze (reserved) | Short thin solid **dashes** along the velocity | Burn Resistance movement trail now; haste and haze later |
+
+- New particle shapes `bubble` and `dash` in `ParticleSystem` (`len` field for the dash), new `render/drawRibbons.js`. `ManaRegenFx` lost its body glow (and its `render`); `BurnWardEffect.draw` draws ribbons instead of `drawAura`. Lights are weaker (Mana Regen 0.45 to 0.15, ward 0.35 to 0.12), the ward body tint is 0.18 (was 0.45), embers 22/s to 10/s. Self-skill casting (charge) still uses the aura.
+
+### Changed (Settings, UI and UX)
+
+- **Settings are split into sections** (Audio, Graphics, Interface) in cards, with a chip bar that jumps to a section. New shared panel `ui/SettingsPanel.js`; a new setting is one row object.
+- **Home Settings holds player preferences only.** Developer options are gone from the lobby.
+- **In-game Settings** (Pause menu, new **Settings** button) adds **Training Dummy** (attacks, skills, movement; Save rebuilds the dummy at once, no need to re-enter) and **Developer** (debug FPS, cast timer, XP tools). The XP tools now act on the running world (the player levels up live) and **Reset progression asks to confirm**.
+- **Fixed footer: Reset, Save, Back.** The body scrolls, the footer does not. Editing is staged: changes apply live (you hear and see them) and are written only on Save. Reset loads the defaults for the settings on that panel (still needs Save). Back with unsaved changes asks **Save / Discard** (X or Esc keeps editing). Save is disabled when nothing changed, the footer says "Unsaved changes" or "All changes saved", Esc acts as Back.
+- Version 1.11.2.01 to 1.12.0.00.
+
+### Tests
+
+- `tests/visuals-settings.test.mjs` (3 tests): bubble / dash shapes draw finite numbers, ribbons, staged Settings. `tests/abilities.test.mjs` now asserts Mana Regen emits bubbles. `npm test` runs six files. Browser-checked with Playwright (modal X, settings sections, sticky footer, discard, in-game settings, both buffs on screen).
+
 ## V1.11.2.01 — S1b seeded RNG: every gameplay roll comes from `world.rng` (cleanup, no gameplay change)
 
 Second step of the server path (`SERVER_PATH.md` S1b). A server must be the only source of dice, and tests must be able to replay a fight, so gameplay randomness no longer touches `Math.random`.

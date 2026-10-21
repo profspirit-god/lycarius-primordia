@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.11.2.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.12.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -40,6 +40,7 @@ Default when the user says "you decide": **S1c**. Never start an item whose `Nee
 | V1.11.0.00 | Fire Blast: fourth Mage skill (`R`, hold; 70 damage AOE, knockback, 40% burn, 40 mana, 60 s cooldown), unlocks at specialization level 8; `SkillDef.noAi`, `blast` event, `tests/fireblast.test.mjs`. S1 sub-steps now start at V1.11.0.01, S1 closes at V1.12.0.00 |
 | V1.11.1.00 | Fix: Fire Blast froze the game on `R` (a self skill without a `palette` crashed `Player.draw`); fallback palette, draw and full-cast regression tests (15) |
 | V1.11.2.00 | Mana Regen (Mage passive, `F`, x5 mana regen for 30 s, 3 min cooldown), Dodge (universal, `Shift`, 20 stamina, 25 s), `instant` skill type, yellow dodge trail, blue regen glow |
+| V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 
 ## Server path (road to online)

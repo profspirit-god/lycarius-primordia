@@ -12,6 +12,8 @@ export const scaled = (count) =>
  * Physics particles. Each has ground position (x,y) and height z.
  * Gravity pulls z down, particles bounce off the ground (z=0) with restitution + friction.
  * shapes: 'dot' | 'spark' (velocity streak) | 'ring' (expanding ground shockwave)
+ * | 'bubble' (hollow circle in screen space: regen / restoring buffs)
+ * | 'dash' (short thin solid line of fixed `len` along the velocity, vertical when still: haze, motion)
  */
 export class ParticleSystem {
   constructor(max = 6000) {
@@ -42,6 +44,7 @@ export class ParticleSystem {
       additive: true,
       shape: "dot",
       stretch: 0.02,
+      len: 7,
       ...o,
     });
   }
@@ -102,6 +105,25 @@ export class ParticleSystem {
       ctx.lineWidth = 1 + 4 * (1 - t);
       ctx.beginPath();
       ctx.ellipse(sx, sy, s, s * 0.5, 0, 0, TAU);
+      ctx.stroke();
+    } else if (p.shape === "bubble") {
+      ctx.strokeStyle = rgba(c, p.alpha * fade);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, s, 0, TAU);
+      ctx.stroke();
+    } else if (p.shape === "dash") {
+      const vx = p.vx,
+        vy = p.vy - p.vz,
+        m = Math.hypot(vx, vy) || 1,
+        ux = m > 1 ? vx / m : 0,
+        uy = m > 1 ? vy / m : -1;
+      ctx.strokeStyle = rgba(c, p.alpha * fade);
+      ctx.lineWidth = 1;
+      ctx.lineCap = "butt";
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - ux * p.len, sy - uy * p.len);
       ctx.stroke();
     } else if (p.shape === "spark") {
       ctx.strokeStyle = rgba(c, p.alpha * fade);
