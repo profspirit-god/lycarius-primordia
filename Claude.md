@@ -31,7 +31,7 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 
 1. **Start:** read this file. Do **not** ask for or unzip the whole repo for a small task, and read docs by section (1b). Use the code map (section 4) to name the 3-8 files needed. If the user attached a full zip, unzip once, then `grep -n` / `view_range`; never `cat` big files.
 2. **Work in a copy.** Source files are **CRLF**. Read with `tr -d '\r'`; edit in LF with exact-match replace (assert one match); convert back to CRLF before packaging (`sed -i 's/$/\r/'`). Never leave mixed endings.
-3. **Verify before delivering:** run `node tests/graugr.test.mjs`, `node tests/mage.test.mjs` (or `npm test`) and `node tools/audit-server-ready.mjs` (all must pass), `node --check` on every `src/**/*.js`; for new logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
+3. **Verify before delivering:** run `node tests/graugr.test.mjs`, `node tests/mage.test.mjs`, `node tests/fireblast.test.mjs` (or `npm test`) and `node tools/audit-server-ready.mjs` (all must pass), `node --check` on every `src/**/*.js`; for new logic, a tiny headless harness (stub `world` with `events`, `entities`, `player`, `particles`, `damageNumbers`, `lights`) run with `node`. For drawing, call `draw` with a Proxy ctx and assert no NaN args. State what was and was not tested (browser play is the user's test).
 4. **Deliver a changes-only zip**, never the whole repo: `lycarius-primordia-V<x.y.z.nn>-changes.zip`, paths relative to the repo root (`src/...`, `css/...`, docs), CRLF kept, only new + changed files, docs and `Claude.md` included. List the files in chat. User extracts into the repo root and overwrites. Make the zip with python `zipfile`, forward slashes.
 5. **Chat reply, in order:** design decisions with numbers (only the non-obvious ones, flag ambiguities and the default taken) → what changed (file list) → **Server-ready: yes, or debt (file: what)** → test checklist (concrete, observable) → GitHub steps (exact commands, section 7) → known difficulties. No code dumps in chat unless the user asks.
 6. **Ask at most one question**, only if blocked or at a real roadmap fork. Do not bundle unrequested features. Bugs: cause in 1-2 lines, then the fix as the next FIX version.
@@ -69,7 +69,7 @@ entities/          Entity (x y z radius height dead hittable solid burn ward stu
                    Player (stats, syncProgression, stun-aware, downed/respawn), TrainingDummy (passive/hostile, thinkSkills),
                    Graugr (melee enemy; GRAUGR consts; AI pickMode/think/dodge; startBarrage/startPoke/leap; tryDeflect; emits 'kill')
 classes/           ClassRegistry, Mage (data)
-skills/            SkillRegistry; defs Fireball FlameShield BurnResistance; FireballProjectile (checkHit order: clash → deflect →
+skills/            SkillRegistry; defs Fireball FlameShield BurnResistance FireBlast (self AOE, `noAi`, emits `blast` + aoe `hit`s); FireballProjectile (checkHit order: clash → deflect →
                    shield → body; roll(); hit()), FlameShieldEffect, BurnWardEffect, ProjectileClash
 progression/       Progression (XP, levels, picks, save), SpecBonuses (data), Mods (skillMult, elementMult)
 ui/                PlayerHud (top-left card, status icons, bottom-left skill circles), ProfilePanel (character panel), SkillTreePanel,
@@ -77,16 +77,16 @@ ui/                PlayerHud (top-left card, status icons, bottom-left skill cir
 systems/           SkillCaster (casters: vitals aim getCastOrigin wantsCast applyImpulse kick lowManaFlash), Vitals (hp/mana/stamina),
                    HitEffects ('hit' → target.onHit → VFX), StatusSystem (burn + stun), ExplosionSystem, XpSystem,
                    RaidSystem (start/stop/nextRaid/update; kills, oneShots), ParticleSystem (emit; `scaled as n`), Lights, Camera,
-                   DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, AudioSystem (events → GameAudio)
+                   DamageNumbers.spawn(x,y,text,{crit,color}), Toasts, BurnFx, ExplosionFx, BlastFx (Fire Blast visuals), AudioSystem (events → GameAudio)
 audio/AudioEngine  procedural Web Audio, no asset files
 render/            drawCylinder drawGlow drawGround drawBar drawChargeOrb drawMagicCircle drawAura drawCover drawEnhance drawStun
 tools/             audit-server-ready.mjs (+ server-ready-baseline.json): counts sim-code debt, fails on increase; sec.mjs: print one doc section
 docs/proposals/    ASSESSMENT + the two proposals (Marble bag, World division); design only, no code
 docs/ART_AND_MAPS.md  art style, sprite manifest, Tiled maps; plan only
-tests/             graugr.test.mjs (Graugr, raid, stun, deflect), mage.test.mjs (S1a safety net: Mage kit, burn, shield, explosions, clash, XP and levels), helpers.mjs (stub world, step, capture, withRandom, memoryStorage; pattern for new tests)
+tests/             graugr.test.mjs (Graugr, raid, stun, deflect), mage.test.mjs (S1a safety net: Mage kit, burn, shield, explosions, clash, XP and levels), helpers.mjs (stub world, step, capture, withRandom, memoryStorage; pattern for new tests) fireblast.test.mjs (Fire Blast)
 ```
 
-World events: `hit` `cast` `explosion` `burn` `ward` `shield` `levelup` `kill` `stun`. HitEvent: `{source,target,damage,crit,dir,charge,x,y,z,aoe?,burn?,stun?}`.
+World events: `hit` `cast` `explosion` `blast` `burn` `ward` `shield` `levelup` `kill` `stun`. HitEvent: `{source,target,damage,crit,dir,charge,x,y,z,aoe?,burn?,stun?}`.
 
 ## 5. Architecture rules
 
@@ -163,6 +163,8 @@ Undo before pushing: `git restore .` (and `git clean -fd` for new files), or `gi
 - Graugr: emits `kill {target, source, oneShot, tier}` on the first update after death (it has no world in `onHit`). One-shot = it died on its first damage event. Barrage ticks are `aoe` hits (no hit-stop spam). A deflected projectile gets `owner = Graugr`.
 - DOM buttons over the canvas: `#ui` has `pointer-events:none`; give the control `pointer-events:auto`. A focused button reacts to Space (the fireball key), so use `tabIndex=-1` and `preventDefault` on `mousedown`.
 - Player starts with Fireball only; skills come from `Progression.unlockedSkills()`; call `Player.syncProgression()` after any pick or level-up. Cast time / cooldown use `owner.mods?.castTimeMult / cooldownMult`; damage uses `skillMult` / `elementMult`.
+- **Every `self` skill must carry a `palette`** (`Player.draw` and `drawAura` read it; a missing one killed the render loop in V1.11.0.00). `tests/fireblast.test.mjs` checks it and draws a full cast with the real particle, light and camera systems; copy that pattern for any new skill that draws.
+- Fire Blast: self skill with `noAi:true` (TrainingDummy filters such skills out of its caster). It emits `blast`, not `cast`, so XpSystem gives no flat spec XP. Knockback = `target.applyImpulse` after the `hit` (hit `charge` kept at 0.3 so the target's own onHit knock stays small). No randomness in the file: burn chance is rolled by StatusSystem.
 - Explosions: emit `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe:true`.
 - Loading: `LoadingScene` runs every task from `loadTasks.buildTasks` and starts the next scene only when all are done and `minTime` has passed; a `fatal` task shows Retry / Back. Add anything the world needs to wait for as a task.
 - HUD is DOM (`#ui`): `.hud` is `pointer-events:none`, only the profile circle and status icons take pointer events. The HUD writes to the DOM only when a value changes. Stamina exists on `Vitals` but nothing spends it yet.

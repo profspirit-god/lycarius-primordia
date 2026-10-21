@@ -1,5 +1,6 @@
 import { Entity } from "./Entity.js";
 import { SkillCaster } from "../systems/SkillCaster.js";
+import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { Vitals } from "../systems/Vitals.js";
 import { drawCylinder } from "../render/drawCylinder.js";
 import { drawGlow } from "../render/drawGlow.js";
@@ -45,7 +46,7 @@ export class TrainingDummy extends Entity {
     this.cls = cls;
     this.vitals = this.attack ? new Vitals(cls.stats) : null;
     this.skills = this.attack && skills;
-    this.caster = this.attack ? new SkillCaster(this, this.skills ? cls.skills : cls.skills.slice(0, 1), {}) : null;
+    this.caster = this.attack ? new SkillCaster(this, this.skills ? cls.skills.filter((id) => !SkillRegistry.get(id).noAi) : cls.skills.slice(0, 1), {}) : null; // noAi skills (Fire Blast) are player-only
     this.aim = Math.PI;
     this.kick = 0;
     this.knock = { x: 0, y: 0 };

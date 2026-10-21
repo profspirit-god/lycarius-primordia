@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.10.0.05** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.11.1.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.10.0.05
+## 1. What is in V1.11.1.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Settings       | Master volume, particle quality, screen shake, damage numbers, debug overlay (FPS), cast-timer debug, dummy attacks toggle, dummy uses skills toggle, dummy movement mode, Developer options test panel. Persisted in `localStorage`. |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
-| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. You start with Fireball only; the other two unlock in the specialization tree |
+| Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
 | Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` |
 | Projectile clash | Two enemy fireballs that meet explode and hurt anything near. A stronger charge destroys a weaker one                                |
 | Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
@@ -139,7 +139,8 @@ Press `K` to open the tree (pauses the game; `K` or `Esc` closes). It is a singl
 | 1 (start)       | **Fireball** (the only skill you begin with)                                            |
 | 2, 3, 4         | Pick one bonus each (see below)                                                         |
 | 5               | **Flame Shield** unlocked                                                               |
-| 6, 7, 8, 9      | Pick one bonus each                                                                     |
+| 6, 7, 9         | Pick one bonus each                                                                     |
+| 8               | **Fire Blast** unlocked                                                                 |
 | 10 (max)        | **Burn Resistance** unlocked                                                            |
 
 Locked skills show as greyed slots (with the level needed) on the HUD. Reaching a bonus level adds a pending pick; the `K` hint turns green and pulses while you have unspent picks. Picks fill the lowest pending level first.
@@ -219,6 +220,24 @@ A body hit from Fireball can ignite the target (`StatusSystem`). Burn works on t
 | Tick feedback   | Burn sound, the body flashes and lights up, an orange damage number, a burst of sparks. The dummy counts burn damage in Total damage and DPS, not in Hits |
 | Visuals         | Fire particles rise from the body and a flickering light follows it. In the last 1.2 seconds the fire shrinks and thins out, then a puff of smoke drifts off |
 | Flame Shield    | Unchanged: it absorbs raw fireball damage first. Burn can only start from the part that reaches the body           |
+
+### Fire Blast
+
+Self-centred AOE with a cast time. **Hold `R`** until the circle completes; releasing early cancels for free (no mana, no cooldown). Holding on after it completes does not recast. Unlocks at specialization level 8.
+
+| Rule               | Value                                                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Type               | Fire mage skill, AOE around the caster in all directions. Mage with the fire element only                  |
+| Cast               | 0.5 s hold, 40 mana paid when the cast completes (you need 40 mana to start)                               |
+| Cooldown           | 60 seconds (the Skill Cooldown bonus shortens it)                                                          |
+| Range              | 240 px from your centre to the target's body edge (the last ground ring marks it)                          |
+| Damage             | 70 to every target in range, no falloff, no crit. Skill and element damage multiply it (`70 x (1 + skill) x (1 + element)`). You are never hurt by your own blast |
+| Knockback          | 1500 px/s push away from you, about 215 px of travel, on top of the target's normal hit reaction            |
+| Burn               | 40% chance per target: 6 s of burn, 8 damage per second (element damage boosts it). A Burn Resistance ward can nullify it |
+| Fire resistance    | A Burn Resistance ward reduces the damage by 30%. Flame Shields do not stop it                              |
+| Enemies            | The hostile dummy never uses it (`noAi`)                                                                    |
+
+Example: two enemies at 100 px and 200 px, a third at 300 px. The first two take 70 and fly back, each with a 40% chance to burn; the third is out of range.
 
 ### Burn Resistance
 
@@ -313,6 +332,7 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Release                      | Cast            |
 | `Right Mouse` or `E`         | Raise / drop Flame Shield |
 | Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
+| Hold `R`                     | Cast Fire Blast (level 8; hold until the circle completes) |
 | `K`                          | Skill tree (class specialization) |
 | Click the profile circle     | Character panel (info, skills, attributes, equipment) |
 | `Esc`                        | Pause menu (or close the skill tree / character panel) |
@@ -431,10 +451,11 @@ src/
 | ------- | ------------ |
 | `node tests/graugr.test.mjs` | Headless gameplay tests (Graugr AI, skills, stun, deflect, raid). Exit 0 = pass |
 | `node tests/mage.test.mjs` | Safety-net tests that pin the Mage kit: Fireball numbers, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels (52 tests). Shared helpers in `tests/helpers.mjs` |
+| `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (both test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all three test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -478,7 +499,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.10.0.05)
+## 6. Known limitations (V1.11.1.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
@@ -491,6 +512,6 @@ git checkout dev && git pull
 - Only the Training Ground exists, so progression is saved in the browser's `localStorage` (not on a server).
 - Graugr has no sounds of its own yet. Barrage damage (12 per 0.5 s) is very high against 50 HP: outrun it (you walk 230 px/s, it walks 105 while spinning). Raids are not saved, and kill counts reset when a raid session starts.
 - A deflected fireball keeps its burn, so it can ignite you. Flame Shield does not stop Graugr's melee.
-- Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`.
+- Burn Resistance is tuned by constants at the top of `BurnResistance.js`; Burn numbers live in `Fireball.burn`. Fire Blast is tuned by the constants at the top of `FireBlast.js`.
 
 See **[ROADMAP.md](ROADMAP.md)** for what comes next and **[CHANGELOG.md](CHANGELOG.md)** for history.

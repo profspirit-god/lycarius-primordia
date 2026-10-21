@@ -2,6 +2,44 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.11.1.00 — Fix: Fire Blast froze the game
+
+### Fixed
+
+- **Pressing `R` froze the game and the character vanished.** Cause: `Player.draw` tints the body with `casting.palette.main` while a self skill is being cast, and Fire Blast (a self skill) had no `palette`, so the first frame of the cast threw `TypeError: Cannot read properties of undefined (reading 'main')` and the render loop died. Burn Resistance never hit it because it carries `WARD_CIRCLE`.
+- `FireBlast.palette` is now `FIRE_CIRCLE`, and `Player.draw` falls back to `FIRE_CIRCLE` for any self skill without a palette, so a future self skill cannot take the game down the same way.
+
+### Added
+
+- Three regression tests in `tests/fireblast.test.mjs` (now 15): the player draws at charge 0, 0.3 and 1 while casting Fire Blast; every self skill of the class has a complete palette; and a full 2 s cast with the **real** `ParticleSystem`, `Lights` and `Camera` updates and renders every frame with no NaN or Infinity argument, exactly one blast, 70 damage and the 60 s cooldown running.
+
+### Notes
+
+- Why V1.11.0.00 missed it: its tests covered the simulation and the particle numbers, but never drew the player while casting. The rule in `Claude.md` (drawing is checked with a Proxy ctx) now has a test for every self skill. Server-ready: yes, no new debt. S1 sub-steps now start at V1.11.1.01.
+
+## V1.11.0.00 — Fire Blast (new Mage skill)
+
+### Added
+
+- **Fire Blast** (fire mage skill, `R`, hold): a self-centred AOE. Hold `R` for 0.5 s until the circle completes, then one big fire blast goes off in all directions. Costs 40 mana, 60 s cooldown. Unlocks at specialization level 8 (see Changed).
+  - Damage 70 flat (no falloff, no crit) to everything hittable whose body edge is within 240 px of the caster. The caster is never hurt. Skill damage and element damage multiply it; a Burn Resistance ward reduces it like any fire damage.
+  - Knockback: every target in range gets a 1500 px/s radial impulse away from the caster (about 215 px of travel), added to the target's own hit reaction.
+  - Status: 40% chance per target to set it on fire (6 s, 8 damage per second, boosted by element damage), rolled by `StatusSystem` like Fireball burn.
+- `src/skills/FireBlast.js` (simulation code, zero audit debt: no randomness, no drawing), `src/systems/BlastFx.js` (rings, fire billow, sparks, smoke, light, shake; client only), new world event `blast` (`BlastEvent` in `types.js`), `blast` icon, `AudioSystem.onBlast` (explosion boom at full strength).
+- `SkillDef.noAi`: skills the enemy and dummy AI must not receive. The hostile dummy in skills mode now builds its caster from the class skills without them, so it never casts Fire Blast.
+- `tests/fireblast.test.mjs` (12 headless tests); `npm test` runs all three test files.
+
+### Changed
+
+- **Mage specialization:** Fire Blast unlocks at level **8** (was a bonus-pick level). Levels 2, 3, 4, 6, 7 and 9 keep their picks, so the tree now has 6 picks instead of 7. A saved pick at level 8 is ignored on load.
+- **S1a safety net, three deliberate pin updates** in `tests/mage.test.mjs`: `Mage.skills` gains `fireBlast`, `choiceLevels()` loses 8, and the fully unlocked list gains `fireBlast` (between Flame Shield and Burn Resistance).
+- **Version plan:** S1 sub-steps now start at `V1.11.0.01` and the closing S1 release moves from V1.11.0.00 to **V1.12.0.00** (`SERVER_PATH.md` S1 and S1k, `ROADMAP.md`, `ASSESSMENT.md`).
+- `VERSION` 1.10.0.05 → 1.11.0.00. README, ROADMAP, `Claude.md` updated.
+
+### Notes
+
+- Casting Fire Blast does not emit `cast`, so it gives no flat spec XP (only the XP from damage dealt). Server-ready: yes, no new debt.
+
 ## V1.10.0.05 — S1a safety net: characterization tests for the Mage kit (tests only, no gameplay change)
 
 First step of the server path (`SERVER_PATH.md` S1a). The tests pin what the code does today, so every later S1 step can prove it changed nothing.

@@ -82,7 +82,7 @@ W2 is folded into S6 (not a separate version) when S6 starts; W3/W4 wait for the
 
 ## 7. Risks
 
-- Scope creep: two large proposals on a solo project. Mitigation: M1 only before S1 closes; everything else after V1.11.0.00.
+- Scope creep: two large proposals on a solo project. Mitigation: M1 only before S1 closes; everything else after V1.12.0.00.
 - Rewrite risk: building bags or grids before S1h ids forces rework. Mitigation: gates above.
 - Balance drift (crit rate, tick feel at 30 Hz): retest after M2 and S1j.
 - Capacity claims: forbidden without S6/S9 data.
