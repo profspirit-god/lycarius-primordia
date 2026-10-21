@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.11.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.11.1.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -38,6 +38,7 @@ Default when the user says "you decide": **S1b**. Never start an item whose `Nee
 | V1.10.0.04 | Docs and tooling (no gameplay change): `docs/MMORPG_GUIDELINE.md` (Gemini seven-part sequence reconciled with this repo, guide not truth), roadmap "Choosing work", `Claude.md` rules 10 and 11, `tools/check-docs.mjs`. S1 sub-step versions now start at V1.10.0.05 |
 | V1.10.0.05 | Tests only (no gameplay change): **S1a safety net**, `tests/mage.test.mjs` (52 tests) and `tests/helpers.mjs` pin Fireball, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels; `npm test` runs both files. S1 sub-step versions now start at V1.10.0.06 |
 | V1.11.0.00 | Fire Blast: fourth Mage skill (`R`, hold; 70 damage AOE, knockback, 40% burn, 40 mana, 60 s cooldown), unlocks at specialization level 8; `SkillDef.noAi`, `blast` event, `tests/fireblast.test.mjs`. S1 sub-steps now start at V1.11.0.01, S1 closes at V1.12.0.00 |
+| V1.11.1.00 | Fix: Fire Blast froze the game on `R` (a self skill without a `palette` crashed `Player.draw`); fallback palette, draw and full-cast regression tests (15) |
 
 ## Server path (road to online)
 

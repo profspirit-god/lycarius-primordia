@@ -2,6 +2,21 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.11.1.00 — Fix: Fire Blast froze the game
+
+### Fixed
+
+- **Pressing `R` froze the game and the character vanished.** Cause: `Player.draw` tints the body with `casting.palette.main` while a self skill is being cast, and Fire Blast (a self skill) had no `palette`, so the first frame of the cast threw `TypeError: Cannot read properties of undefined (reading 'main')` and the render loop died. Burn Resistance never hit it because it carries `WARD_CIRCLE`.
+- `FireBlast.palette` is now `FIRE_CIRCLE`, and `Player.draw` falls back to `FIRE_CIRCLE` for any self skill without a palette, so a future self skill cannot take the game down the same way.
+
+### Added
+
+- Three regression tests in `tests/fireblast.test.mjs` (now 15): the player draws at charge 0, 0.3 and 1 while casting Fire Blast; every self skill of the class has a complete palette; and a full 2 s cast with the **real** `ParticleSystem`, `Lights` and `Camera` updates and renders every frame with no NaN or Infinity argument, exactly one blast, 70 damage and the 60 s cooldown running.
+
+### Notes
+
+- Why V1.11.0.00 missed it: its tests covered the simulation and the particle numbers, but never drew the player while casting. The rule in `Claude.md` (drawing is checked with a Proxy ctx) now has a test for every self skill. Server-ready: yes, no new debt. S1 sub-steps now start at V1.11.1.01.
+
 ## V1.11.0.00 — Fire Blast (new Mage skill)
 
 ### Added
