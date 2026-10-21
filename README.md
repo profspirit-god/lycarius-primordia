@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.11.1.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.11.2.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.11.1.00
+## 1. What is in V1.11.2.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +20,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` |
 | Projectile clash | Two enemy fireballs that meet explode and hurt anything near. A stronger charge destroys a weaker one                                |
 | Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
-| Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), stamina 100 (regen 8/s, no skill spends it yet), death and respawn                      |
+| Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), stamina 100 (regen 8/s, spent by Dodge), death and respawn                      |
 | HUD            | DOM overlay: profile circle (click for the character panel) with the level under it, name and thin health / mana / stamina bars, status-effect icons beside the card; skill circles with SVG icons in the bottom-left |
 | Loading        | Real task-based loading screen (data check, fonts, art, audio, renderer warm-up, world dry run). Starts the game only when everything is ready; shows Retry / Back on a fatal error |
 | Icons          | Every icon is an inline SVG from `src/ui/icons.js` (no emoji)                                                                           |
@@ -239,6 +239,34 @@ Self-centred AOE with a cast time. **Hold `R`** until the circle completes; rele
 
 Example: two enemies at 100 px and 200 px, a third at 300 px. The first two take 70 and fly back, each with a 40% chance to burn; the third is out of range.
 
+### Mana Regen (Mage passive)
+
+Mage-only boost. You own it right after choosing the Mage (no unlock level). **Press `F`**: no cost, no cast time.
+
+| Rule        | Value                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------- |
+| Cost        | Free                                                                                    |
+| Effect      | Mana regeneration x5 for 30 seconds (the Mage's base 1/s becomes 5/s). Specialization regen bonuses are multiplied too |
+| Cooldown    | 3 minutes (the specialization cooldown bonus shortens it)                               |
+| Ending      | After 30 s, or when you are downed                                                      |
+| Visual      | Blue glow around the body, rising blue motes, a blue light, a status icon with a time-left bar beside the bars, and a blue glow on the mana bar |
+| Skill icon  | Human silhouette with a blue enhancement arrow stack                                    |
+
+### Dodge (universal ability)
+
+Every class has it, no unlock level. **Press `Shift`**.
+
+| Rule        | Value                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------- |
+| Cost        | 20 stamina (refused with a red flash on the stamina bar if you have less)               |
+| Movement    | Slides 130 px straight backwards, away from where you aim, over 0.32 s. Fast at first, then it settles |
+| Protection  | Nothing can hit you for the first 0.18 s                                                |
+| Cooldown    | 25 seconds                                                                              |
+| While dodging | A cast in progress is cancelled and you cannot start a new one until it ends; you cannot steer |
+| Not allowed | While stunned or downed                                                                 |
+| Visual      | Yellow line trail: a streak through the body plus fading yellow body outlines, and a few sparks |
+| Skill icon  | Yellow human silhouette leaning back with speed lines                                   |
+
 ### Burn Resistance
 
 Self-only buff with a cast time. **Hold `Q`** until the circle completes; releasing early cancels for free (no mana, no cooldown). Holding on after it completes does not recast.
@@ -333,6 +361,8 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | `Right Mouse` or `E`         | Raise / drop Flame Shield |
 | Hold `Q`                     | Cast Burn Resistance (hold until the circle completes) |
 | Hold `R`                     | Cast Fire Blast (level 8; hold until the circle completes) |
+| `F`                          | Mana Regen (Mage passive, free)  |
+| `Shift`                      | Dodge backwards (20 stamina)     |
 | `K`                          | Skill tree (class specialization) |
 | Click the profile circle     | Character panel (info, skills, attributes, equipment) |
 | `Esc`                        | Pause menu (or close the skill tree / character panel) |
@@ -499,7 +529,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.11.1.00)
+## 6. Known limitations (V1.11.2.00)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

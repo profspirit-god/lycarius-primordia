@@ -2,6 +2,26 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.11.2.00 — Mana Regen (Mage passive) and Dodge (universal ability)
+
+### Added
+
+- **Mana Regen** (`skills/ManaRegen.js`, `ManaRegenEffect.js`, `systems/ManaRegenFx.js`): Mage-only, free, no cast time. Press `F`: mana regeneration x5 for 30 s, 3 minute cooldown. Owned from class selection (it is in `specialization.start`, no unlock level). Blue glow and rising motes on the body, a blue status icon with a time-left bar beside the bars, and a blue glow on the mana bar while it runs. Icon: a human silhouette with a blue enhancement arrow stack.
+- **Dodge** (`skills/Dodge.js`, `classes/Universal.js`, `systems/DodgeFx.js`): universal, 20 stamina, 25 s cooldown. Press `Shift`: slide 130 px straight backwards (away from the aim) over 0.32 s, decelerating, so it is not instant. Untouchable for the first 0.18 s. Cancels a cast in progress; no casting while it runs. A yellow line trail (streak plus fading body outlines) follows the dodger. Icon: a yellow silhouette leaning back with speed lines. First skill to spend stamina.
+- **`instant` skill type** in `SkillCaster`: one key press fires the skill, no charge. Optional `canUse(owner)` / `onDenied(owner)` for non-mana costs, `activeFrac`, `color`, `costText` on `SkillDef`.
+- `Vitals.manaRegenMult`, `Player.startDodge` / `stepDodge`, `manaRegen` and `dodge` events (types in `types.js`).
+- `tests/abilities.test.mjs` (10 tests); `npm test` runs both test files.
+
+### Changed
+
+- HUD: skill circles can carry their own colour (`--tone`); a stamina bar flashes red when a Dodge is refused; status icons can carry a colour. Character panel lists every starting skill and the universal skills, and shows `costText` where a skill has one.
+- `VERSION` 1.11.1.00 → 1.11.2.00.
+
+### Notes
+
+- Server-ready: no new debt (audit counts unchanged, new files have zero hits).
+- Design defaults chosen where the brief was silent: Mana Regen is pressed (`F`), x5 multiplier; Dodge has 0.18 s of invulnerability, 130 px, `Shift`. All are constants at the top of the skill files.
+
 ## V1.11.1.00 — Fix: Fire Blast froze the game
 
 ### Fixed
