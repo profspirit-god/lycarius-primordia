@@ -18,7 +18,7 @@ Detailed plan for turning Primordia from a single-browser game into an online ga
 
 A phase is **not done** until all of these hold. No exceptions, no "almost".
 
-1. `node tests/graugr.test.mjs` passes (and every test added by later phases).
+1. `node tests/graugr.test.mjs` and `node tests/mage.test.mjs` pass (`npm test` runs both; and every test added by later phases).
 2. `node tools/audit-server-ready.mjs` prints `PASS` (no count above `tools/server-ready-baseline.json`). From phase S1k on: `--strict` passes.
 3. `node --check` passes on every `.js` file; the game plays in the browser exactly as before (the phase's manual checklist).
 4. CHANGELOG, README, ROADMAP, `Claude.md` and this file updated; `VERSION` bumped; debt log (section 6) edited.
@@ -76,9 +76,9 @@ Effort is counted in **sessions** (one focused chat that ends with a delivered z
 
 ### S1: Separate the simulation from the view (the big one)
 
-Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.05`, `.06`, ...; `V1.10.0.02` to `.04` were docs releases). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
+Goal: the simulation runs in Node with no browser, deterministically. **Behaviour must not change** for the player. Order matters: tests first, risky things last. Each step is its own branch `cleanup/sim-<step>` and a cleanup-digit version (`V1.10.0.05`, `.06`, ...; `V1.10.0.02` to `.04` were docs releases; S1a took `V1.10.0.05`, so S1b starts at `V1.10.0.06`). The closing release is **V1.11.0.00**. About 14 to 20 sessions.
 
-- **S1a. Safety net.** Extend `tests/` with characterization tests that pin today's behaviour: Fireball damage by charge, cooldowns and mana cost, burn ticks, Flame Shield absorb, explosion falloff, clash outcomes, XP and level math. Done when the tests are green on the unmodified code. Every later step must keep them green.
+- **S1a. Safety net.** Extend `tests/` with characterization tests that pin today's behaviour: Fireball damage by charge, cooldowns and mana cost, burn ticks, Flame Shield absorb, explosion falloff, clash outcomes, XP and level math. Done when the tests are green on the unmodified code. Every later step must keep them green. **Done in V1.10.0.05** (`tests/mage.test.mjs`, 52 tests, plus `tests/helpers.mjs`; 23 mutations of the source were all caught).
 - **S1b. Seeded RNG.** Add `src/sim/rng.js` (mulberry32: `next()`, `range(a,b)`, `chance(p)`), create it in `WorldScene.enter` as `world.rng` with a seed. Classify every `rand(` / `Math.random` in a sim file as **G** (gameplay-affecting) or **V** (visual only). Replace every **G** with `world.rng`. **V** stays and moves out in S1f. Done when a test running the same seed twice gives identical Fireball damage lists, and different seeds differ.
 - **S1c. Sim clock.** `world.time` (seconds, advanced by the sim step). Replace `performance.now` in sim code (the dummy DPS log). Done when the audit `clock` count is 0 outside draw code.
 - **S1d. Damage out of the view.** Create `systems/DamageSystem.js` (sim): on `hit`, calls `target.onHit`. `HitEffects` keeps only VFX and no longer calls `onHit`. Split every `onHit` into `onHit` (health, stagger timer `staggerT`, knock velocity) and view-side reactions (flash, glow) that the view derives from events. Stagger must stay a sim value because it cancels enemy casts. Systems are created in an explicit ordered list in one place, and the ordering gotcha in `Claude.md` is rewritten. Done when the tests pass with a world that has **no** `HitEffects`.
@@ -280,6 +280,7 @@ The audit tool counts the mechanical debt. This list holds debt a script cannot 
 - `lobby/loadTasks.js`: the world dry run creates a real `Progression`, so loading reads the real save (P13), S1g
 - `ui/PlayerHud.js`, `ui/ProfilePanel.js`: read `world.player` and `world.raid` directly (P13, added in V1.10.0.00), S2
 - `core/Game.js`: variable timestep and hit-stop time scaling (P10), S1j
+- `tests/mage.test.mjs`: stubs `Math.random` (`withRandom`) and a global `localStorage`; switch to `world.rng` in S1b and to the storage adapter in S1g, then delete the stubs
 
 ---
 
