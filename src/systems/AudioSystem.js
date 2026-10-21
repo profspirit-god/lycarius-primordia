@@ -17,6 +17,7 @@ export class AudioSystem {
       world.events.on("burn", (e) => this.onBurn(e)),
       world.events.on("ward", (e) => this.onWard(e)),
       world.events.on("explosion", (e) => this.onExplosion(e)),
+      world.events.on("blast", (e) => this.onBlast(e)),
       world.events.on("levelup", () => GameAudio.levelUp()),
     ];
   }
@@ -41,6 +42,11 @@ export class AudioSystem {
   onExplosion(e) {
     const s = this.spatial(e.x, e.y);
     GameAudio.explosion(e.charge, s.pan, s.vol);
+  }
+  /** Fire Blast: the explosion boom at full strength. */
+  onBlast(e) {
+    const s = this.spatial(e.x, e.y);
+    GameAudio.explosion(1, s.pan, s.vol);
   }
   onCast(e) {
     const s = this.spatial(e.owner.x, e.owner.y);

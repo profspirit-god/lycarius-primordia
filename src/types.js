@@ -86,6 +86,7 @@
  * @property {string} [hint]                          Key hint shown on the HUD slot.
  * @property {boolean} [toggle]                       Toggle skill: press on, press off. Needs isActive, onActivate, onDeactivate.
  * @property {boolean} [self]                         Targets the caster only. AI casters skip it; Player draws an aura instead of the charge orb.
+ * @property {boolean} [noAi]                        Player-only: enemy / dummy AI is not given this skill (Fire Blast).
  * @property {boolean} [autoRelease]                  Cast-time skill: fires the moment charge hits 1 (hold until the bar fills; releasing early cancels).
  * @property {object} [palette]                       Magic circle colours (see drawMagicCircle.js). Defaults to the fire palette.
  * @property {(owner: CasterOwner) => boolean} [isActive]
@@ -165,6 +166,19 @@
  * @property {number} charge                          0..1 strength: sets radius (70-190 px) and damage (6-24 at the centre).
  * @property {'clash'} kind
  * @property {string} element
+ */
+
+/**
+ * Emitted on world.events as 'blast' by Fire Blast (self-centred AOE). The damage itself goes out as 'hit' events with aoe=true;
+ * BlastFx draws the burst and AudioSystem plays the boom.
+ * @typedef {Object} BlastEvent
+ * @property {CasterOwner} source
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} radius                          Damage radius in px (caster centre to target body edge).
+ * @property {string} element
+ * @property {'fireBlast'} kind
  */
 
 /**
