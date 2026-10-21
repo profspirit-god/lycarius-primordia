@@ -15,13 +15,13 @@ export const Mage = {
     maxStamina: 100,
     staminaRegen: 8,
   },
-  skills: ["fireball", "flameShield", "burnResistance", "fireBlast"],
+  skills: ["fireball", "flameShield", "burnResistance", "fireBlast", "manaRegen"],
   // Class specialization (separate from character level): Lv1 starts with `start`, `unlocks` grant skills,
   // every other level above 1 grants one bonus pick (see progression/SpecBonuses.js).
   specialization: {
     element: "fire",
     maxLevel: 10,
-    start: ["fireball"],
+    start: ["fireball", "manaRegen"], // Mana Regen has no unlock level: a Mage owns it from class selection
     unlocks: { 5: "flameShield", 8: "fireBlast", 10: "burnResistance" },
   },
   bindings: {
@@ -29,5 +29,6 @@ export const Mage = {
     flameShield: ["Mouse2", "KeyE"],
     burnResistance: ["KeyQ"],
     fireBlast: ["KeyR"],
+    manaRegen: ["KeyF"],
   },
 };

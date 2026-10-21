@@ -88,6 +88,8 @@ export class PlayerHud {
       pv.style.width = `${(Math.min(cost, v.mana) / v.maxMana) * 100}%`;
     } else if (pv.style.display !== "none") pv.style.display = "none";
     this.bars.mp.el.classList.toggle("flash", p.lowManaFlash > 0);
+    this.bars.mp.el.classList.toggle("boost", !!p.manaBuff); // Mana Regen running
+    this.bars.st.el.classList.toggle("flash", p.lowStaminaFlash > 0);
 
     // level, pending-pick pip, xp gain flash
     if (prog) {
@@ -117,6 +119,10 @@ export class PlayerHud {
     if (!o) {
       const el = document.createElement("div");
       el.className = `fx ${d.kind}`;
+      if (d.tone) {
+        el.style.color = d.tone;
+        el.style.boxShadow = `0 0 8px ${d.tone}77`;
+      }
       el.innerHTML = `${icon(d.icon)}<span class="fx-t"></span><i class="fx-bar"><b></b></i>`;
       o = { el, t: el.querySelector(".fx-t"), bar: el.querySelector(".fx-bar b"), title: "", text: "", w: -1 };
       this.fx.set(key, o);
@@ -143,6 +149,10 @@ export class PlayerHud {
     this.setFx("ward", w && {
       icon: "ward", kind: "buff", frac: w.life / w.maxLife, text: `${Math.ceil(w.life)}`, title: `Burn Resistance: ${Math.ceil(w.life)}s left`,
     });
+    const mb = p.manaBuff;
+    this.setFx("manaRegen", mb && {
+      icon: "manaRegen", kind: "buff", tone: "#5ab4ff", frac: mb.life / mb.maxLife, text: `${Math.ceil(mb.life)}`, title: `Mana Regen: x${mb.mult} mana regeneration, ${Math.ceil(mb.life)}s left`,
+    });
     const s = p.shield;
     this.setFx("shield", s && {
       icon: "shield", kind: "buff", frac: s.points / s.maxPoints, text: `${Math.ceil(s.points)}`, title: `Flame Shield: ${Math.ceil(s.points)} / ${s.maxPoints} points (-${s.upkeep} MP/s)`,
@@ -154,9 +164,10 @@ export class PlayerHud {
     const slots = p.caster.slots;
     this.skillBox.replaceChildren();
     this.sk = [];
-    const mk = (cls, ic, label, title) => {
+    const mk = (cls, ic, label, title, tone) => {
       const el = document.createElement("div");
       el.className = `sk ${cls}`;
+      if (tone) el.style.setProperty("--tone", tone);
       el.title = title;
       el.innerHTML = `<div class="sk-btn">${icon(ic)}<span class="sk-cd"></span>
         <svg class="sk-ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="${RING_R}" stroke-dasharray="${RING_C.toFixed(2)}" stroke-dashoffset="${RING_C.toFixed(2)}"/></svg></div>
@@ -166,7 +177,7 @@ export class PlayerHud {
     };
     for (const s of slots) {
       const sk = s.skill,
-        o = mk("", sk.icon, sk.hint ?? "", sk.name);
+        o = mk("", sk.icon, sk.hint ?? "", sk.name, sk.color);
       o.slot = s;
       this.sk.push(o);
     }
@@ -182,8 +193,9 @@ export class PlayerHud {
         sk = s.skill,
         on = !!sk.isActive?.(p),
         cd = clamp01(s.cooldown / (s.cdMax || sk.cooldown || 1)),
-        frac = sk.toggle ? (on && p.shield ? p.shield.points / p.shield.maxPoints : 0) : on && p.ward ? p.ward.life / p.ward.maxLife : s.charge,
-        state = (s.charging || on ? "on " : "") + (!s.charging && !on && !sk.canStart(v.mana) ? "nomana" : "");
+        frac = sk.activeFrac ? sk.activeFrac(p) : sk.toggle ? (on && p.shield ? p.shield.points / p.shield.maxPoints : 0) : on && p.ward ? p.ward.life / p.ward.maxLife : s.charge,
+        blocked = sk.canUse ? !sk.canUse(p) : !sk.canStart(v.mana), // not enough mana (or stamina for Dodge)
+        state = (s.charging || on ? "on " : "") + (!s.charging && !on && blocked ? "nomana" : "");
       const cdq = Math.round(cd * 360);
       if (cdq !== o.cd) { o.cd = cdq; o.el.style.setProperty("--cd", `${cdq}deg`); }
       const rq = Math.round(clamp01(frac) * 200);

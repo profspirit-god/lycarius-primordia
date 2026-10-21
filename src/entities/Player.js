@@ -10,6 +10,7 @@ import { WARD_CIRCLE, FIRE_CIRCLE } from "../render/drawMagicCircle.js";
 import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
 import { Settings } from "../core/Settings.js";
+import { UNIVERSAL } from "../classes/Universal.js";
 
 const AIM_Z = 32; // cursor is read at body height so shots land where the sprite visually is
 const RESPAWN_TIME = 3; // seconds spent downed
@@ -37,6 +38,9 @@ export class Player extends Entity {
     this.vitals = new Vitals(this.stats);
     this.caster = new SkillCaster(this, [], {});
     this.shield = null; // active FlameShieldEffect, if any
+    this.manaBuff = null; // running ManaRegenEffect, if any
+    this.dodge = null; // running dodge { t, dur, iFr, fx, fy, tx, ty } (replicated), if any
+    this.lowStaminaFlash = 0;
     this.flash = 0;
     this.lowManaFlash = 0;
     this.downed = false;
@@ -58,6 +62,7 @@ export class Player extends Entity {
     if (gained > 0) v.mana += gained;
     v.mana = Math.min(v.mana, v.maxMana);
     for (const id of prog ? prog.unlockedSkills() : this.cls.skills) this.caster.addSkill(id, this.cls.bindings[id] ?? []);
+    for (const id of UNIVERSAL.skills) this.caster.addSkill(id, UNIVERSAL.bindings[id] ?? []);
   }
   applyImpulse(x, y) {
     this.knock.x += x;
@@ -71,12 +76,36 @@ export class Player extends Entity {
     };
   }
   wantsCast(slot, world) {
-    return !this.downed && !(this.stunT > 0) && slot.keys.some((k) => world.input.isDown(k));
+    return !this.downed && !this.dodge && !(this.stunT > 0) && slot.keys.some((k) => world.input.isDown(k));
   }
 
   /** Toggle skills fire on the key press, not while held. */
   wantsToggle(slot, world) {
     return !this.downed && !(this.stunT > 0) && slot.keys.some((k) => world.input.wasPressed(k));
+  }
+
+  /** Begin a dodge: slide from here to `dist` px along `angle` over `time` s; untouchable for the first `iFr` s. */
+  startDodge(angle, dist, time, iFr) {
+    this.dodge = { t: 0, dur: time, iFr, fx: this.x, fy: this.y, tx: this.x + Math.cos(angle) * dist, ty: this.y + Math.sin(angle) * dist };
+    this.hittable = iFr <= 0;
+  }
+  /** Advance the dodge (ease-out slide). Returns true while it is still running. */
+  stepDodge(dt) {
+    const d = this.dodge;
+    if (!d) return false;
+    const u0 = d.t / d.dur;
+    d.t = Math.min(d.dur, d.t + dt);
+    const u1 = d.t / d.dur,
+      k = (1 - (1 - u1) * (1 - u1)) - (1 - (1 - u0) * (1 - u0));
+    this.x += (d.tx - d.fx) * k;
+    this.y += (d.ty - d.fy) * k;
+    this.hittable = d.t >= d.iFr;
+    if (d.t >= d.dur) {
+      this.dodge = null;
+      this.hittable = true;
+      return false;
+    }
+    return true;
   }
 
   /** Called by HitEffects when something hits the player. */
@@ -99,6 +128,8 @@ export class Player extends Entity {
     this.burn = null;
     this.stunT = 0;
     this.ward?.deactivate("downed");
+    this.manaBuff?.end("downed");
+    this.dodge = null;
     this.downed = true;
     this.downedTimer = RESPAWN_TIME;
     this.hittable = false;
@@ -122,6 +153,7 @@ export class Player extends Entity {
   update(dt, world) {
     this.flash = Math.max(0, this.flash - dt * 5);
     this.lowManaFlash = Math.max(0, this.lowManaFlash - dt);
+    this.lowStaminaFlash = Math.max(0, this.lowStaminaFlash - dt);
     if (this.downed) {
       this.downedTimer -= dt;
       if (this.downedTimer <= 0) this.respawn();
@@ -136,8 +168,9 @@ export class Player extends Entity {
     const my =
       Number(i.isDown("KeyS") || i.isDown("ArrowDown")) -
       Number(i.isDown("KeyW") || i.isDown("ArrowUp"));
-    const len = Math.hypot(mx, my) || 1,
-      free = this.stunT > 0 ? 0 : 1; // stunned: no steering, no casting
+    const dodging = this.stepDodge(dt),
+      len = Math.hypot(mx, my) || 1,
+      free = this.stunT > 0 || dodging ? 0 : 1; // stunned or dodging: no steering, no casting
     const sp = this.cls.stats.speed * (this.caster.charging ? 0.55 : 1);
     const k = 1 - Math.exp(-14 * dt);
     this.vx += ((mx / len) * sp * free - this.vx) * k;

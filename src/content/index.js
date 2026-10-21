@@ -5,6 +5,8 @@ import { Fireball } from '../skills/Fireball.js';
 import { FlameShield } from '../skills/FlameShield.js';
 import { BurnResistance } from '../skills/BurnResistance.js';
 import { FireBlast } from '../skills/FireBlast.js';
+import { ManaRegen } from '../skills/ManaRegen.js';
+import { Dodge } from '../skills/Dodge.js';
 import { Mage } from '../classes/Mage.js';
 import { SpecBonusRegistry, SPEC_BONUSES } from '../progression/SpecBonuses.js';
 
@@ -12,5 +14,7 @@ SkillRegistry.register(Fireball);
 SkillRegistry.register(FlameShield);
 SkillRegistry.register(BurnResistance);
 SkillRegistry.register(FireBlast);
+SkillRegistry.register(ManaRegen);
+SkillRegistry.register(Dodge);
 ClassRegistry.register(Mage);
 SPEC_BONUSES.forEach((b) => SpecBonusRegistry.register(b));

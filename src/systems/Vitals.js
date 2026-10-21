@@ -5,6 +5,7 @@ export class Vitals {
   }
   configure({ maxHp, maxMana, hpRegen, manaRegen, maxStamina = 0, staminaRegen = 0 }) {
     Object.assign(this, { maxHp, maxMana, hpRegen, manaRegen, maxStamina, staminaRegen });
+    this.manaRegenMult = 1; // Mana Regen boost multiplies this; owned by ManaRegenEffect
     this.hp = maxHp;
     this.mana = maxMana;
     this.stamina = maxStamina;
@@ -12,7 +13,7 @@ export class Vitals {
   update(dt) {
     if (this.hp <= 0) return;
     this.hp = Math.min(this.maxHp, this.hp + this.hpRegen * dt);
-    this.mana = Math.min(this.maxMana, this.mana + this.manaRegen * dt);
+    this.mana = Math.min(this.maxMana, this.mana + this.manaRegen * this.manaRegenMult * dt);
     this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegen * dt);
   }
   get dead() {
@@ -24,7 +25,7 @@ export class Vitals {
   spend(n) {
     this.mana = Math.max(0, this.mana - n);
   }
-  /** Spend stamina if there is enough. Returns false (and spends nothing) otherwise. No skill uses it yet. */
+  /** Spend stamina if there is enough. Returns false (and spends nothing) otherwise. Dodge uses it. */
   spendStamina(n) {
     if (this.stamina < n) return false;
     this.stamina -= n;

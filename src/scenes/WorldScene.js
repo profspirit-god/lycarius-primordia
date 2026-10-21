@@ -11,6 +11,8 @@ import { DamageNumbers } from "../systems/DamageNumbers.js";
 import { HitEffects } from "../systems/HitEffects.js";
 import { StatusSystem } from "../systems/StatusSystem.js";
 import { BurnFx } from "../systems/BurnFx.js";
+import { ManaRegenFx } from "../systems/ManaRegenFx.js";
+import { DodgeFx } from "../systems/DodgeFx.js";
 import { Toasts } from "../systems/Toasts.js";
 import { drawGround } from "../render/drawGround.js";
 import { VERSION_LABEL } from "../config.js";
@@ -58,6 +60,8 @@ export class WorldScene extends Scene {
     this.hitEffects = new HitEffects(this);
     this.status = new StatusSystem(this); // after HitEffects: hit damage lands before ignition is rolled
     this.burnFx = new BurnFx(this);
+    this.manaRegenFx = new ManaRegenFx(this);
+    this.dodgeFx = new DodgeFx(this);
     this.explosions = new ExplosionSystem(this);
     this.explosionFx = new ExplosionFx(this);
     this.blastFx = new BlastFx(this);
@@ -103,6 +107,8 @@ export class WorldScene extends Scene {
     this.hitEffects.dispose();
     this.status.dispose();
     this.burnFx.dispose();
+    this.manaRegenFx.dispose();
+    this.dodgeFx.dispose();
     this.explosions.dispose();
     this.explosionFx.dispose();
     this.blastFx.dispose();
@@ -283,6 +289,8 @@ export class WorldScene extends Scene {
     this.raid.update(dt);
     this.status.update(edt);
     this.burnFx.update(edt); // after lights.update: its one-frame lights must survive to render
+    this.manaRegenFx.update(edt);
+    this.dodgeFx.update(edt);
     this.particles.update(pdt);
     this.damageNumbers.update(dt);
     this.toasts.update(dt);
@@ -296,8 +304,10 @@ export class WorldScene extends Scene {
     ctx.save();
     this.camera.apply(ctx, w, h);
     drawGround(ctx, this.camera, w, h);
+    this.dodgeFx.render(ctx); // under the bodies
     for (const e of [...this.entities].sort((a, b) => a.y - b.y))
       e.draw(ctx, this);
+    this.manaRegenFx.render(ctx);
     this.particles.render(ctx);
     this.lights.render(ctx);
     this.damageNumbers.render(ctx);

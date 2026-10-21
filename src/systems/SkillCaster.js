@@ -72,11 +72,31 @@ export class SkillCaster {
       }
     }
   }
+  /** Instant skills (Mana Regen, Dodge): one key press fires them, no charge. Refused while on cooldown or when unaffordable. */
+  _instant(s, world, mana) {
+    const sk = s.skill,
+      o = this.owner;
+    if (s.cooldown > 0 || !o.wantsToggle?.(s, world)) return;
+    if (sk.canStart && !sk.canStart(mana)) {
+      o.lowManaFlash = 0.4;
+      return;
+    }
+    if (sk.canUse && !sk.canUse(o)) {
+      sk.onDenied?.(o);
+      return;
+    }
+    sk.onRelease(this._ctx(s, world));
+    this._cd(s);
+  }
   update(dt, world) {
     const mana = this.owner.vitals.mana;
     for (const s of this.slots) {
       const sk = s.skill;
       s.cooldown = Math.max(0, s.cooldown - dt);
+      if (sk.instant) {
+        this._instant(s, world, mana);
+        continue;
+      }
       if (sk.toggle) {
         this._toggle(s, world, mana);
         continue;
