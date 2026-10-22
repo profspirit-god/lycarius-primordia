@@ -7,7 +7,7 @@ const FLAME_RATE = 85; // flame particles per second per burning entity at full 
 
 /**
  * Visuals for the 'burn' event: rising flames on every burning entity (decaying at the end),
- * tick flash + damage number, ignite burst, nullify toast. Create AFTER HitEffects.
+ * tick flash + damage number, ignite burst, nullify toast. View only; its place in the order is set in `systems/pipeline.js`.
  */
 export class BurnFx {
   constructor(world) {
@@ -139,10 +139,12 @@ export class BurnFx {
     this.world.lights.add({ x, y, z, radius: 220, intensity: 1.1, life: 0.35, color: [255, 130, 45] });
   }
 
-  /** One burn damage tick: damage number, embers, light pulse. The body flash comes from target.onDot. */
+  /** One burn damage tick: body flash, damage number, embers, light pulse. */
   tick({ target, damage, x, y, z }) {
     const w = this.world,
       P = w.particles;
+    target.flash = target === w.player ? 0.55 : 0.8; // view-only fields (the player's flash is softer)
+    if (target.glow !== undefined) target.glow = 1;
     w.damageNumbers.spawn(target.x, target.y - target.height - 8, String(damage), {
       color: "#ff8a2a",
     });

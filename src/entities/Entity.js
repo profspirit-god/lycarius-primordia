@@ -5,9 +5,11 @@
  * Optional members the world looks for:
  *   hittable = true       -> projectiles can damage it
  *   solid    = true       -> blocks the player
- *   onHit(e: HitEvent, world) -> reaction to damage (see src/types.js)
+ *   onHit(e: HitEvent, world) -> SIM reaction to damage (health, knock, status), called by DamageSystem (see src/types.js).
+ *                                No flash, glow or sound in it: HitEffects and BurnFx derive those from the same event
  *   damageColor           -> colour of damage numbers it receives
- *   onDot(e, world)       -> reaction to damage over time (burn tick): { damage, kind, source }
+ *   onDot(e, world)       -> sim reaction to damage over time (burn tick): { damage, kind, source }
+ *   flash (0..1), glow    -> view-only fields, written by HitEffects / BurnFx and drawn by the entity
  *
  * Status slots the world looks for (null when absent):
  *   burn  -> running burn, owned by StatusSystem

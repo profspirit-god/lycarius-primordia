@@ -10,19 +10,11 @@ import { Camera } from "../systems/Camera.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { Lights } from "../systems/Lights.js";
 import { DamageNumbers } from "../systems/DamageNumbers.js";
-import { HitEffects } from "../systems/HitEffects.js";
-import { StatusSystem } from "../systems/StatusSystem.js";
-import { BurnFx } from "../systems/BurnFx.js";
-import { ManaRegenFx } from "../systems/ManaRegenFx.js";
-import { DodgeFx } from "../systems/DodgeFx.js";
+import { SIM_SYSTEMS, VIEW_SYSTEMS, createSystems, disposeSystems } from "../systems/pipeline.js";
 import { Toasts } from "../systems/Toasts.js";
 import { drawGround } from "../render/drawGround.js";
 import { VERSION_LABEL } from "../config.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
-import { ExplosionSystem } from "../systems/ExplosionSystem.js";
-import { ExplosionFx } from "../systems/ExplosionFx.js";
-import { BlastFx } from "../systems/BlastFx.js";
-import { XpSystem } from "../systems/XpSystem.js";
 import { RaidSystem } from "../systems/RaidSystem.js";
 import { drawEnhance } from "../render/drawEnhance.js";
 import { Progression } from "../progression/Progression.js";
@@ -65,19 +57,12 @@ export class WorldScene extends Scene {
     this.paused = false;
     this.fps = 60;
 
-    this.hitEffects = new HitEffects(this);
-    this.status = new StatusSystem(this); // after HitEffects: hit damage lands before ignition is rolled
-    this.burnFx = new BurnFx(this);
-    this.manaRegenFx = new ManaRegenFx(this);
-    this.dodgeFx = new DodgeFx(this);
-    this.explosions = new ExplosionSystem(this);
-    this.explosionFx = new ExplosionFx(this);
-    this.blastFx = new BlastFx(this);
+    createSystems(this, SIM_SYSTEMS); // the one ordered list: damage, status, explosions, xp (systems/pipeline.js)
+    createSystems(this, VIEW_SYSTEMS); // then the view systems; they read events and never change sim state
     const cls = ClassRegistry.get(this.classId);
     this.cls = cls;
     this.progression = new Progression(cls);
     this.player = this.spawn(new Player(cls, this.progression));
-    this.xp = new XpSystem(this); // after HitEffects + StatusSystem: a killing blow has already downed the target
     this.progression.onEvent = (e) => this.onProgress(e);
     this.offLevel = this.events.on("levelup", (e) => this.levelFx(e));
     this.banners = [];
@@ -114,15 +99,8 @@ export class WorldScene extends Scene {
   exit() {
     this.settingsPanel?.discard(); // leaving with unsaved previews: put the saved values back
     this.audio.dispose();
-    this.hitEffects.dispose();
-    this.status.dispose();
-    this.burnFx.dispose();
-    this.manaRegenFx.dispose();
-    this.dodgeFx.dispose();
-    this.explosions.dispose();
-    this.explosionFx.dispose();
-    this.blastFx.dispose();
-    this.xp.dispose();
+    disposeSystems(this, VIEW_SYSTEMS);
+    disposeSystems(this, SIM_SYSTEMS);
     this.raid.dispose();
     this.offLevel();
   }

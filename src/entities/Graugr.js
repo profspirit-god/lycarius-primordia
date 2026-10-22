@@ -95,10 +95,9 @@ export class Graugr extends Entity {
     this.knock.y += y;
   }
 
-  // --- damage in ---------------------------------------------------------
+  // --- damage in (sim only: the flash is view state, set by HitEffects / BurnFx) ------------
   onHit(e) {
     if (this.downed) return;
-    this.flash = 1;
     const k = e.aoe ? 40 : 60 + 140 * e.charge;
     this.knock.x += e.dir.x * k;
     this.knock.y += e.dir.y * k;
@@ -106,7 +105,6 @@ export class Graugr extends Entity {
   }
   onDot(e) {
     if (this.downed) return;
-    this.flash = 0.8;
     this.hurt(e.damage, e.source);
   }
   hurt(damage, source) {
