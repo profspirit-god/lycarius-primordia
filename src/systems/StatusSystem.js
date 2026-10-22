@@ -93,7 +93,7 @@ export class StatusSystem {
       Math.round(b.dps * (ward ? 1 - ward.burnReduction : 1)),
     );
     ward?.pulse();
-    t.onDot?.({ damage, kind: "burn", source: b.source });
+    t.onDot?.({ damage, kind: "burn", source: b.source }, this.world);
     this.world.events.emit("burn", {
       type: "tick",
       target: t,

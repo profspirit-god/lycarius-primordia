@@ -16,6 +16,7 @@ export function mkWorld() {
   w.hitstop = () => {};
   w.spawn = (e) => (w.entities.push(e), e);
   w.rng = new Rng(1); // seeded like the real world; tests that need exact dice use withRng()
+  w.time = 0; // sim clock, advanced by step() like WorldScene.update
   w.status = new StatusSystem(w);
   return w;
 }
@@ -23,6 +24,7 @@ export function mkWorld() {
 /** Advance every entity and the status system by n fixed frames. */
 export function step(w, n = 1) {
   for (let i = 0; i < n; i++) {
+    w.time += DT;
     for (const e of w.entities.slice()) e.update?.(DT, w);
     w.entities = w.entities.filter((e) => !e.dead);
     w.status.update(DT);

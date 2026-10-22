@@ -16,6 +16,7 @@ const PATROL_AMP = 260; // patrol line half-length
 const PATROL_RATE = 0.5; // rad/s along the sin path
 const ORBIT_R = 340; // strafe radius around the player
 const ORBIT_RATE = 0.35; // rad/s around the player
+const DPS_WINDOW = 5; // seconds of sim time (`world.time`) the DPS readout averages over
 
 /**
  * Passive mode: infinite health, never attacks.
@@ -94,8 +95,8 @@ export class TrainingDummy extends Entity {
   }
 
   // --- combat -----------------------------------------------------------
-  /** Called by HitEffects: freeze-frame, white flash, light emission, delayed knock-spring. */
-  onHit(e) {
+  /** Called by HitEffects: freeze-frame, white flash, light emission, delayed knock-spring. `world.time` stamps the DPS log. */
+  onHit(e, world) {
     this.freeze = 0.12 + 0.2 * e.charge;
     this.flash = 1;
     this.glow = 1;
@@ -106,18 +107,18 @@ export class TrainingDummy extends Entity {
     this.totalDamage += e.damage;
     this.hits++;
     this.lastHit = e.damage;
-    this.log.push({ t: performance.now(), d: e.damage });
+    this.log.push({ t: world.time, d: e.damage });
     if (this.attack) {
       this.vitals.damage(e.damage);
       if (this.vitals.dead) this.down();
     }
   }
   /** Damage over time (burn tick): counts toward total damage and DPS, not toward hits. */
-  onDot(e) {
+  onDot(e, world) {
     this.flash = 0.8;
     this.glow = 1;
     this.totalDamage += e.damage;
-    this.log.push({ t: performance.now(), d: e.damage });
+    this.log.push({ t: world.time, d: e.damage });
     if (this.attack) {
       this.vitals.damage(e.damage);
       if (this.vitals.dead) this.down();
@@ -151,10 +152,10 @@ export class TrainingDummy extends Entity {
     this.ai.timer = world.rng.range(1.5, 2.5);
     this.xpGiven = false;
   }
-  dps() {
-    const now = performance.now();
-    this.log = this.log.filter((l) => now - l.t < 5000);
-    return Math.round(this.log.reduce((a, l) => a + l.d, 0) / 5);
+  dps(world) {
+    const now = world.time;
+    this.log = this.log.filter((l) => now - l.t < DPS_WINDOW);
+    return Math.round(this.log.reduce((a, l) => a + l.d, 0) / DPS_WINDOW);
   }
 
   /** Steer toward the movement-mode target point; velocity eases so direction changes look weighty. */

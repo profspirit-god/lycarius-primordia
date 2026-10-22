@@ -53,7 +53,7 @@
  * @property {object|null} [dodge]                    Running dodge { t, dur, iFr, fx, fy, tx, ty } (Player only).
  * @property {number} [lowStaminaFlash]               Set > 0 when a Dodge is refused for lack of stamina.
  * @property {object|null} [ward]                     Active BurnWardEffect, if the owner has cast Burn Resistance.
- * @property {(e: { damage: number, kind: string, source: object }) => void} [onDot]  Damage over time (burn tick).
+ * @property {(e: { damage: number, kind: string, source: object }, world: object) => void} [onDot]  Damage over time (burn tick).
  * @property {(x: number, y: number) => void} applyImpulse          Recoil / knockback.
  * @property {{ element: string, castTimeMult: number, cooldownMult: number, elementDamage: number, skillDamage: number }|null} [mods]
  *   Specialization modifiers (Player only). SkillCaster applies castTimeMult / cooldownMult; damage code uses progression/Mods.js.
@@ -107,7 +107,7 @@
  * Emitted on world.events as 'hit' by anything that deals damage.
  * @typedef {Object} HitEvent
  * @property {object} source                          The attacker.
- * @property {object} target                          Must have hittable=true; may implement onHit(e).
+ * @property {object} target                          Must have hittable=true; may implement onHit(e, world).
  * @property {number} damage
  * @property {boolean} crit
  * @property {{ x: number, y: number }} dir           Unit vector of travel.

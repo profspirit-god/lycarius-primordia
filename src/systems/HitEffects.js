@@ -21,7 +21,7 @@ export class HitEffects {
     const w = this.world,
       { target, dir, charge, crit } = e;
     const mid = target.height * 0.55;
-    target.onHit?.(e);
+    target.onHit?.(e, w);
     if (!e.aoe) {
       w.hitstop(0.04 + 0.06 * charge);
       w.camera.addTrauma(0.22 + 0.45 * charge);
