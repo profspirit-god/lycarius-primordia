@@ -2,9 +2,10 @@ import { scaled as n } from "./ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
 
 /**
- * Listens to 'hit' and layers every impact effect:
- * freeze + flash + glow on the target, hit-stop, shake, damage number,
+ * VIEW only. Listens to 'hit' and layers every impact effect:
+ * flash + glow on the target, hit-stop, shake, damage number,
  * front sparks, BURST BEHIND the target, shockwave rings, smoke, light flash.
+ * It never changes health or any sim value: DamageSystem does that (S1d), and a world without this class plays the same fight.
  * To add a new hit reaction, add a method here and call it from onHit.
  */
 export class HitEffects {
@@ -21,7 +22,8 @@ export class HitEffects {
     const w = this.world,
       { target, dir, charge, crit } = e;
     const mid = target.height * 0.55;
-    target.onHit?.(e, w);
+    target.flash = 1; // view-only fields the entities draw and fade themselves
+    if (target.glow !== undefined) target.glow = 1;
     if (!e.aoe) {
       w.hitstop(0.04 + 0.06 * charge);
       w.camera.addTrauma(0.22 + 0.45 * charge);

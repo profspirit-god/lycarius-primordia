@@ -108,20 +108,18 @@ export class Player extends Entity {
     return true;
   }
 
-  /** Called by HitEffects when something hits the player. */
+  /** Sim reaction to a hit, called by DamageSystem. The red flash is view state, set by HitEffects. */
   onHit(e) {
     this.vitals.damage(e.damage);
-    this.flash = 1;
     this.applyImpulse(
       e.dir.x * (120 + 260 * e.charge),
       e.dir.y * (120 + 260 * e.charge),
     );
     if (this.vitals.dead) this.down();
   }
-  /** Damage over time (burn tick): no knock-back, no hit-stop, just a flash. */
+  /** Damage over time (burn tick): no knock-back. The flash is view state, set by BurnFx. */
   onDot(e) {
     this.vitals.damage(e.damage);
-    this.flash = 0.55;
     if (this.vitals.dead) this.down();
   }
   down() {

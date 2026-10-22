@@ -95,11 +95,9 @@ export class TrainingDummy extends Entity {
   }
 
   // --- combat -----------------------------------------------------------
-  /** Called by HitEffects: freeze-frame, white flash, light emission, delayed knock-spring. `world.time` stamps the DPS log. */
+  /** Sim reaction, called by DamageSystem: freeze (stops steering), delayed knock-spring, damage totals. `world.time` stamps the DPS log. Flash and glow are view state, set by HitEffects. */
   onHit(e, world) {
     this.freeze = 0.12 + 0.2 * e.charge;
-    this.flash = 1;
-    this.glow = 1;
     this.pending = {
       x: e.dir.x * (150 + 300 * e.charge),
       y: e.dir.y * (150 + 300 * e.charge) * 0.5,
@@ -115,8 +113,6 @@ export class TrainingDummy extends Entity {
   }
   /** Damage over time (burn tick): counts toward total damage and DPS, not toward hits. */
   onDot(e, world) {
-    this.flash = 0.8;
-    this.glow = 1;
     this.totalDamage += e.damage;
     this.log.push({ t: world.time, d: e.damage });
     if (this.attack) {
