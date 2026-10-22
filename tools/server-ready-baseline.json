@@ -18,9 +18,9 @@
     "present": 23
   },
   "entities/TrainingDummy.js": {
-    "clock": 5,
     "singlePlayer": 2,
-    "present": 29
+    "present": 29,
+    "clock": 2
   },
   "progression/Progression.js": {
     "dom": 3

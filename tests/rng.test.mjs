@@ -98,7 +98,7 @@ function arena(seed) {
   w.events.on("hit", (e) => w.log.push(["hit", e.target === w.player ? "P" : "E", e.damage, e.crit, !!e.aoe, e.burn ? Math.round(e.burn.duration * 1e6) : 0]));
   w.events.on("burn", (e) => w.log.push(["burn", e.type]));
   w.events.on("kill", (e) => w.log.push(["kill", e.oneShot]));
-  w.events.on("hit", (e) => e.target.onHit?.(e));
+  w.events.on("hit", (e) => e.target.onHit?.(e, w));
   return w;
 }
 const ballAt = (w, from, to, charge) =>

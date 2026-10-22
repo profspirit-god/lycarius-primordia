@@ -5,9 +5,9 @@
  * Optional members the world looks for:
  *   hittable = true       -> projectiles can damage it
  *   solid    = true       -> blocks the player
- *   onHit(e: HitEvent)    -> reaction to damage (see src/types.js)
+ *   onHit(e: HitEvent, world) -> reaction to damage (see src/types.js)
  *   damageColor           -> colour of damage numbers it receives
- *   onDot(e)              -> reaction to damage over time (burn tick): { damage, kind, source }
+ *   onDot(e, world)       -> reaction to damage over time (burn tick): { damage, kind, source }
  *
  * Status slots the world looks for (null when absent):
  *   burn  -> running burn, owned by StatusSystem
