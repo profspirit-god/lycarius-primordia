@@ -2,6 +2,29 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.03 — S1d damage out of the view: `DamageSystem` applies hits, the view only draws (cleanup, no gameplay change)
+
+Fourth step of the server path (`SERVER_PATH.md` S1d, debts P3 and P4). Before, damage landed because `HitEffects`, a presentation class, called `target.onHit`. A headless server has no `HitEffects`, so nothing would have taken damage, and "create X after HitEffects" was a hidden rule. Now one sim system applies hits and the view only reads the same event.
+
+### Added
+
+- **`systems/DamageSystem.js`** (sim): on `hit`, calls `target.onHit(e, world)`. Zero audit hits.
+- **`systems/pipeline.js`**: the one ordered list of world systems. `SIM_SYSTEMS` (damage, status, explosions, xp) come before `VIEW_SYSTEMS` (hitEffects, burnFx, manaRegenFx, dodgeFx, explosionFx, blastFx); `createSystems` and `disposeSystems` build and tear down a list. Listeners on one event run in creation order, so this order is the rule.
+- **`tests/damage.test.mjs`** (9 tests): the pipeline order; Player, Graugr and TrainingDummy take hit and burn damage in a world with **no** `HitEffects` (and keep `flash` at 0); a killing blow downs the target before ignition is rolled; `DamageSystem` receives and passes the world and stops after `dispose`; `HitEffects.js` has no `onHit` call left; with the view systems on, a hit sets `flash` to 1 and `glow` to 1 on the dummy, a burn tick sets 0.55 on the player and 0.8 on others; the same seeded Graugr fight (both sides take damage) ends in an identical sim state with and without the view systems.
+
+### Changed
+
+- **`onHit` / `onDot` are sim only.** `Player` (health, knock, downing), `Graugr` (knock, `hurt`) and `TrainingDummy` (`freeze`, knock spring, damage totals, DPS log, health when it attacks) no longer set `flash` or `glow`. `HitEffects` sets `flash = 1` (and `glow = 1` where the entity has one) on every hit; `BurnFx` sets 0.55 (player) or 0.8 (others) and `glow` on every burn tick. The entities still fade and draw them. Same numbers as before.
+- **`WorldScene`** builds and disposes systems through `pipeline.js` instead of ten loose `new` lines. Creation order changed (sim systems first), with the same relative order of damage, status and XP as before.
+- `HitEffects`, `BurnFx`, `Entity.js` headers and JSDoc say what is sim and what is view. `tools/audit-server-ready.mjs` lists `systems/DamageSystem.js`. `npm test` runs eight files. `VERSION` 1.12.0.02 → 1.12.0.03. README, ROADMAP (default is now S1e, M2 unblocked), `SERVER_PATH.md` (S1d, P3, P4, debt log, hooks), `Claude.md` (code map, gotchas, verify step), engines doc, guideline and assessment status lines.
+
+### Notes
+
+- **Server-ready:** debt unchanged (the baseline is not rewritten). Two debt-log lines are gone (P3, P4); the `Graugr` death still calls `world.particles` directly (existing `present` debt, S1f), which is why stub worlds keep no-op particles.
+- **`staggerT` was not added.** The S1d text names it, but the code has no stagger that cancels casts today. The dummy's `freeze` (it stops steering) stays a sim value in `onHit`. Inventing a timer nothing reads would be new gameplay; it arrives with the first interruptible caster.
+- Not tested: playing in a browser (`WorldScene.enter` and `exit` were syntax-checked only). The check: hits still flash the dummy, Graugr and player; burn ticks flash and the dummy glows; exiting to the menu and re-entering the world still works.
+- Order of listeners changed slightly (damage, status, explosions and XP now come before the view systems). The seeded-fight test shows no sim difference; draw order of effects within one event is the only thing that could differ, and it is cosmetic.
+
 ## V1.12.0.02 — S1c sim clock: `world.time` replaces the wall clock in sim code (cleanup, no gameplay change)
 
 Third step of the server path (`SERVER_PATH.md` S1c). Simulation code may not read a wall clock (R2): a server steps time itself, and a replay must not depend on when it runs. The only sim-side user was the training dummy's DPS readout.

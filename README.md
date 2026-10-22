@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.12.0.02** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.03** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.12.0.02
+## 1. What is in V1.12.0.03
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -429,15 +429,16 @@ src/
   classes/                    ClassRegistry, Mage (data only)
   skills/                     SkillRegistry, Fireball, FlameShield, BurnResistance (definitions),
                               FireballProjectile, FlameShieldEffect, BurnWardEffect, ProjectileClash
-  systems/                    SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers, HitEffects,
-                              StatusSystem (burn, stun), BurnFx, Toasts, AudioSystem, ExplosionSystem, ExplosionFx, XpSystem, RaidSystem
+  systems/                    pipeline (the one ordered list of systems), SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers,
+                              DamageSystem (applies hits), HitEffects (hit visuals), StatusSystem (burn, stun), BurnFx, Toasts, AudioSystem,
+                              ExplosionSystem, ExplosionFx, XpSystem, RaidSystem
   render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura, drawRibbons, drawEnhance, drawStun
 ```
 
 ### Core concepts
 
 - **Pseudo-3D space.** Every object has ground position `(x, y)` and height `z`. It is drawn at `y - z`. Particles apply gravity to `z`, so they truly fall, bounce and slide.
-- **Event-driven combat.** A projectile only emits `hit`; a skill release emits `cast`. `HitEffects` (visuals), `AudioSystem` (sound) and the target's `onHit` (reaction) respond independently. Later systems (quests, threat, combat log, networking) can subscribe without touching the projectile.
+- **Event-driven combat.** A projectile only emits `hit`; a skill release emits `cast`. `DamageSystem` (calls the target's `onHit`, the sim reaction: health, knock), `HitEffects` (visuals, including the target's flash and glow) and `AudioSystem` (sound) respond independently, so a world without the view still takes damage. Later systems (quests, threat, combat log, networking) can subscribe without touching the projectile.
 - **Data-driven content.** A class lists stats, skill ids and key bindings. A skill is an object with `cooldown`, `chargeTime`, `minCharge`, optional `manaCost`, `canStart`, `maxAffordableCharge`, and the hooks `onChargeStart`, `onCharging`, `onRelease`.
 - **Any entity can cast.** `SkillCaster` works with any owner that provides `vitals`, `aim`, `getCastOrigin()`, `wantsCast(slot, world)` and `applyImpulse()`. The player reads the keyboard; the hostile dummy reads its AI. Future enemies and NPCs reuse this.
 - **Status effects.** Burn lives on `entity.burn` and is run by `StatusSystem`; a ward lives on `entity.ward`. Ignition is an offer carried by the `hit` event (`burn: { chance, duration, dps }`), so any future skill can burn by adding that field. `StatusSystem` emits `burn` events (`ignite`, `tick`, `nullify`, `end`); the skill emits `ward` events (`up`, `down`). `BurnFx`, `Toasts` and `AudioSystem` react to them. Entities take burn damage through `onDot(e)`.
@@ -461,9 +462,9 @@ src/
 
 **A new class** — copy `src/classes/Mage.js`, change stats / skills, register in `content/index.js`, and pass `{ classId }` to the `world` scene.
 
-**A new entity (enemy, NPC)** — extend `Entity`, set `hittable = true` for damage, give it `vitals` if it has health, implement `update` / `draw` and optionally `onHit(e)`. To let it cast, implement the caster interface above.
+**A new entity (enemy, NPC)** — extend `Entity`, set `hittable = true` for damage, give it `vitals` if it has health, implement `update` / `draw` and optionally `onHit(e, world)` (sim reaction only: health, knock, status; no flash or sound). To let it cast, implement the caster interface above.
 
-**A new hit reaction** — add a method in `HitEffects` and call it from `onHit`.
+**A new hit reaction** — a visual or sound: add a method in `HitEffects` (or a listener) and call it from its `onHit`. A change to health, knock or status goes in the target's `onHit`, which `DamageSystem` calls. A new system goes in `src/systems/pipeline.js`, in the sim or the view group.
 
 **A new sound** — add a public method to `AudioEngine` and call it from `AudioSystem`.
 
@@ -487,11 +488,12 @@ src/
 | `node tests/mage.test.mjs` | Safety-net tests that pin the Mage kit: Fireball numbers, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels (52 tests). Shared helpers in `tests/helpers.mjs` |
 | `node tests/rng.test.mjs` | Seeded RNG tests: the generator, same-seed Fireball damage lists, and three scripted fights that must repeat exactly for one seed and must not change when `Math.random` does (10 tests). Exit 0 = pass |
 | `node tests/clock.test.mjs` | Sim clock tests: `world.time` stepping and the dummy's 5-second DPS window, which must not read a wall clock (4 tests). Exit 0 = pass |
+| `node tests/damage.test.mjs` | Damage tests (S1d): hit and burn damage land through `DamageSystem` in a world with no `HitEffects`, a killing blow downs the target before ignition, view flash and glow come from events, and a seeded fight ends in the same sim state with and without the view systems (9 tests). Exit 0 = pass |
 | `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (all seven test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all eight test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -535,7 +537,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.12.0.02)
+## 6. Known limitations (V1.12.0.03)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

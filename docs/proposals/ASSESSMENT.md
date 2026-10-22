@@ -16,7 +16,7 @@ Both fit D1 (server-authoritative), D2 (same sim files in Node) and `Claude.md` 
 | Needed by | Exists? | Evidence |
 | --------- | ------- | -------- |
 | MBE: RNG source | Partial | `Math.random` only at V1.10.0.01; `world.rng` shipped in S1b (V1.11.2.01). Crit = one site: `FireballProjectile.roll`, 12% flat, x1.75, damage jitter `rand(0.9,1.1)` |
-| MBE: token consumption point | Partial | Hits are `hit` events; damage still applied in `HitEffects` (P3, S1d). Consumption must live in the sim, after S1d |
+| MBE: token consumption point | Partial | Hits are `hit` events; damage is applied by `DamageSystem` since S1d (V1.12.0.03). Consumption must live in the sim, in or after `DamageSystem` |
 | MBE: instance IDs | No | Entities have no `id` (S1h). Skills have a definition `id` only |
 | MBE: items / instance state | No | `ItemRegistry` is L2, not built |
 | MBE: persistence | No | `Progression` uses `localStorage` (P7, S1g); server saves are S5 |
