@@ -11,10 +11,14 @@ import { drawGroundCircle } from "../render/drawMagicCircle.js";
 import { TAU } from "../core/math.js";
 import { Settings } from "../core/Settings.js";
 import { UNIVERSAL } from "../classes/Universal.js";
+import { idleCommand, sanitizeCommand } from "../sim/InputCommand.js";
 
-const AIM_Z = 32; // cursor is read at body height so shots land where the sprite visually is
 const RESPAWN_TIME = 3; // seconds spent downed
 
+/**
+ * The local or remote player. It never reads input: each tick it is given an InputCommand (`applyCommand`, see sim/InputCommand.js).
+ * Replicated fields (S1e): cmd { seq mx my aim btn } plus the existing x y vx vy knock aim dodge stunT downed.
+ */
 export class Player extends Entity {
   /** @param {import('../progression/Progression.js').Progression} [prog] specialization state; without it the player owns every class skill */
   constructor(cls, prog = null) {
@@ -29,6 +33,9 @@ export class Player extends Entity {
     this.vy = 0;
     this.knock = { x: 0, y: 0 };
     this.aim = 0;
+    this.cmd = idleCommand(); // the command being applied; btnPrev / btnNow give skill presses as rising edges
+    this.btnPrev = 0;
+    this.btnNow = 0;
     this.kick = 0;
     this.t = 0;
     this.solid = true;
@@ -75,13 +82,24 @@ export class Player extends Entity {
       z: this.height * 0.7,
     };
   }
-  wantsCast(slot, world) {
-    return !this.downed && !this.dodge && !(this.stunT > 0) && slot.keys.some((k) => world.input.isDown(k));
+  /** Hand the player its next command. Untrusted input is validated; an old or repeated seq is ignored (the last command stays). */
+  applyCommand(raw) {
+    const c = sanitizeCommand(raw, this.cmd.seq);
+    if (c) this.cmd = c;
+  }
+  /** Bit of `slot` in a command mask (0 when the slot is not one of this player's). */
+  slotBit(slot) {
+    const i = this.caster.slots.indexOf(slot);
+    return i < 0 ? 0 : 1 << i;
+  }
+  wantsCast(slot) {
+    return !this.downed && !this.dodge && !(this.stunT > 0) && (this.btnNow & this.slotBit(slot)) !== 0;
   }
 
-  /** Toggle skills fire on the key press, not while held. */
-  wantsToggle(slot, world) {
-    return !this.downed && !(this.stunT > 0) && slot.keys.some((k) => world.input.wasPressed(k));
+  /** Toggle skills fire on the press (the bit rising since last tick), not while held. */
+  wantsToggle(slot) {
+    const b = this.slotBit(slot);
+    return !this.downed && !(this.stunT > 0) && (this.btnNow & b) !== 0 && (this.btnPrev & b) === 0;
   }
 
   /** Begin a dodge: slide from here to `dist` px along `angle` over `time` s; untouchable for the first `iFr` s. */
@@ -152,6 +170,8 @@ export class Player extends Entity {
     this.flash = Math.max(0, this.flash - dt * 5);
     this.lowManaFlash = Math.max(0, this.lowManaFlash - dt);
     this.lowStaminaFlash = Math.max(0, this.lowStaminaFlash - dt);
+    this.btnPrev = this.btnNow;
+    this.btnNow = this.cmd.btn;
     if (this.downed) {
       this.downedTimer -= dt;
       if (this.downedTimer <= 0) this.respawn();
@@ -159,15 +179,9 @@ export class Player extends Entity {
     }
     this.vitals.update(dt);
 
-    const i = world.input;
-    const mx =
-      Number(i.isDown("KeyD") || i.isDown("ArrowRight")) -
-      Number(i.isDown("KeyA") || i.isDown("ArrowLeft"));
-    const my =
-      Number(i.isDown("KeyS") || i.isDown("ArrowDown")) -
-      Number(i.isDown("KeyW") || i.isDown("ArrowUp"));
+    const { mx, my } = this.cmd;
     const dodging = this.stepDodge(dt),
-      len = Math.hypot(mx, my) || 1,
+      len = Math.max(1, Math.hypot(mx, my)), // a command is already within the unit circle; this keeps a weaker stick slower
       free = this.stunT > 0 || dodging ? 0 : 1; // stunned or dodging: no steering, no casting
     const sp = this.cls.stats.speed * (this.caster.charging ? 0.55 : 1);
     const k = 1 - Math.exp(-14 * dt);
@@ -192,13 +206,7 @@ export class Player extends Entity {
       }
     }
 
-    const m = world.camera.screenToWorld(
-      i.mouse.x,
-      i.mouse.y,
-      world.game.width,
-      world.game.height,
-    );
-    this.aim = Math.atan2(m.y + AIM_Z - this.y, m.x - this.x);
+    this.aim = this.cmd.aim;
     this.kick *= Math.exp(-6 * dt);
     this.t += dt;
     if (this.stunT > 0) this.caster.cancel();

@@ -1,6 +1,7 @@
 import { Scene } from "../core/Scene.js";
 import { EventBus } from "../core/EventBus.js";
 import { Rng } from "../sim/rng.js";
+import { PlayerController } from "../input/PlayerController.js";
 import { Settings } from "../core/Settings.js";
 import { SettingsPanel } from "../ui/SettingsPanel.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
@@ -63,6 +64,7 @@ export class WorldScene extends Scene {
     this.cls = cls;
     this.progression = new Progression(cls);
     this.player = this.spawn(new Player(cls, this.progression));
+    this.controller = new PlayerController(this);
     this.progression.onEvent = (e) => this.onProgress(e);
     this.offLevel = this.events.on("levelup", (e) => this.levelFx(e));
     this.banners = [];
@@ -296,6 +298,7 @@ export class WorldScene extends Scene {
     this.time += edt; // before the entities run, so everything in this step stamps the same time
 
     this.lights.update(dt);
+    this.controller.update(this.player); // client only: keyboard, mouse and camera become the player's command for this tick
     const list = this.entities.slice();
     for (const e of list) e.update(edt, this);
     this.entities = this.entities.filter((e) => !e.dead);

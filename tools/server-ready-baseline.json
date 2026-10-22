@@ -14,8 +14,7 @@
   },
   "entities/Player.js": {
     "settings": 2,
-    "input": 6,
-    "present": 23
+    "present": 22
   },
   "entities/TrainingDummy.js": {
     "singlePlayer": 2,
