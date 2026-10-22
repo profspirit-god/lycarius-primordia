@@ -10,6 +10,7 @@ import { Vitals } from "../src/systems/Vitals.js";
 import { ManaRegenFx } from "../src/systems/ManaRegenFx.js";
 import { DodgeFx } from "../src/systems/DodgeFx.js";
 import { ICONS } from "../src/ui/icons.js";
+import { PlayerController } from "../src/input/PlayerController.js";
 
 const DT = 1 / 60;
 const mage = ClassRegistry.get("mage");
@@ -22,16 +23,18 @@ function mkWorld() {
   w.camera = { screenToWorld: () => ({ x: 100, y: -32 }) }; // the cursor is level with the body, to the right: aim = 0
   w.game = { width: 800, height: 600 };
   w.player = w.spawn(new Player(mage, new Progression(mage)));
+  w.controller = new PlayerController(w); // S1e: keys become the player's command, like WorldScene.update does each frame
   return w;
 }
 const step = (w, n = 1) => {
   for (let i = 0; i < n; i++) {
+    w.controller.update(w.player);
     for (const e of w.entities.slice()) e.update(DT, w);
     w.entities = w.entities.filter((e) => !e.dead);
     w.pressed.clear();
   }
 };
-const press = (w, key) => (w.pressed.add(key), step(w));
+const press = (w, key) => (w.down.add(key), step(w), w.down.delete(key)); // held for exactly one frame
 let passed = 0;
 const test = (name, fn) => (fn(), passed++, console.log("ok  " + name));
 globalThis.localStorage ??= { getItem: () => null, setItem() {} };

@@ -2,6 +2,29 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.04 — S1e input command layer: the player is driven by a command, not by the keyboard (cleanup, no gameplay change)
+
+Fifth step of the server path (`SERVER_PATH.md` S1e, debt P5). A server cannot read a keyboard, a mouse or a camera, and it must not trust what a client sends. The player now receives one validated command per tick; a client-only controller builds it from the devices.
+
+### Added
+
+- **`sim/InputCommand.js`**: `InputCommand { seq, mx, my, aim, btn }`, `idleCommand()` and `sanitizeCommand(raw, lastSeq)` (R11, constants at the top). Axes are clamped to -1..1 and a longer diagonal is scaled to length 1; NaN and Infinity become 0; `aim` is wrapped into -PI..PI; `btn` must be an integer and is masked to 16 bits; a `seq` that is not newer than the last one is dropped.
+- **`input/PlayerController.js`** (client only): reads `Input` and the camera and sends the command with `player.applyCommand`. It is the only place that maps keys to skills (`slot.keys`, class data). `btn` bit i means "the i-th skill slot is held".
+- **`tests/input.test.mjs`** (8 tests): validation; scripted commands move the player (right, diagonal at the same speed, half stick at half speed, idle stops) and set its aim in a world with no `input`, `camera.screenToWorld` or `game`; hold-to-charge and a toggle skill (press, not hold); stun and downed ignore commands; an old `seq` is ignored; `PlayerController` builds the right command from keys, mouse and camera; `Player.js` source has no input access.
+
+### Changed
+
+- **`Player`** has `cmd`, `applyCommand`, `slotBit`; `update` reads `mx my aim` from `cmd`, `wantsCast` reads the held bit and `wantsToggle` the rising edge (`btnPrev` / `btnNow`). Movement keeps its numbers (speed, 0.55 while charging, the same smoothing); the length divisor is `max(1, hypot)`, identical for keyboard input.
+- **`WorldScene`** creates the controller and calls it once per frame before the entities update.
+- **`tests/abilities.test.mjs`** now drives the player through a `PlayerController` over its key stubs (a key press is held for one frame).
+- `npm test` runs nine files. `VERSION` 1.12.0.03 → 1.12.0.04. README, ROADMAP (default is now S1f), `SERVER_PATH.md`, `Claude.md` (R4, code map, gotchas), engines doc, guideline status line.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `input` hits 6 → 0 and `Player.js` `present` 23 → 22 (the camera call); baseline rewritten. Player-only debt left: `settings` 2 and `present` 22, all in `draw`.
+- **Two small behaviour differences, both invisible in play:** the aim angle is computed from the player's position at the start of the frame, not after it moved (at most about one frame of lag); a skill key pressed while the game is paused now registers on the first frame after resuming (before, the press was lost). A tap shorter than one frame no longer counts as a press.
+- Not tested: playing in a browser. Check: WASD and arrows move (diagonal not faster), the mouse aims, Fireball charges and fires, Flame Shield, Burn Resistance, Fire Blast, Mana Regen and Dodge work on their keys, E / Q / F toggles do not flicker when held, stun and downed block everything.
+
 ## V1.12.0.03 — S1d damage out of the view: `DamageSystem` applies hits, the view only draws (cleanup, no gameplay change)
 
 Fourth step of the server path (`SERVER_PATH.md` S1d, debts P3 and P4). Before, damage landed because `HitEffects`, a presentation class, called `target.onHit`. A headless server has no `HitEffects`, so nothing would have taken damage, and "create X after HitEffects" was a hidden rule. Now one sim system applies hits and the view only reads the same event.
