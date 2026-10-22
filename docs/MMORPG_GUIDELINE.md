@@ -12,7 +12,7 @@ A seven-part development sequence for a JavaScript MMORPG, written by Gemini and
 
 **Section shape (grep-friendly):** every G section has the same fields in the same order: Source idea, Source evidence, Verdict, Do, Do not, Repo hooks, Gate. Verdict is ADOPT, ADAPT (idea kept, method changed) or REJECT-PART.
 
-**Status at V1.11.2.01:** no server exists. S1a (safety net) shipped in V1.10.0.05 and S1b (seeded RNG) in V1.11.2.01; S1c (sim clock) is the next critical-path step. Nothing below is built by this file; it adds no code and no dependency.
+**Status at V1.12.0.02:** no server exists. S1a (safety net) shipped in V1.10.0.05, S1b (seeded RNG) in V1.11.2.01 and S1c (sim clock) in V1.12.0.02; S1d (damage out of the view) is the next critical-path step. Nothing below is built by this file; it adds no code and no dependency.
 
 | Id | Topic | Verdict | Where it lands |
 | -- | ----- | ------- | -------------- |

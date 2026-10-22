@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.12.0.01** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.02** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.12.0.01
+## 1. What is in V1.12.0.02
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -446,6 +446,7 @@ src/
 - **Projectile clash and explosions.** Projectiles set `isProjectile = true` and call `clashProjectiles()` when they touch a foreign projectile. That emits `explosion`; `ExplosionSystem` deals area damage as `hit` events with `aoe: true`, `ExplosionFx` draws it and `AudioSystem` plays it.
 - **Reusable vitals.** `Vitals` holds health, mana, regeneration and damage/spend helpers.
 - **Seeded gameplay randomness.** Every roll that changes an outcome (crit, damage spread, ignition and nullify chances, explosion spread, raid spawns, enemy and dummy AI choices) is drawn from `world.rng` (`next()`, `range(a, b)`, `chance(p)`), a seeded generator created in `WorldScene.enter`. The same seed and the same inputs give the same fight, which is what tests and a future server need. Visual randomness (particles, shake, audio) keeps `rand()` from `core/math.js`; it must never decide a gameplay result.
+- **Simulation clock.** `world.time` is the game's own time in seconds. It advances once per simulation step with the same `dt` the entities get (so it stops in pause and slows in hit-stop), and anything in the simulation that needs "how long ago" (today the dummy's 5-second DPS) reads it instead of the browser's clock.
 - **Scene factory.** `game.register(name, factory)` and `game.goto(name, params)`.
 - **Audio is a listener, not a caller.** Combat code never plays sounds; `AudioSystem` reads events and entity state. `AudioEngine` can be swapped for real sound files without touching gameplay code.
 
@@ -485,11 +486,12 @@ src/
 | `node tests/graugr.test.mjs` | Headless gameplay tests (Graugr AI, skills, stun, deflect, raid). Exit 0 = pass |
 | `node tests/mage.test.mjs` | Safety-net tests that pin the Mage kit: Fireball numbers, cooldowns and mana, burn, Flame Shield, explosions, clashes, XP and levels (52 tests). Shared helpers in `tests/helpers.mjs` |
 | `node tests/rng.test.mjs` | Seeded RNG tests: the generator, same-seed Fireball damage lists, and three scripted fights that must repeat exactly for one seed and must not change when `Math.random` does (10 tests). Exit 0 = pass |
+| `node tests/clock.test.mjs` | Sim clock tests: `world.time` stepping and the dummy's 5-second DPS window, which must not read a wall clock (4 tests). Exit 0 = pass |
 | `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (all five test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all seven test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -533,7 +535,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.12.0.01)
+## 6. Known limitations (V1.12.0.02)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

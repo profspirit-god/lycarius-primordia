@@ -2,6 +2,29 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.02 — S1c sim clock: `world.time` replaces the wall clock in sim code (cleanup, no gameplay change)
+
+Third step of the server path (`SERVER_PATH.md` S1c). Simulation code may not read a wall clock (R2): a server steps time itself, and a replay must not depend on when it runs. The only sim-side user was the training dummy's DPS readout.
+
+### Added
+
+- **`world.time`**: the simulation clock in seconds, created in `WorldScene.enter` and advanced once per sim step in `WorldScene.update` by the same `dt` the entities receive, before they run. It stops while the game is paused and slows during hit-stop, exactly like every cooldown and timer.
+- **`tests/clock.test.mjs`** (4 tests): `step()` advances `world.time` by `DT` per frame; the DPS window is 5 s of sim time (hits and burn ticks count, a 5.0 s old entry drops out, the total is not windowed, a burn tick is not a hit); DPS works with `performance.now` replaced by `NaN` and with `world.time` at 1,000,000; a burn on the dummy reaches `onDot` with the world and shows up in DPS.
+- `tests/helpers.mjs`: `mkWorld()` has `time = 0` and `step()` advances it like `WorldScene.update` does.
+
+### Changed
+
+- **`onHit(e, world)` and `onDot(e, world)`**: `HitEffects` and `StatusSystem` now pass the world as a second argument (additive: `Player` and `Graugr` ignore it). `TrainingDummy` stamps its damage log with `world.time` and `dps(world)` averages over `DPS_WINDOW` (5 s, a constant at the top of the file). The HUD calls `d.dps(this)`. JSDoc in `Entity.js` and `types.js` updated.
+- The DPS readout now measures sim time instead of wall time, so it no longer keeps counting while the game is paused (the old window kept running). Otherwise it reads the same.
+- `npm test` runs seven files. `VERSION` 1.12.0.01 → 1.12.0.02. README, ROADMAP ("Choosing work" default is now S1d), `SERVER_PATH.md` (S1c done, P2, debt log, hooks), `Claude.md` (R2, code map, gotchas), guideline status line.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `clock` hits 6 → 3, baseline rewritten. The 3 left are in `draw` code (`TrainingDummy` ground circle and aura, `Graugr` arm swing animation phase) and leave in S1f, which is what the step's "0 outside draw code" allows. `TrainingDummy.js` has no clock outside drawing any more.
+- Mutation check by hand: putting the dummy's three clock sites (hit, burn tick, readout) or the `onDot` world argument back to the old code made `tests/clock.test.mjs` fail every time.
+- Not tested: playing in a browser (`WorldScene.update` was syntax-checked only; its new lines are `this.time += edt` and `d.dps(this)`).
+- Built on V1.12.0.01: the UI and Settings release took V1.12.0.00 while S1c was in progress, so this step was renumbered from V1.11.2.02 to V1.12.0.02 and merged onto that code. `WorldScene.js` merged without conflicts; the audit baseline was regenerated, and it differs from V1.12.0.01 only in the `TrainingDummy` clock count (5 to 2).
+
 ## V1.12.0.01 — Docs: engines and systems guideline (cleanup, no code change)
 
 - **`docs/ENGINES_AND_SYSTEMS.md`** (new): the Gemini engine and system roadmap, reconciled with this repo. Early (E1), mid (E2) and scale (E3) tables give each system, what it does, its `Status` (Built, Planned with a step, Not planned) and `Where` it lands; E4 lists known differences from the source; E5 is a checklist for creating a system. Stated everywhere as a guideline, not the truth.
