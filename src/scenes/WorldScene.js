@@ -35,7 +35,9 @@ import { rand, TAU } from "../core/math.js";
 
 /**
  * The playable world. Acts as the `world` object handed to entities and skills:
- * { game, input, events, camera, particles, lights, damageNumbers, entities, spawn(), hitstop() }
+ * { game, input, events, camera, particles, lights, damageNumbers, entities, spawn(), hitstop(), rng, time }
+ * `time` is the simulation clock in seconds: it advances once per sim step by the same dt the entities get (so hit-stop slows it and
+ * pause stops it). Sim code that needs "how long ago" reads `world.time`, never a wall clock (R2).
  */
 export class WorldScene extends Scene {
   /** @param {{ classId?: string, mode?: 'training', seed?: number }} params `mode` is the game mode; only the training ground exists so far. `seed` fixes every gameplay roll (tests, replays); omitted = a fresh one per run. */
@@ -58,6 +60,7 @@ export class WorldScene extends Scene {
     this.entities = [];
     this.seed = (this.seedParam ?? Date.now()) >>> 0; // client side: the clock is fine here, the sim only ever sees `world.rng`
     this.rng = new Rng(this.seed);
+    this.time = 0; // sim clock, see the class comment
     this.hitstopTimer = 0;
     this.paused = false;
     this.fps = 60;
@@ -312,6 +315,7 @@ export class WorldScene extends Scene {
       edt = dt * 0.08;
       pdt = dt * 0.4;
     } // hit-stop
+    this.time += edt; // before the entities run, so everything in this step stamps the same time
 
     this.lights.update(dt);
     const list = this.entities.slice();
@@ -456,7 +460,7 @@ export class WorldScene extends Scene {
       60,
     );
     ctx.fillText(`Hits: ${d.hits}   Last: ${d.lastHit}`, w - 224, 80);
-    ctx.fillText(`DPS (5s): ${d.dps()}`, w - 224, 100);
+    ctx.fillText(`DPS (5s): ${d.dps(this)}`, w - 224, 100);
     ctx.fillText(
       d.attack
         ? `Hostile · HP ${d.vitals.hp.toFixed(1)} / ${d.vitals.maxHp}`
