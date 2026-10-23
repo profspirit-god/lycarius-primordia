@@ -2,6 +2,30 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.16.0.01 — S1f-b Fireball skill presentation out of the sim: the charge and release look is a view (cleanup, no gameplay change)
+
+Second group of S1f (`SERVER_PATH.md` S1f, debt P6): the `Fireball` skill. Before, `onCharging` and `onRelease` spawned rune motes, spiralling embers, the charge light, the discharge ring, the muzzle flash, shook the camera and leaned the caster, so a headless server could not cast. Now the skill holds the numbers, the mana cost, the cooldown, the ball it spawns and the recoil impulse; the look lives in a view found by skill id.
+
+### Added
+
+- **`view/FireballCastView.js`** (client only): everything shown while the key is held and on release, with the same numbers as before. It also sets the view-only field `owner.kick` (the body lean, decayed and drawn by `Player` and `TrainingDummy`, like `flash` and `glow`).
+- **`view/SkillViews.js`**: a view system (`world.skillViews`) that feeds `skill:charging` to `view.charging(e)` and `cast` to `view.cast(e)` of the skill with that id; skills with no view are ignored. `SKILL_VIEWS = { fireball: FireballCastView }` in `view/index.js` is the manifest.
+- **Event `skill:charging`** `{ owner, skill (id), charge, aim, origin: {x,y,z} }` (`SkillChargingEvent` in `types.js`), emitted by `SkillCaster` on every step a hold-to-charge skill is held. It is generic: later groups (`BurnResistance`) only add a view.
+- **`cast` event** now also carries `aim` and `origin` (Fireball only for now). Existing listeners (`XpSystem`, `AudioSystem`) are unaffected.
+- **`tests/skill-view.test.mjs`** (8 tests): a cast through `SkillCaster` in a world whose `particles`, `lights`, `camera`, `damageNumbers` and `audio` throw on any use (events, cost, ball, recoil, `kick` untouched); `Fireball.js` has no presentation, visual random, `onCharging` or `kick`; `SkillViews` dispatch and dispose; `FireballCastView.charging` and `.cast` numbers (counts scaled by charge, the 0.45 drip, camera trauma, muzzle fan of 0.4 rad, lights); a full cast on the real `ParticleSystem`, `Lights` and `Camera`; pipeline wiring and a skill that still draws from its own `onCharging`; the same seeded volley of four casts ends in the same sim state with and without the views.
+
+### Changed
+
+- **`Fireball`** lost `onCharging` and every particle, light, camera and `kick` line; `onRelease` keeps cost, the `cast` event, the spawn and the recoil impulse. `SkillCaster` still calls a skill's own `onCharging` (the other skills still draw from it until their group moves out).
+- **`tests/mage.test.mjs`**: one pinned assertion changed on purpose. The Fireball cast test used to check `o.kick` = 1.15 after the release; the lean is a view field now, so it checks that the sim leaves `kick` at 0 (the value 0.7 + 0.9 x charge is tested in `skill-view.test.mjs`).
+- `npm test` runs sixteen files. `VERSION` 1.16.0.00 → 1.16.0.01. README, ROADMAP (S1f row, Done), `SERVER_PATH.md` (P6, S1f progress), `Claude.md` (code map, rule 3 test list, gotcha), engines doc, guideline status line.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `Fireball.js` `present` 6 → 0 and `random` 27 → 0; totals `present` 204 → 198, `random` 120 → 93. `SkillCaster.js` stays at 7 (the event is built in a small method without the word `ctx`, which the audit counts as canvas drawing). Baseline rewritten.
+- **Checked against the old skill:** a throwaway differential run (old `Fireball` against the new skill plus `SkillViews`, visual randomness seeded, charges of 10, 39 and 78 frames and a five-cast sequence with the caster moving and turning between casts) gave the same particles in the same order with the same values, the same lights, the same camera shakes, the same `kick` value on every frame (including the decay), the same `cast` events, impulses, spawned balls and mana. No difference found.
+- Not tested: playing in a browser. Check: holding the Fireball key shows rune motes lifting off the ground circle, embers spiralling into the orb and a growing light; at high charge hot embers drip; releasing leans the caster back, shakes the camera, throws a ring of sparks along the ground and a muzzle flash; the training dummy and the Graugr (if they cast it) look the same; the Burn Resistance charge look is unchanged (it still draws from its own hook).
+
 ## V1.16.0.00 — M1: the pure bag primitive (feature, new files only, nothing user-visible)
 
 First stage of the Marble Bag Engine (`docs/proposals/Marble-bag-engine.md`, roadmap track M). It adds the reusable "bag of outcome tokens" and its validator and tests. **Nothing in the game uses it yet**: no skill, entity or scene imports `src/sim/bag/`, so the game plays exactly as before. Fireball crits are still a flat 12% roll until stage M2.

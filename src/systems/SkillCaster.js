@@ -56,6 +56,12 @@ export class SkillCaster {
       origin: this.owner.getCastOrigin(),
     };
   }
+  /** `skill:charging` for the views (SkillViews): plain data, every step a hold-to-charge skill is held. The charge look is not drawn from here. */
+  _announce(s, world) {
+    const o = this.owner,
+      at = o.getCastOrigin();
+    world.events.emit("skill:charging", { owner: o, skill: s.skill.id, charge: s.charge, aim: o.aim, origin: { x: at.x, y: at.y, z: at.z } });
+  }
   /** Toggle skills (shields, auras): one press switches on, the next switches off. */
   _toggle(s, world, mana) {
     const sk = s.skill;
@@ -133,8 +139,10 @@ export class SkillCaster {
         s.charge = 0;
         continue;
       }
-      if (held) sk.onCharging?.(ctx, dt);
-      else {
+      if (held) {
+        this._announce(s, world);
+        sk.onCharging?.(ctx, dt);
+      } else {
         s.charging = false;
         if (s.charge >= sk.minCharge) {
           sk.onRelease(ctx);
