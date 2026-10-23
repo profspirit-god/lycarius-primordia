@@ -2,6 +2,29 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.13.0.00 — L2 phase B: item definitions and the ItemRegistry (feature, data only, nothing user-visible)
+
+First code of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). It adds the static description of an item type and nothing else: no ownership, no save, no screen, no combat change. The Home Inventory button still shows its placeholder.
+
+### Added
+
+- **`sim/items/ItemRegistry.js`**: `ItemRegistry` (a `Registry`), `validateItemDef(def)` (returns every problem, never throws), `defineItem(def)` (validates, rejects a duplicate id, registers a frozen copy), `findItem` / `hasItem` (safe lookup for untrusted ids: `null`, never a throw), `allItems()` (ordered by id) and the enums (`ITEM_CATEGORIES`, `ITEM_RARITIES`, `ITEM_SCOPES`, `ITEM_ACTIONS`, `MAX_STACK_LIMIT`). A definition has exactly: `id` (`a-z0-9_`, 2 to 40 characters), `name`, `description`, `category`, `rarity`, `scope` (`account` or `character`), `maxStack` (1 = not stackable) and `actions`. Any other field is rejected, so slots, stat modifiers or recipes must be added on purpose by their own phase.
+- **`sim/items/cosmetics.js`**: the nine Shop cosmetics as account-owned, single, equippable definitions (`ember_robe`, `ashen_cloak`, `primordial_garb`, `cinder_halo`, `molten_veil`, `blue_flame_fireball`, `spark_trail`, `bow_of_respect`, `fire_dance`).
+- **`tests/items.test.mjs`** (11 tests): each field's bounds, junk input, frozen copies, duplicates, safe lookup (including `__proto__` and `constructor`), id order, the nine cosmetics, a transitional guard that keeps `SHOP.items` and the definitions in step, the existing skill, class and spec registrations, and no browser, clock or random call in the new files.
+- **`docs/proposals/Inventory-and-ownership.md`**: the owner's proposal, adopted in stages, with an adoption record (decisions, corrections, phase status) as section 13.
+
+### Changed
+
+- **`content/index.js`** registers the cosmetics (additive; nothing existing was touched). `Registry` is unchanged.
+- `npm test` runs twelve files. `VERSION` 1.12.0.06 → 1.13.0.00. README, ROADMAP (L2 rows, Done), `Claude.md` (doc map, code map, rule 3), engines doc (rows for data registries and the item engine).
+
+### Notes
+
+- **Server-ready:** new files have zero audit hits. `tools/server-ready-baseline.json` was refreshed: it still listed the `Progression.js` `dom` debt that S1g removed in V1.12.0.06 (total `dom` 3 → 0).
+- **Not touched:** `HomeScene`, `Wallet`, `Shop` data, `Progression`, `PROGRESS_KEY`, `Player`, combat, RNG, loot.
+- Not tested: playing in a browser. Check: the game starts and loads as before, the Home Inventory button still opens the placeholder, the Shop still lists nine offers.
+- Next: phase C (ownership state and a separate versioned local save). It needs the owner to approve the save schema first.
+
 ## V1.12.0.06 — S1g storage adapter: progression saves through an object, not through the browser (cleanup, no gameplay change)
 
 Seventh step of the server path (`SERVER_PATH.md` S1g, debt P7). `Progression` called `localStorage` itself, so it could not run on a server and every test had to fake a global. It now receives a `storage` object with two methods, and nothing in the sim names the browser's storage.

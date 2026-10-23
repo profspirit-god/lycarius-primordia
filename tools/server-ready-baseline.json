@@ -21,9 +21,6 @@
     "present": 29,
     "clock": 2
   },
-  "progression/Progression.js": {
-    "dom": 3
-  },
   "skills/BurnResistance.js": {
     "random": 9,
     "present": 1
