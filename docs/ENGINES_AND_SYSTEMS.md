@@ -31,7 +31,7 @@ Goal: a decoupled, deterministic simulation with tests, before any networking.
 | Event bus | Combat emits, view and audio subscribe, no direct calls | Built | `core/EventBus.js` |
 | Damage out of the view | One sim system applies damage on `hit`; the view only reads events. One ordered system list | Built (V1.12.0.03) | `systems/DamageSystem.js`, `systems/pipeline.js` |
 | Entity views | Presentation of an entity (trail, particles, light, drawing) lives in a client-only view found by `entity.kind`; the sim emits plain-data events | Built for the Fireball (V1.12.0.05); the other groups are planned S1f | `view/EntityViews.js`, `view/FireballView.js`, `view/index.js` |
-| Data registries | Classes, skills and spec bonuses are data | Built (items and status effects: not yet) | `content/index.js`, `core/Registry.js`, `classes/`, `skills/` |
+| Data registries | Classes, skills and spec bonuses are data | Built (items since V1.13.0.00; status effects: not yet) | `content/index.js`, `core/Registry.js`, `classes/`, `skills/` |
 | Universal skill caster | Any entity casts through one interface | Built | `systems/SkillCaster.js` |
 | Status system | Burn (damage over time), stun, wards by data offers on hit | Built | `systems/StatusSystem.js`, `skills/BurnWardEffect.js` |
 | Stat and modifier engine | Compounding bonuses: element, skill, cooldown, cast time | Built | `progression/SpecBonuses.js`, `Mods.js` |
@@ -52,7 +52,7 @@ Goal: from a single-player sandbox to client and server, plus the world and data
 | Room manager | One `Simulation` per room, heartbeats, idle cleanup | Planned S3, S6 | D8 |
 | Prediction and reconciliation | Local input applied at once, server snapshots correct it | Planned S4 | `SERVER_PATH.md` S4 |
 | Entity interpolation | Remote entities rendered slightly in the past | Planned S4 | with S1j render interpolation |
-| Item and inventory engine | Item definitions, slots, equipment stats, wallet | Planned L2 (data), M4 (instances) | `lobby/Wallet.js` is a placeholder |
+| Item and inventory engine | Item definitions, slots, equipment stats, wallet | L2 data built in V1.13.0.00 (definitions, `ItemRegistry`); ownership and saves planned (inventory proposal phases C to E); M4 (instances) | `sim/items/`; `lobby/Wallet.js` is a placeholder |
 | Accounts and database | SQLite, scrypt hashing, sessions, migrations | Planned S5 | D6, D7, `better-sqlite3` approved for S5 only |
 | Tilemap and collision grid | Maps and collision as data | Planned T1, T2 | `docs/ART_AND_MAPS.md` |
 | Spatial partitioning | Grid for proximity, collision and interest management | Planned W2 | `docs/proposals/World-Division-and-Lag-Management.md`, `src/sim/spatial/` |

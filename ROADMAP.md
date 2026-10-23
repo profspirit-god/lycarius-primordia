@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.12.0.06**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.13.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -9,7 +9,7 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
 | **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Default.** Critical path: the next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Group 1, `FireballProjectile`, is done (V1.12.0.05). Next group: `Fireball` (the skill: charge orb, recoil, release effects) |
-| L2 Items and inventory data model | none | G1, G5 | No server dependency; unlocks L3, L4, L5 and M4 |
+| L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phase B (definitions and `ItemRegistry`) done in V1.13.0.00. Next: Phase C, ownership state and a separate versioned local save (needs the owner to approve the save schema). Unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | May ship before S1 closes; owner approves the stage |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
@@ -43,6 +43,7 @@ Default when the user says "you decide": **S1f** (next group: `Fireball`). Never
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.13.0.00 | Feature (data only, nothing user-visible): **L2 phase B**, item definitions and `ItemRegistry` in `src/sim/items/` (validated, frozen, listed by id), nine Shop cosmetics registered as account-owned items, inventory proposal adopted in `docs/proposals/`, `tests/items.test.mjs` (11 tests), audit baseline refreshed (`dom` 3 to 0) |
 | V1.12.0.06 | Cleanup (no gameplay change): **S1g storage adapter**, `Progression` takes a `storage` object (`load()` / `save(data)`); client `core/LocalStorageAdapter.js`, in-memory `sim/storage.js` for tests and the loading dry run; `tests/storage.test.mjs`; audit `dom` debt 3 to 0 |
 | V1.12.0.05 | Cleanup (no gameplay change): **S1f-a projectile presentation out of the sim**, `FireballProjectile` is sim only, its trail, particles, light and drawing moved to `view/FireballView.js` behind `EntityViews` (views by `entity.kind`), new event `projectile:fizzle`, `tests/projectile-view.test.mjs` (9 tests); audit `present` 226 to 204, `random` 138 to 120 |
 | V1.12.0.04 | Cleanup (no gameplay change): **S1e input command layer**, `InputCommand { seq, mx, my, aim, btn }` validated in `sim/InputCommand.js`; client-only `input/PlayerController.js`; `Player` reads only `this.cmd`; `tests/input.test.mjs` (8 tests); audit `input` debt 6 to 0 |
@@ -105,7 +106,7 @@ The lobby shell exists with placeholder data. Everything below plugs into it wit
 | Step | Work | Where it plugs in | Depends on |
 | ---- | ---- | ----------------- | ---------- |
 | L1 | **Partly done in V1.8.0.00** (scenery, Mode Select video, card pictures, training loading art; lazy loader `lobby/assets.js` with placeholder fallback). Still to do: Home character art (replace the cylinder), shop item images, profile avatar, per-mode videos, loading art for Campaign and Live | `HomeScene.render`, `Shop` cards, `ART` / `MODES[].pic` / `LOADING[].image` in `lobbyData.js` | Art from the user |
-| L2 | Items and inventory data model: items as definitions in a `Registry` (`ItemRegistry`), registered in `content/index.js`; versioned save | Inventory button (placeholder modal in `HomeScene.openPlaceholder`) | None |
+| L2 | Items and inventory data model: items as definitions in a `Registry` (`ItemRegistry`), registered in `content/index.js`; versioned save | Inventory button (placeholder modal in `HomeScene.openPlaceholder`) | None. **Phase B done in V1.13.0.00** (definitions and registry); phases C to E in the inventory proposal |
 | L3 | Character customization: pick outfit / aura / skill effect and apply it in `Player.draw` / `drawCylinder` tint and `drawAura` | Character button; Shop cosmetics | L2 |
 | L4 | Wallet persistence and the Shop buy flow (`Wallet.spend`, ownership check, versioned save), then server-side checks | `Wallet.js`, `HomeScene.openShop` (`data-a="buy"`) | L2 |
 | L5 | Genesis Path: reward track data (free and premium lanes), XP source (play time / quests), claim UI. Subscription price and model are the user's decision | `GENESIS_PATH`, `HomeScene.openGenesis` | L2, L4 |
