@@ -3,6 +3,8 @@
 
 /** localStorage key of the progression save. */
 export const PROGRESS_KEY = "lycarius.primordia.progress";
+/** localStorage key of the inventory save (sim/items/Inventory.js). A separate key and shape: it never touches the progression save. */
+export const INVENTORY_KEY = "lycarius.primordia.inventory";
 
 /**
  * @param {string} key

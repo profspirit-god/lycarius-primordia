@@ -2,7 +2,7 @@
 
 **Project:** Lycarius: Primordia  
 **Document type:** Design and implementation proposal only  
-**Status:** Adopted in stages by the owner. Phase A done and Phase B built in V1.13.0.00 (L2); every later phase needs its own owner approval. See section 13  
+**Status:** Adopted in stages by the owner. Phase A done, Phase B built in V1.13.0.00 and Phase C in V1.14.0.00 (L2); every later phase needs its own owner approval. See section 13  
 **Primary scope:** Home/Lobby inventory, in-game inventory, item definitions, ownership, and dependencies
 
 > **Instruction to Claude:** This document is a proposal, not a command to implement everything. You may reject it, improve it, or integrate it as written. First compare it with the current repository, `Claude.md`, `ROADMAP.md`, `docs/ENGINES_AND_SYSTEMS.md`, and `SERVER_PATH.md`. Preserve established architecture and owner decisions. Do not claim a feature exists unless verified in code. Do not implement a phase until its prerequisites are checked and the owner approves the scope.
@@ -473,5 +473,24 @@ Then wait for owner approval if the scope, schema, ownership, persistence, or pr
 | ----- | ------ |
 | A Audit and design | Done (V1.13.0.00) |
 | B Item definitions and `ItemRegistry` (L2) | **Built in V1.13.0.00**: `src/sim/items/ItemRegistry.js`, `cosmetics.js`, `tests/items.test.mjs`; nine cosmetics registered; nothing user-visible changed |
-| C Ownership state and local persistence | Next. Needs an approved save schema: a separate key and version, `PROGRESS_KEY` untouched |
-| D to I | Not started |
+| C Ownership state and local persistence | **Built in V1.14.0.00**: `src/sim/items/Inventory.js`, `INVENTORY_KEY` in `core/LocalStorageAdapter.js`, `tests/inventory.test.mjs`; schema in 13.4; not wired into any scene |
+| D Home Account Inventory UI | Next. Creates the client `Inventory` (`createInventory(createLocalStorageAdapter(INVENTORY_KEY))`) |
+| E to I | Not started |
+
+### 13.4 Save schema, version 1 (Phase C, V1.14.0.00)
+
+Built on the owner's request to work on Phase C; the schema below is the proposal that was implemented, and the owner can change it before Phase D relies on it. The decisions marked default are the ones to confirm.
+
+| Item | Rule |
+| ---- | ---- |
+| Key and version | `lycarius.primordia.inventory`, `v: 1`. `PROGRESS_KEY` and the progression payload are untouched; a test compares the progression save byte for byte before and after grants |
+| Shape | `{ v, account: { items: { id: qty } }, characters: { ownerId: { items: { id: qty } } } }`, keys in id order. Stacks only (an id and a quantity); instances wait for M4 |
+| Collection | Chosen by the definition's `scope`, never by the caller. An account item with an owner id, or a character item without one, is refused |
+| Account limit | At most `maxStack` of an id. A cosmetic (`maxStack` 1) is owned once; a second grant fails with `already_owned` |
+| Character limit | Slot based, `ceil(qty / maxStack)` slots per id, `CHARACTER_SLOTS` = 30 (default, confirm at Phase E). Owner id = class id today (`^[a-z][a-z0-9_]{0,39}$`) |
+| Failed calls | `unknown_item`, `bad_quantity`, `bad_owner`, `wrong_scope`, `already_owned`, `stack_full`, `inventory_full`, `not_enough`, `read_only`: nothing changes and nothing is saved |
+| Bad data on load | An entry that is unknown, in the wrong collection, not an integer from 1 up, or over the account limit is dropped, never repaired into an item. `status` is `new`, `ok`, `repaired` or `corrupt`; a corrupt save starts empty and the next change replaces it |
+| Newer version | A save with `v` above 1 is read-only: every change is refused so an older build cannot erase it (`status: newer_version`) |
+| Not decided | Starting contents (none), currency scope (L4), claims (Phase H), equipped references (Phase E), grant-many in one step for the Shop (Phase F) |
+
+localStorage is local prototype storage: the player can edit it, so it is not authoritative for an online economy (section 9).
