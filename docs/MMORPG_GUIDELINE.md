@@ -63,7 +63,7 @@ A seven-part development sequence for a JavaScript MMORPG, written by Gemini and
 - **Verdict:** ADAPT. Pattern kept; library and "asynchronous" detail differ.
 - **Do:** keep live state in memory on the server host; write only meaningful events at once (level-up, trade, pickup, purchase) and everything else in periodic batches inside one transaction. Flush on SIGINT and SIGTERM and on a clean "server stopping" path. Use `better-sqlite3` (D6, S5). It is synchronous: keep each write small and batched so it does not stall a tick. Version every saved record (the roadmap L2/L4 already asks for a versioned save).
 - **Do not:** add Prisma, Knex or PostgreSQL now; do not write position per tick; do not let sim code touch storage (S1g adapter only).
-- **Repo hooks:** `progression/Progression.js` (localStorage today, P7), `lobby/Wallet.js`, `SERVER_PATH.md` S5, S8a backups.
+- **Repo hooks:** `progression/Progression.js` (storage adapter since V1.12.0.06, `sim/storage.js`, P7 done), `lobby/Wallet.js`, `SERVER_PATH.md` S5, S8a backups.
 - **Gate:** kill the server mid-session; restart restores state to the last flush and loses no purchased item (S5 test).
 
 ## G5. Composition-based entities and combat events
