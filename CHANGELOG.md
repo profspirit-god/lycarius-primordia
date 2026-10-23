@@ -2,6 +2,30 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.05 — S1f-a projectile presentation out of the sim: the fireball is sim only, its look is a view (cleanup, no gameplay change)
+
+First group of S1f (`SERVER_PATH.md` S1f, debt P6): the Fireball projectile. Before, `FireballProjectile` spawned embers, smoke and a light, kept a trail history and drew itself, so a headless server could not run it. Now the class holds movement, the hit order (clash, deflect, shield, body), the damage roll and the range; everything you see lives in a view registered by the entity's `kind`.
+
+### Added
+
+- **`view/FireballView.js`** (client only): the trail history (points live 0.32 s), the ember and smoke particles, the one-frame moving light, the fizzle burst and `draw`, with the same numbers as before. Per-ball animation state (trail, flicker clock) sits in a `WeakMap` in the view, not on the entity.
+- **`view/EntityViews.js`** and **`view/index.js`**: `EntityViews` finds a view by `entity.kind`; `update(dt)` ticks the views of the entities that just ran, `draw(ctx, e)` draws one entity and falls back to `e.draw` for kinds without a view yet. `view/index.js` is the one manifest (`VIEWS = { fireball: FireballView }`). `EntityViews` is a new view system in `systems/pipeline.js` (`world.entityViews`).
+- **Event `projectile:fizzle`** `{ kind, x, y, z, charge }` (plain data, `ProjectileFizzleEvent` in `types.js`), emitted when the range runs out.
+- **`Entity.kind`** (string, default `""`): the view key. An entity with a view does not draw itself.
+- **`tests/projectile-view.test.mjs`** (9 tests): a fireball lives through range, body hit, shield and clash in a world whose `particles`, `lights`, `damageNumbers`, `camera` and `audio` throw on any use; the fizzle event is plain data; `FireballProjectile.js` has no presentation, clock or visual random; the view's embers, light, trail culling, fizzle burst and `draw` (finite canvas arguments, composite mode restored, real `ParticleSystem` and `Lights`); `EntityViews` dispatch and dispose; pipeline and `WorldScene` wiring; the same seeded volley ends in the same sim state with and without the view.
+
+### Changed
+
+- **`FireballProjectile`** lost `draw`, `fizzle`, `trail`, `t` and every particle and light call; it emits `projectile:fizzle` instead. It sets `kind = "fireball"`.
+- **`WorldScene`** calls `entityViews.update(edt)` right after the entities update (before the dead are removed) and draws every entity through `entityViews.draw`.
+- `npm test` runs ten files. `VERSION` 1.12.0.04 → 1.12.0.05. README, ROADMAP (S1f row, Done), `SERVER_PATH.md` (P6, S1f progress), `Claude.md` (code map, rule 3 test list, projectile gotcha), engines doc, guideline status line.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `FireballProjectile.js` `present` 22 → 0 and `random` 18 → 0 (the visual `rand` / `Math.random` moved to the view); totals `present` 226 → 204, `random` 138 → 120. Baseline rewritten.
+- **Checked against the old class:** a throwaway differential run (old `FireballProjectile` against the new sim plus view, visual randomness seeded, four scenarios: range, body, shield, clash) gave the same particle and light calls, the same `hit` and `explosion` events and the same canvas calls for one ball, for a body hit and for a shield. Three small differences remain, none visible in play: (1) with two balls alive in one step, the particles of ball 2 are emitted after those of ball 1 instead of in between (same particles, different random numbers); (2) a ball destroyed by a clash earlier in the same step now still sheds its last 4 to 7 embers and its one-frame light under the clash explosion (before, it skipped them); (3) when the clash is detected by the other ball after this ball already ticked, the survivor's embers of that one frame use the already weakened radius (a spread of 1 to 2 px).
+- Not tested: playing in a browser. Check: a Fireball at any charge looks as before (tapered trail, ember rain, glow, light on the ground), a ball that flies out of range bursts into sparks, two balls colliding still explode, a flame shield and the Graugr arms still stop and deflect balls, the training dummy still dodges them, and the frame rate with many balls is unchanged.
+
 ## V1.12.0.04 — S1e input command layer: the player is driven by a command, not by the keyboard (cleanup, no gameplay change)
 
 Fifth step of the server path (`SERVER_PATH.md` S1e, debt P5). A server cannot read a keyboard, a mouse or a camera, and it must not trust what a client sends. The player now receives one validated command per tick; a client-only controller builds it from the devices.

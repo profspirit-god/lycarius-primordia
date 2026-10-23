@@ -16,7 +16,7 @@ A phased list of the engines and systems an MMORPG needs, from the first prototy
 
 **Relation to `docs/MMORPG_GUIDELINE.md`:** that file judges seven ideas (G1-G7) with a verdict. This file is the catalogue: what exists, in which phase. Use both: this one to find the system, that one for the Do / Do not of the topic.
 
-**Status checked at V1.12.0.04:** no server exists. S1a to S1e are done, S1f is next.
+**Status checked at V1.12.0.05:** no server exists. S1a to S1e are done, S1f is in progress (projectiles done, the `Fireball` skill is next).
 
 ## E1. Phase 1: early development (foundations and core simulation)
 
@@ -30,6 +30,7 @@ Goal: a decoupled, deterministic simulation with tests, before any networking.
 | Input command layer | Keyboard and mouse become `InputCommand { seq, mx, my, aim, btn }` | Built (V1.12.0.04) | `sim/InputCommand.js`, `input/PlayerController.js`, rule R4 in `Claude.md` |
 | Event bus | Combat emits, view and audio subscribe, no direct calls | Built | `core/EventBus.js` |
 | Damage out of the view | One sim system applies damage on `hit`; the view only reads events. One ordered system list | Built (V1.12.0.03) | `systems/DamageSystem.js`, `systems/pipeline.js` |
+| Entity views | Presentation of an entity (trail, particles, light, drawing) lives in a client-only view found by `entity.kind`; the sim emits plain-data events | Built for the Fireball (V1.12.0.05); the other groups are planned S1f | `view/EntityViews.js`, `view/FireballView.js`, `view/index.js` |
 | Data registries | Classes, skills and spec bonuses are data | Built (items and status effects: not yet) | `content/index.js`, `core/Registry.js`, `classes/`, `skills/` |
 | Universal skill caster | Any entity casts through one interface | Built | `systems/SkillCaster.js` |
 | Status system | Burn (damage over time), stun, wards by data offers on hit | Built | `systems/StatusSystem.js`, `skills/BurnWardEffect.js` |
