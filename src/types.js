@@ -202,6 +202,16 @@
  */
 
 /**
+ * Emitted on world.events as 'projectile:fizzle' when a projectile's range runs out (S1f). Plain data only. FireballView draws the burst.
+ * @typedef {Object} ProjectileFizzleEvent
+ * @property {string} kind                            The projectile's view key ('fireball').
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} charge                          0..1.
+ */
+
+/**
  * Emitted on world.events as 'blast' by Fire Blast (self-centred AOE). The damage itself goes out as 'hit' events with aoe=true;
  * BlastFx draws the burst and AudioSystem plays the boom.
  * @typedef {Object} BlastEvent

@@ -7,6 +7,7 @@
  *   solid    = true       -> blocks the player
  *   onHit(e: HitEvent, world) -> SIM reaction to damage (health, knock, status), called by DamageSystem (see src/types.js).
  *                                No flash, glow or sound in it: HitEffects and BurnFx derive those from the same event
+ *   kind (string)         -> key of its view in view/index.js; entities with a view do not draw themselves (S1f). "" = draws itself
  *   damageColor           -> colour of damage numbers it receives
  *   onDot(e, world)       -> sim reaction to damage over time (burn tick): { damage, kind, source }
  *   flash (0..1), glow    -> view-only fields, written by HitEffects / BurnFx and drawn by the entity
@@ -24,6 +25,7 @@ export class Entity {
     this.radius = 12;
     this.height = 40;
     this.dead = false;
+    this.kind = "";
     this.hittable = false;
     this.solid = false;
     this.burn = null;
