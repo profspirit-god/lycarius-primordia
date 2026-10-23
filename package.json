@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/graugr.test.mjs && node tests/mage.test.mjs && node tests/fireblast.test.mjs && node tests/abilities.test.mjs && node tests/rng.test.mjs && node tests/visuals-settings.test.mjs && node tests/clock.test.mjs && node tests/damage.test.mjs && node tests/input.test.mjs && node tests/projectile-view.test.mjs && node tests/storage.test.mjs && node tests/items.test.mjs && node tests/inventory.test.mjs",
+    "test": "node tests/graugr.test.mjs && node tests/mage.test.mjs && node tests/fireblast.test.mjs && node tests/abilities.test.mjs && node tests/rng.test.mjs && node tests/visuals-settings.test.mjs && node tests/clock.test.mjs && node tests/damage.test.mjs && node tests/input.test.mjs && node tests/projectile-view.test.mjs && node tests/storage.test.mjs && node tests/items.test.mjs && node tests/inventory.test.mjs && node tests/inventory-view.test.mjs",
     "audit": "node tools/audit-server-ready.mjs",
     "sec": "node tools/sec.mjs",
     "docs": "node tools/check-docs.mjs"

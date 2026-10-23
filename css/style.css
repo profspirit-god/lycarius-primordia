@@ -136,6 +136,17 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .item-buy:hover { border-color:var(--gold); color:#fff; }
 .msg { padding:10px 12px; border:1px solid rgba(255,255,255,.1); border-radius:8px; margin-bottom:8px; font-size:13px; background:rgba(0,0,0,.25); }
 .msg small { margin-left:10px; color:#8d836b; }
+.inv-item { position:relative; width:100%; font:inherit; color:inherit; cursor:pointer; }
+.inv-item:hover { box-shadow:0 0 14px var(--rar); }
+.inv-qty { position:absolute; top:8px; right:10px; font-size:11px; padding:1px 6px; border-radius:999px; background:rgba(0,0,0,.6); border:1px solid var(--rar); }
+.inv-empty { padding:36px 12px; text-align:center; border:1px dashed rgba(242,196,109,.3); border-radius:10px; background:rgba(0,0,0,.25); }
+.inv-empty b { display:block; margin-bottom:6px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+.inv-warn { margin:0 0 10px; border-color:rgba(255,120,80,.5); }
+.inv-detail { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+.inv-detail-img { width:140px; height:140px; flex:none; font-size:48px; }
+.inv-detail-text { flex:1; min-width:220px; }
+.inv-detail-text h3 { margin:0; font-size:20px; font-weight:600; }
+.inv-detail-text p { margin:8px 0 12px; font-size:13px; line-height:1.5; }
 .slot-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
 .slot { aspect-ratio:1; border:1px dashed rgba(242,196,109,.3); border-radius:8px; background:rgba(0,0,0,.3); }
 .gp-lane { display:flex; gap:6px; margin-bottom:8px; }
