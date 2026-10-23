@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.14.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.15.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,13 +8,13 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.14.0.00
+## 1. What is in V1.15.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Menu           | Title menu: Play, Creator Support (placeholder), Exit. Play opens the Home lobby (placeholders), then Mode Select: Live Server (placeholder), Campaign (placeholder), Training Grounds (playable, with a loading screen). Settings is on the Home bottom row |
 | Settings       | Sectioned (Audio, Graphics, Interface) with a footer that stays put: Reset, Save, Back (Back asks Save / Discard when there are unsaved changes). Pause menu → Settings adds Training Dummy (attacks, skills, movement) and Developer (FPS overlay, cast timer, XP tools). Persisted in `localStorage`. |
-| Items          | Item definitions in an `ItemRegistry` (`src/sim/items/`): id, name, category, rarity, scope, stack size, allowed actions. The nine Shop cosmetics are registered as account-owned items. An `Inventory` service (`src/sim/items/Inventory.js`) records who owns how many of each item (account cosmetics, owned once; character items in 30 slots) and saves it under its own key, `lycarius.primordia.inventory`, separate from your progression save. Nothing shows it yet: no screen reads or grants items (inventory phases D to I, `docs/proposals/Inventory-and-ownership.md`) |
+| Items          | Item definitions in an `ItemRegistry` (`src/sim/items/`): id, name, category, rarity, scope, stack size, allowed actions. The nine Shop cosmetics are registered as account-owned items. An `Inventory` service (`src/sim/items/Inventory.js`) records who owns how many of each item (account cosmetics, owned once; character items in 30 slots) and saves it under its own key, `lycarius.primordia.inventory`, separate from your progression save. The Home **Inventory** button opens a read-only Account Inventory: owned cosmetics as cards with a tab per category you own something in, and a detail view (rarity, description, how many, account-wide). It starts empty, and nothing grants items yet (inventory phases E to I, `docs/proposals/Inventory-and-ownership.md`) |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
@@ -544,9 +544,9 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.14.0.00)
+## 6. Known limitations (V1.15.0.00)
 
-- The Inventory button on Home still shows empty placeholder slots, and Shop purchases are placeholders: the ownership model and its save exist, but no screen shows or grants items yet.
+- The Home Inventory shows what you own but is always empty for now: Shop purchases are placeholders and nothing grants items yet. Equip is shown disabled until character customization (L3). To try the screen, run `lycarius.inventory.grant("ember_robe")` in the browser console (any id from the Shop list, e.g. `molten_veil`, `spark_trail`); it is saved in your browser only.
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.
