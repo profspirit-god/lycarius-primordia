@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.12.0.04** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.05** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.12.0.04
+## 1. What is in V1.12.0.05
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -304,7 +304,7 @@ Hits still freeze the dummy and knock it back; it steers back onto its path afte
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Attack charge                       | `SkillCaster` + `Fireball.onCharging`: orb grows, embers spiral inward, ground ring fills, light grows, movement slows to 55%   |
 | Attack recoil                       | `Fireball.onRelease`: backward impulse on the caster (scales with charge), body lean (`kick`), camera shake                     |
-| Projectile trail                    | `FireballProjectile.draw`: tapered, colour-graded ribbon from the position history                                              |
+| Projectile trail                    | `FireballView.draw`: tapered, colour-graded ribbon from the position history                                              |
 | Projectile glow                     | `drawGlow` (additive radial gradients) + a dynamic light that illuminates the ground                                            |
 | Projectile particles (real physics) | `ParticleSystem`: gravity, drag, ground bounce with restitution, ground friction                                                |
 | Burst behind the enemy              | `HitEffects.backBurst`: a cone of fire, embers and smoke emitted from the far side of the target along the projectile direction |
@@ -434,6 +434,7 @@ src/
   systems/                    pipeline (the one ordered list of systems), SkillCaster, Vitals, ParticleSystem, Lights, Camera, DamageNumbers,
                               DamageSystem (applies hits), HitEffects (hit visuals), StatusSystem (burn, stun), BurnFx, Toasts, AudioSystem,
                               ExplosionSystem, ExplosionFx, XpSystem, RaidSystem
+  view/                       EntityViews (draws and ticks entities by their `kind`), FireballView (the fireball's trail, particles, light, drawing), index (the view manifest)
   render/                     drawCover, drawCylinder, drawGlow, drawGround, drawBar, drawChargeOrb, drawMagicCircle, drawAura, drawRibbons, drawEnhance, drawStun
 ```
 
@@ -493,11 +494,12 @@ src/
 | `node tests/clock.test.mjs` | Sim clock tests: `world.time` stepping and the dummy's 5-second DPS window, which must not read a wall clock (4 tests). Exit 0 = pass |
 | `node tests/input.test.mjs` | Input command tests (S1e): the command is validated and clamped, scripted commands drive movement, aim and skills with no `input`, `camera` or `game` in the world, stun and downed players ignore commands, `PlayerController` builds the same command from keys and mouse (8 tests). Exit 0 = pass |
 | `node tests/damage.test.mjs` | Damage tests (S1d): hit and burn damage land through `DamageSystem` in a world with no `HitEffects`, a killing blow downs the target before ignition, view flash and glow come from events, and a seeded fight ends in the same sim state with and without the view systems (9 tests). Exit 0 = pass |
+| `node tests/projectile-view.test.mjs` | Projectile view tests (S1f-a): the fireball runs range, hit, shield and clash with no presentation object in the world, `projectile:fizzle` is plain data, `FireballView` and `EntityViews` behave, same seeded volley with and without the view (9 tests). Exit 0 = pass |
 | `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (all nine test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all ten test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -541,7 +543,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.12.0.04)
+## 6. Known limitations (V1.12.0.05)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

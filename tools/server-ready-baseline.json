@@ -36,10 +36,6 @@
     "random": 27,
     "present": 6
   },
-  "skills/FireballProjectile.js": {
-    "random": 18,
-    "present": 22
-  },
   "skills/FlameShieldEffect.js": {
     "present": 44,
     "random": 25

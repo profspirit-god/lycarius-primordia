@@ -1,0 +1,10 @@
+/**
+ * The ONE manifest of entity views (S1f, client only), like content/index.js is for skills. A view is registered under the
+ * entity's `kind` string. A view class takes `(world)` and has `tick(entity, dt)`, `draw(ctx, entity)` and `dispose()`.
+ * Entities whose kind has no view still draw themselves with `entity.draw` until their S1f group moves out.
+ */
+import { FireballView } from "./FireballView.js";
+
+export const VIEWS = {
+  fireball: FireballView,
+};

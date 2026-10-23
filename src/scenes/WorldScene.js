@@ -301,6 +301,7 @@ export class WorldScene extends Scene {
     this.controller.update(this.player); // client only: keyboard, mouse and camera become the player's command for this tick
     const list = this.entities.slice();
     for (const e of list) e.update(edt, this);
+    this.entityViews.update(edt); // views of the entities that just ran (S1f), before the dead are removed so a last frame still shows
     this.entities = this.entities.filter((e) => !e.dead);
     this.raid.update(dt);
     this.status.update(edt);
@@ -322,7 +323,7 @@ export class WorldScene extends Scene {
     drawGround(ctx, this.camera, w, h);
     this.dodgeFx.render(ctx); // under the bodies
     for (const e of [...this.entities].sort((a, b) => a.y - b.y))
-      e.draw(ctx, this);
+      this.entityViews.draw(ctx, e);
     this.particles.render(ctx);
     this.lights.render(ctx);
     this.damageNumbers.render(ctx);
