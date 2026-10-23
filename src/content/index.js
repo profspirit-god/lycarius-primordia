@@ -9,6 +9,8 @@ import { ManaRegen } from '../skills/ManaRegen.js';
 import { Dodge } from '../skills/Dodge.js';
 import { Mage } from '../classes/Mage.js';
 import { SpecBonusRegistry, SPEC_BONUSES } from '../progression/SpecBonuses.js';
+import { defineItem } from '../sim/items/ItemRegistry.js';
+import { COSMETIC_ITEMS } from '../sim/items/cosmetics.js';
 
 SkillRegistry.register(Fireball);
 SkillRegistry.register(FlameShield);
@@ -18,3 +20,4 @@ SkillRegistry.register(ManaRegen);
 SkillRegistry.register(Dodge);
 ClassRegistry.register(Mage);
 SPEC_BONUSES.forEach((b) => SpecBonusRegistry.register(b));
+COSMETIC_ITEMS.forEach(defineItem);
