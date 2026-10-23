@@ -307,6 +307,7 @@ Small obligations so the two proposals in `docs/proposals/` stay buildable. They
 | S1d (met) | `DamageSystem` (V1.12.0.03) calls `target.onHit(e, world)` for every `hit`, before `StatusSystem` and `XpSystem` (`systems/pipeline.js`); `HitEffects` never changes sim state. A bag draw or token spend goes into `DamageSystem` or a sim system created after it | M2 |
 | S1h | Integer entity `id`; `snapshot()` omits fields marked hidden (bag order, gates, secrets) | M3, M4, W2 |
 | S1k | New sim folders: `src/sim/bag/`, `src/sim/spatial/` (both covered by the audit list and `import-sim`) | M1, W2 |
+| M1 (met early) | `src/sim/bag/` was created in V1.16.0.00, before S1k (`Bag`, `validateBagDef`). The audit already scans it through `sim/` (zero hits) and `tests/import-sim.mjs` must import it too. A `Bag` is built with `world.rng` and keeps its order in `#private` fields, so `snapshot()` code never needs to remember to hide it | M2, M3 |
 | S2 | `snap` and `ev` payloads carry no hidden state; a test asserts it | M4 |
 | S5 | Item-instance state gets its own table only when M4 starts; do not add it earlier | M4 |
 | S6 | Interest management uses the W2 grid; room soft/hard capacity are constants; `loadtest.mjs` also logs entities per room | W2, W5 |
