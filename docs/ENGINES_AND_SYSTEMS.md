@@ -56,7 +56,7 @@ Goal: from a single-player sandbox to client and server, plus the world and data
 | Accounts and database | SQLite, scrypt hashing, sessions, migrations | Planned S5 | D6, D7, `better-sqlite3` approved for S5 only |
 | Tilemap and collision grid | Maps and collision as data | Planned T1, T2 | `docs/ART_AND_MAPS.md` |
 | Spatial partitioning | Grid for proximity, collision and interest management | Planned W2 | `docs/proposals/World-Division-and-Lag-Management.md`, `src/sim/spatial/` |
-| Randomness and loot engine | Marble bag for crit, loot, gates | Planned M1-M4 (owner approves each stage) | `docs/proposals/Marble-bag-engine.md` |
+| Randomness and loot engine | Marble bag for crit, loot, gates | M1 built (V1.16.0.00): `Bag` primitive and validator in `src/sim/bag/`, not wired in; M2 to M4 planned (owner approves each stage) | `docs/proposals/Marble-bag-engine.md`, `src/sim/bag/` |
 
 ## E3. Phase 3: improvement and scaling (optimization, polish, scale)
 

@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.15.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.16.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,13 +8,14 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.15.0.00
+## 1. What is in V1.16.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Menu           | Title menu: Play, Creator Support (placeholder), Exit. Play opens the Home lobby (placeholders), then Mode Select: Live Server (placeholder), Campaign (placeholder), Training Grounds (playable, with a loading screen). Settings is on the Home bottom row |
 | Settings       | Sectioned (Audio, Graphics, Interface) with a footer that stays put: Reset, Save, Back (Back asks Save / Discard when there are unsaved changes). Pause menu → Settings adds Training Dummy (attacks, skills, movement) and Developer (FPS overlay, cast timer, XP tools). Persisted in `localStorage`. |
 | Items          | Item definitions in an `ItemRegistry` (`src/sim/items/`): id, name, category, rarity, scope, stack size, allowed actions. The nine Shop cosmetics are registered as account-owned items. An `Inventory` service (`src/sim/items/Inventory.js`) records who owns how many of each item (account cosmetics, owned once; character items in 30 slots) and saves it under its own key, `lycarius.primordia.inventory`, separate from your progression save. The Home **Inventory** button opens a read-only Account Inventory: owned cosmetics as cards with a tab per category you own something in, and a detail view (rarity, description, how many, account-wide). It starts empty, and nothing grants items yet (inventory phases E to I, `docs/proposals/Inventory-and-ownership.md`) |
+| Bags           | The Marble Bag primitive (`src/sim/bag/`, stage M1 of `docs/proposals/Marble-bag-engine.md`): a pool of outcome tokens, for example 4 NORMAL and 2 CRIT, dealt as one shuffled cycle and drawn without replacement, so every complete cycle holds exactly the configured counts. Refill policy `refill_shuffle` or `no_refill`, versioned `serialize` / `restore`, a validator. **Not used by any skill yet**: Fireball crits still roll the old way until stage M2, so nothing about play changed |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
@@ -422,6 +423,7 @@ src/
     math.js                   helpers (lerp, rand for visuals only, hash2, colour)
   sim/
     rng.js                    Rng: seeded mulberry32 (`world.rng`), the only source of gameplay dice
+    bag/                      Bag (shuffled token cycles drawn without replacement, serialize / restore) and validateBagDef; not wired in until M2
   scenes/                     MenuScene, HomeScene, ModeSelectScene, LoadingScene, CreatorSupportScene, SettingsScene, ExitScene, WorldScene, PlaceholderScene (Campaign, Live Server)
   lobby/                      lobbyData (lobby content + art paths), Wallet (shared currencies), assets (lazy image / video loaders), loadTasks (loading-screen readiness tasks)
   progression/                Progression (XP, levels, picks, save), SpecBonuses (bonus data + computeMods), Mods (damage multipliers)
@@ -496,11 +498,12 @@ src/
 | `node tests/input.test.mjs` | Input command tests (S1e): the command is validated and clamped, scripted commands drive movement, aim and skills with no `input`, `camera` or `game` in the world, stun and downed players ignore commands, `PlayerController` builds the same command from keys and mouse (8 tests). Exit 0 = pass |
 | `node tests/damage.test.mjs` | Damage tests (S1d): hit and burn damage land through `DamageSystem` in a world with no `HitEffects`, a killing blow downs the target before ignition, view flash and glow come from events, and a seeded fight ends in the same sim state with and without the view systems (9 tests). Exit 0 = pass |
 | `node tests/projectile-view.test.mjs` | Projectile view tests (S1f-a): the fireball runs range, hit, shield and clash with no presentation object in the world, `projectile:fizzle` is plain data, `FireballView` and `EntityViews` behave, same seeded volley with and without the view (9 tests). Exit 0 = pass |
+| `node tests/bag.test.mjs` | Bag primitive tests (M1): definition validation, exact counts in every cycle for 400 seeds, a Fisher-Yates shuffle pinned with a scripted RNG and shown unbiased, refill and empty behaviour, serialize / restore round trips and refused saves, no hidden state in `JSON.stringify`, import in a bare Node process (24 tests). Exit 0 = pass |
 | `node tests/fireblast.test.mjs` | Headless Fire Blast tests: range, damage, knockback, burn, cost, cooldown, modifiers, AI exclusion, plus draw and full-cast render checks (15 tests). Exit 0 = pass |
 | `node tools/audit-server-ready.mjs` | Counts simulation code that could not run on a server and fails if the count rose above `tools/server-ready-baseline.json`. `--verbose` lists file and line, `--strict` fails on any debt |
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
-| `npm test` (all ten test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
+| `npm test` (all fifteen test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)
 
@@ -544,9 +547,10 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.15.0.00)
+## 6. Known limitations (V1.16.0.00)
 
 - The Home Inventory shows what you own but is always empty for now: Shop purchases are placeholders and nothing grants items yet. Equip is shown disabled until character customization (L3). To try the screen, run `lycarius.inventory.grant("ember_robe")` in the browser console (any id from the Shop list, e.g. `molten_veil`, `spark_trail`); it is saved in your browser only.
+- The bag primitive exists but nothing uses it: Fireball crit is still a flat 12% roll. Moving it to a per-caster bag is stage M2 and needs two owner decisions (crit rate, bag scope).
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.
 - "Exit Game" shows an exit screen. Browsers cannot close themselves. A desktop wrapper will fix this.

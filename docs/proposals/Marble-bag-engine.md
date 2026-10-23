@@ -1,7 +1,7 @@
 # Marble Bag Engine
 
 **Integration concept for Lycarius Primordia / browser-based MMORPG**\
-**Status: PROPOSAL ONLY --- NOT IMPLEMENTED OR INTEGRATED**
+**Status: PROPOSAL; stage M1 (the pure bag primitive, `src/sim/bag/`) is built in V1.16.0.00 but not integrated; everything else is NOT IMPLEMENTED**
 
 > **Instruction to Claude:** This document describes a proposed system.
 > The Marble Bag Engine does not currently exist in the game unless

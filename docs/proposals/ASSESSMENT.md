@@ -1,6 +1,6 @@
 # Proposal assessment (V1.10.0.02)
 
-Verdicts for `Marble-bag-engine.md` (MBE) and `World-Division-and-Lag-Management.md` (WDL). Read one section: `node tools/sec.mjs docs/proposals/ASSESSMENT.md <id>`. Status of both: **proposal only, nothing implemented.** Phase 0 (inspection) is done here; no code was changed.
+Verdicts for `Marble-bag-engine.md` (MBE) and `World-Division-and-Lag-Management.md` (WDL). Read one section: `node tools/sec.mjs docs/proposals/ASSESSMENT.md <id>`. Status: **MBE stage M1 (the bag primitive) is built in V1.16.0.00 and not wired into the game; M2 to M5 and all of WDL are proposal only.** Phase 0 (inspection) was done here.
 
 ## 1. Verdicts
 
@@ -47,13 +47,13 @@ Both fit D1 (server-authoritative), D2 (same sim files in Node) and `Claude.md` 
 | Stage | Work | Needs | Done when |
 | ----- | ---- | ----- | --------- |
 | M0 | Phase 0 inspection | none | **Done in this document** |
-| M1 | `src/sim/bag/` pure primitive: `Bag` (tokens, Fisher-Yates via injected rng, draw, refill/no_refill, `serialize/restore`), validator, unit tests with a seeded test RNG. Not wired to the game | none (new files, zero audit hits) | Counts exact per cycle; 6-token cycle test; refill/empty tests; serialize round-trip; Node import with no globals |
+| M1 | `src/sim/bag/` pure primitive: `Bag` (tokens, Fisher-Yates via injected rng, draw, refill/no_refill, `serialize/restore`), validator, unit tests with a seeded test RNG. Not wired to the game | none (new files, zero audit hits) | Counts exact per cycle; 6-token cycle test; refill/empty tests; serialize round-trip; Node import with no globals. **Done in V1.16.0.00** (`tests/bag.test.mjs`) |
 | M2 | Fireball crit uses one per-caster combat bag; rate per decision 3.1 | S1b, S1d | Same-seed damage lists identical; crit totals per cycle exact; audit debt not up |
 | M3 | Gates: `ALL/ANY/NOT`, counts, bounded sequences; event-fed | M1, S1h | Tests for window/reset/interrupt; cycles fail at load |
 | M4 | Item-instance state + one-time secret + first data-driven item (masterwork bow) | L2, S1h, S5 | Survives restart/trade; cannot fire twice; client payload has no hidden fields |
 | M5 | Crafting gates, NPC memory, world mysteries, discovery archive | M4, NPCs, accounts | One scope per version, owner approval each |
 
-M1 can ship any time as a cleanup-level or minor version (new files only) and does not block S1.
+M1 shipped as the minor version V1.16.0.00 (new files only) and did not block S1. M2 still waits for the owner's decisions 3.1 (crit rate) and 3.2 (bag scope).
 
 ## 5. WDL: conflicts and decisions
 

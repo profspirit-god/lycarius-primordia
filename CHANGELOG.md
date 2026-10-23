@@ -2,6 +2,39 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.16.0.00 — M1: the pure bag primitive (feature, new files only, nothing user-visible)
+
+First stage of the Marble Bag Engine (`docs/proposals/Marble-bag-engine.md`, roadmap track M). It adds the reusable "bag of outcome tokens" and its validator and tests. **Nothing in the game uses it yet**: no skill, entity or scene imports `src/sim/bag/`, so the game plays exactly as before. Fireball crits are still a flat 12% roll until stage M2.
+
+### Added
+
+- **`sim/bag/Bag.js`**: `new Bag(def, { rng })`. A bag holds tokens by name and count (for example `NORMAL: 4, CRIT: 2`), shuffles them into one cycle and draws without replacement, so **every complete cycle holds exactly the configured counts**. `draw()` returns `{ ok: true, token, left, cycle }` or `{ ok: false, reason: "empty" }`; `remaining()` and `counts()` report what is left; `serialize()` and `Bag.restore(def, raw, { rng })` save and rebuild it.
+- **`sim/bag/validateBag.js`**: `validateBagDef(def)` returns a list of problems and never throws; `normalizeBagDef(def)` returns a frozen copy (tokens sorted by name) or throws with every problem listed, like `defineItem`. Limits are constants at the top: ids like item ids, token names in capitals (`NORMAL`, `CRIT`), 1 to 16 kinds, 1 to 1000 of each, at most 1000 tokens per cycle.
+- **`tests/bag.test.mjs`** (24 tests, added to `npm test`, which now runs fifteen files).
+
+### Decisions taken (all reversible, flagged for the owner)
+
+- **Everything is explicit.** A definition must give `id`, `scope`, `tokens`, `refill` and `hidden`; there are no defaults, as the proposal's design law 2 asks. Unknown fields are refused.
+- **Policies in M1:** `refill_shuffle` (the next draw after the last token deals a fresh shuffled cycle) and `no_refill` (the bag stays empty). The proposal's `single_use` and `conditional` need item instances and gates and come with M4 and M3. `persistent` is `serialize` / `restore`, as the proposal itself describes it.
+- **`scope`** is validated against `entity`, `skill`, `item`, `world` but the bag does not use it. The combat default (per attacker or per skill, `ASSESSMENT.md` 3.2) is still the owner's decision before M2, and this list may change then.
+- **Dealing is lazy.** Building or restoring a bag never calls the rng; the first draw and each refill do, with a Fisher-Yates shuffle from the end that costs exactly n - 1 calls to `next()`. Tokens start sorted by name, so object key order never changes a result (`Claude.md` 5b R9). An exhausted `refill_shuffle` bag shows 0 left until its next draw.
+- **The rng is injected and required** (`world.rng`, anything with `next()`); a missing one throws instead of falling back to a fixed seed, because a silent fixed seed would make every caster draw the same crits. The bag never calls `Math.random`.
+- **Hidden state:** all state is in `#private` fields, so `JSON.stringify(bag)` is `{}` and a snapshot cannot leak the draw order by accident. `serialize()` is for the server's persistence layer only.
+- **`restore` trusts nothing.** Reasons: `corrupt` (wrong shape), `newer_version` (written by a newer game, never overwritten, like the inventory save), `mismatch` (another bag, a token the definition no longer has, or more of a token than a cycle). A failure builds no bag, leaves the input alone and does not touch the rng. A save with fewer tokens than a full cycle is valid: it is a bag in the middle of a cycle, and it still fits if the definition later grows.
+
+### Tests (what they pin)
+
+- 400 different seeds each give exactly 4 NORMAL and 2 CRIT per cycle, with counts falling by one per draw; six cycles in a row stay exact.
+- The shuffle is pinned with a scripted rng (a `next()` of 0 gives CRIT NORMAL NORMAL NORMAL NORMAL CRIT, just below 1 keeps the sorted order) and shown unbiased over 60 000 seeds: all six orders of three tokens, and every crit position in the 4 + 2 bag, come up evenly. The proposal's odds hold: the first draw is CRIT 2/6 of the time and 2/5 after a NORMAL.
+- Refill and empty behaviour, including that an empty draw uses no randomness; serialize and restore round trips (undealt, mid cycle, exactly exhausted, after a refill) continue exactly like the original; every kind of bad save is refused with its reason; a bare Node process imports the folder with no browser globals.
+- **Mutation check:** 13 deliberate bugs in the source (shuffle off by one, biased index, wrong direction, refill policies swapped, cycle not counted, restore skipping the token, version or id check, serialize leaking spent tokens, validator accepting zero counts, no pool bound, unsorted tokens) were all caught by the tests.
+
+### Notes
+
+- **Server-ready:** yes. The two new files have zero audit hits (the audit already scans `src/sim/`), the baseline is unchanged, and the test reads the source for browser, clock and `Math.random` use.
+- **Not touched:** `content/index.js`, skills, entities, `world`, saves, UI. No browser test was needed: nothing user-visible changed and nothing imports the new files.
+- **Next:** M2 (Fireball crit from a per-caster bag). Its Needs (S1b, S1d) are done, but it needs two owner decisions first: the crit rate (a 22 NORMAL + 3 CRIT pool keeps today's 12%; the proposal's 4 + 2 bag would make it 33%) and whether a bag belongs to the attacker or to the skill. Default if you say "you decide": 22 + 3 per attacker.
+
 ## V1.15.0.00 — L2 phase D: the Home Account Inventory (feature, read only)
 
 Third step of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). The Home **Inventory** button now opens a real Account Inventory instead of twelve empty slots. It only shows what the `Inventory` service says is owned; it cannot grant, remove, buy or equip anything.
