@@ -12,7 +12,7 @@ A seven-part development sequence for a JavaScript MMORPG, written by Gemini and
 
 **Section shape (grep-friendly):** every G section has the same fields in the same order: Source idea, Source evidence, Verdict, Do, Do not, Repo hooks, Gate. Verdict is ADOPT, ADAPT (idea kept, method changed) or REJECT-PART.
 
-**Status at V1.12.0.05:** no server exists. S1a (safety net) shipped in V1.10.0.05, S1b (seeded RNG) in V1.11.2.01, S1c (sim clock) in V1.12.0.02 S1d (damage out of the view) in V1.12.0.03 and S1e (input commands) in V1.12.0.04; S1f (presentation out of the sim) is in progress: the projectile group shipped in V1.12.0.05, the `Fireball` skill is next. Nothing below is built by this file; it adds no code and no dependency.
+**Status at V1.16.0.01:** no server exists. S1a (safety net) shipped in V1.10.0.05, S1b (seeded RNG) in V1.11.2.01, S1c (sim clock) in V1.12.0.02 S1d (damage out of the view) in V1.12.0.03 and S1e (input commands) in V1.12.0.04; S1f (presentation out of the sim) is in progress: the projectile group shipped in V1.12.0.05 and the `Fireball` skill in V1.16.0.01, `FlameShieldEffect` is next. Nothing below is built by this file; it adds no code and no dependency.
 
 | Id | Topic | Verdict | Where it lands |
 | -- | ----- | ------- | -------------- |
