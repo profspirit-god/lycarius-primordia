@@ -269,7 +269,7 @@ test("Fireball cast: spends mana by charge, starts the 0.7 s cooldown, recoils, 
   near(slot(o, "fireball").cooldown, 0.7, 1e-9);
   near(o.impulses[0][0], -275, 1e-6); // -(130 + 290 x 0.5)
   near(Math.abs(o.impulses[0][1]), 0, 1e-9);
-  near(o.kick, 1.15, 1e-9); // 0.7 + 0.9 x 0.5
+  assert.equal(o.kick, 0, "the lean (kick) is a view field since S1f-b: FireballCastView sets it, the sim leaves it alone");
 });
 
 test("Fireball cast: charge below 0.12 releases nothing and costs nothing", () => {
