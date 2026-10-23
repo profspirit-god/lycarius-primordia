@@ -6,6 +6,7 @@ import { rand } from "../core/math.js";
 import { VERSION_LABEL } from "../config.js";
 import { openModal } from "../ui/Modal.js";
 import { icon } from "../ui/icons.js";
+import { inventoryModel, inventoryHtml } from "../ui/InventoryView.js";
 import { Wallet } from "../lobby/Wallet.js";
 import { PROFILE, SHOP, GENESIS_PATH, HOME_BUTTONS, MESSAGES, ART } from "../lobby/lobbyData.js";
 import { loadImage, loadVideo } from "../lobby/assets.js";
@@ -94,6 +95,7 @@ export class HomeScene extends Scene {
     else if (a === "btn") {
       const b = HOME_BUTTONS.find((x) => x.id === d.id);
       if (b.scene) this.game.goto(b.scene);
+      else if (b.id === "inventory") this.openInventory();
       else this.openPlaceholder(b);
     }
   }
@@ -147,6 +149,24 @@ export class HomeScene extends Scene {
     this.modal({
       title: "MESSAGES",
       html: MESSAGES.map((m) => `<div class="msg"><b>${m.from}</b><small>${m.time}</small><div>${m.text}</div></div>`).join(""),
+    });
+  }
+
+  /** Home Account Inventory (L2 phase D): read only. Everything shown comes from `game.inventory`; nothing here grants or removes an item. */
+  openInventory() {
+    let tab = "all", sel = null;
+    const body = () => inventoryHtml(inventoryModel(this.game.inventory), { tab, selected: sel });
+    const m = this.modal({ title: "INVENTORY", wide: true, html: body() });
+    const holder = m.el.querySelector(".modal-body");
+    holder.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-a]"); // closest: the click may land on the icon inside the button
+      if (!b) return;
+      const a = b.dataset.a;
+      if (a === "inv-tab") { tab = b.dataset.t; sel = null; }
+      else if (a === "inv-open") sel = b.dataset.id;
+      else if (a === "inv-back") sel = null;
+      else return;
+      holder.innerHTML = body();
     });
   }
 

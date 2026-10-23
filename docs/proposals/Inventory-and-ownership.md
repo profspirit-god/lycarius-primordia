@@ -2,7 +2,7 @@
 
 **Project:** Lycarius: Primordia  
 **Document type:** Design and implementation proposal only  
-**Status:** Adopted in stages by the owner. Phase A done, Phase B built in V1.13.0.00 and Phase C in V1.14.0.00 (L2); every later phase needs its own owner approval. See section 13  
+**Status:** Adopted in stages by the owner. Phase A done, Phase B built in V1.13.0.00 and Phase C in V1.14.0.00 and Phase D in V1.15.0.00 (L2); every later phase needs its own owner approval. See section 13  
 **Primary scope:** Home/Lobby inventory, in-game inventory, item definitions, ownership, and dependencies
 
 > **Instruction to Claude:** This document is a proposal, not a command to implement everything. You may reject it, improve it, or integrate it as written. First compare it with the current repository, `Claude.md`, `ROADMAP.md`, `docs/ENGINES_AND_SYSTEMS.md`, and `SERVER_PATH.md`. Preserve established architecture and owner decisions. Do not claim a feature exists unless verified in code. Do not implement a phase until its prerequisites are checked and the owner approves the scope.
@@ -474,7 +474,7 @@ Then wait for owner approval if the scope, schema, ownership, persistence, or pr
 | A Audit and design | Done (V1.13.0.00) |
 | B Item definitions and `ItemRegistry` (L2) | **Built in V1.13.0.00**: `src/sim/items/ItemRegistry.js`, `cosmetics.js`, `tests/items.test.mjs`; nine cosmetics registered; nothing user-visible changed |
 | C Ownership state and local persistence | **Built in V1.14.0.00**: `src/sim/items/Inventory.js`, `INVENTORY_KEY` in `core/LocalStorageAdapter.js`, `tests/inventory.test.mjs`; schema in 13.4; not wired into any scene |
-| D Home Account Inventory UI | Next. Creates the client `Inventory` (`createInventory(createLocalStorageAdapter(INVENTORY_KEY))`) |
+| D Home Account Inventory UI | **Built in V1.15.0.00**: `src/ui/InventoryView.js`, `HomeScene.openInventory`, client `Inventory` in `main.js`, `tests/inventory-view.test.mjs`; read only (list, category tabs for owned categories, detail, empty / unavailable / newer-version / repaired states; Equip disabled until L3); no Claim, Shop or Genesis change |
 | E to I | Not started |
 
 ### 13.4 Save schema, version 1 (Phase C, V1.14.0.00)

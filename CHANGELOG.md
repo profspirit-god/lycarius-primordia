@@ -2,6 +2,30 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.15.0.00 — L2 phase D: the Home Account Inventory (feature, read only)
+
+Third step of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). The Home **Inventory** button now opens a real Account Inventory instead of twelve empty slots. It only shows what the `Inventory` service says is owned; it cannot grant, remove, buy or equip anything.
+
+### Added
+
+- **`ui/InventoryView.js`**: `inventoryModel(inv)` reads the service (entries ordered by category, then name) and `inventoryHtml(model, {tab, selected})` builds the HTML. Pure functions, no DOM. Cards show a category icon, name, rarity and a quantity badge above one. **Tabs exist only for categories you own something in**, with counts; an unknown tab means All. The **detail view** shows name, rarity, category, description, how many you own and "Account-wide". **Equip** is shown disabled ("soon") for equippable items: there is no valid target until character customization (L3). Definition text is escaped.
+- **States:** empty ("Nothing owned yet"), service missing ("Inventory unavailable"), a save from a newer game version ("kept untouched and not shown"), a corrupt save, and a repaired save ("N saved entries were not valid and skipped").
+- **`tests/inventory-view.test.mjs`** (11 tests): empty state, only owned items listed, tabs and counts and order, filtering, detail and disabled Equip, an unowned id never opens a detail, quantity badge, every state, rendering changes nothing and saves nothing, escaping, and wiring (HomeScene reads `game.inventory`, hardcodes no item id, never grants or removes).
+- **Client wiring:** `main.js` creates the one `Inventory` on `INVENTORY_KEY` (`game.inventory`) and exposes it as `lycarius.inventory` next to `lycarius.game` for console debugging.
+- CSS for the cards, the quantity badge, the empty and warning boxes and the detail layout (`css/style.css`).
+
+### Changed
+
+- **`HomeScene`**: the Inventory button calls `openInventory()` (the other placeholder buttons still use `openPlaceholder`). `VERSION` 1.14.0.00 → 1.15.0.00. `npm test` runs fourteen files. README, ROADMAP, `Claude.md` (code map, test list), engines doc and the proposal (phase status).
+
+### Notes
+
+- **Nothing can be owned yet.** No Shop purchase, reward or drop grants items, so for players the screen is always empty. To see it, run `lycarius.inventory.grant("ember_robe")` in the browser console (ids: `ember_robe`, `ashen_cloak`, `primordial_garb`, `cinder_halo`, `molten_veil`, `blue_flame_fireball`, `spark_trail`, `bow_of_respect`, `fire_dance`). The grant goes through the service, is validated and is saved in that browser only.
+- **Server-ready:** no sim file changed; the audit is unchanged.
+- **Not touched:** Shop, Genesis Path, Wallet, Progression, combat. Shop offers are never shown as owned.
+- **Tested in a real browser** (headless Chromium over a local server): empty state, grants from the console, tabs and filter, detail, Back, Escape, reload keeps ownership, the progression save is not written by inventory work, a newer-version save is shown as such and left byte for byte unchanged. The only console error is the missing `favicon.ico`, which was already there. Not tested: touch devices and other browsers.
+- Next: L4 (Shop buy flow) needs the currency-scope decision first; L3 (character customization) makes Equip real.
+
 ## V1.14.0.00 — L2 phase C: ownership state and a separate versioned save (feature, model only, nothing user-visible)
 
 Second code of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). It adds the one place that records who owns how many of which item, and its save. No screen creates or shows it yet (that is phase D), so the game plays exactly as before.
