@@ -37,7 +37,6 @@ const step = (w, n = 1) => {
 const press = (w, key) => (w.down.add(key), step(w), w.down.delete(key)); // held for exactly one frame
 let passed = 0;
 const test = (name, fn) => (fn(), passed++, console.log("ok  " + name));
-globalThis.localStorage ??= { getItem: () => null, setItem() {} };
 
 test("class data: Mana Regen is owned at once, Dodge is universal", () => {
   const w = mkWorld(),

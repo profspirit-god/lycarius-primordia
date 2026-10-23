@@ -20,10 +20,9 @@ import { ExplosionSystem, explosionRadius } from "../src/systems/ExplosionSystem
 import { XpSystem } from "../src/systems/XpSystem.js";
 import { Progression, charXpForNext, specXpForNext, MAX_CHAR_LEVEL } from "../src/progression/Progression.js";
 import { computeMods, SPEC_BONUSES } from "../src/progression/SpecBonuses.js";
-import { DT, mkWorld, step, capture, withRng, dice, memoryStorage } from "./helpers.mjs";
+import { DT, mkWorld, step, capture, withRng, dice, createMemoryStorage } from "./helpers.mjs";
 
-const store = memoryStorage();
-Object.defineProperty(globalThis, "localStorage", { value: store, configurable: true, writable: true });
+const store = createMemoryStorage(); // the storage adapter Progression saves through (S1g); no global stub is needed
 
 let passed = 0;
 const test = (name, fn) => (store.clear(), fn(), passed++, console.log("ok  " + name));
@@ -696,7 +695,7 @@ test("XP curve: XP needed per level", () => {
 });
 
 test("Levels: thresholds, partial progress, caps", () => {
-  const p = new Progression(Mage);
+  const p = new Progression(Mage, store);
   const at = (xp) => { p.charXp = xp; p.recalc(); const c = p.char; return [c.level, c.into, c.need]; };
   assert.deepEqual(at(0), [1, 0, 100]);
   assert.deepEqual(at(99), [1, 99, 100]);
@@ -717,7 +716,7 @@ test("Levels: thresholds, partial progress, caps", () => {
 });
 
 test("Progression events: xp, then one levelup per level gained, unlocks reported", () => {
-  const p = new Progression(Mage), ev = [];
+  const p = new Progression(Mage, store), ev = [];
   p.onEvent = (e) => ev.push(e);
   p.addCharXp(383);
   assert.deepEqual(ev, [
@@ -737,7 +736,7 @@ test("Progression events: xp, then one levelup per level gained, unlocks reporte
 });
 
 test("Specialization: skill unlocks, choice levels, picks, folded modifiers", () => {
-  const p = new Progression(Mage);
+  const p = new Progression(Mage, store);
   assert.deepEqual(p.unlockedSkills(), ["fireball", "manaRegen"]); // manaRegen: no unlock level
   assert.deepEqual(p.choiceLevels(), [2, 3, 4, 6, 7, 9]); // level 8 became the Fire Blast unlock in V1.11.0.00
   assert.deepEqual(p.pendingLevels(), []);
@@ -767,26 +766,43 @@ test("Specialization bonuses: each one folds into the modifier object", () => {
 });
 
 test("Progression saves and loads (versioned), bad data is ignored", () => {
-  const KEY = "lycarius.primordia.progress";
-  const p = new Progression(Mage);
+  const p = new Progression(Mage, store);
   p.addCharXp(500); p.addSpecXp(300); p.pick("skill");
-  const saved = JSON.parse(store.getItem(KEY));
+  const saved = store.load();
   assert.deepEqual(saved, { v: 1, classes: { mage: { charXp: 500, specXp: 300, picks: { 2: "skill" } } } });
-  const q = new Progression(Mage);
+  const q = new Progression(Mage, store);
   assert.deepEqual([q.charXp, q.specXp, q.picks], [500, 300, { 2: "skill" }]);
-  store.setItem(KEY, JSON.stringify({ v: 1, classes: { mage: { charXp: -9, specXp: "x", picks: { 5: "mana", 3: "ghost", 4: "cooldown" } } } }));
-  const r = new Progression(Mage);
+  store.save({ v: 1, classes: { mage: { charXp: -9, specXp: "x", picks: { 5: "mana", 3: "ghost", 4: "cooldown" } } } });
+  const r = new Progression(Mage, store);
   assert.deepEqual([r.charXp, r.specXp, r.picks], [0, 0, { 4: "cooldown" }], "negative and non-numeric XP clamp to 0; unlock levels and unknown ids are dropped");
-  store.setItem(KEY, JSON.stringify({ v: 2, classes: { mage: { charXp: 50 } } }));
-  assert.equal(new Progression(Mage).charXp, 0, "another save version is ignored");
-  store.setItem(KEY, "{not json");
-  assert.equal(new Progression(Mage).charXp, 0);
+  store.save({ v: 2, classes: { mage: { charXp: 50 } } });
+  assert.equal(new Progression(Mage, store).charXp, 0, "another save version is ignored");
+  for (const junk of [null, "junk", 7, [], { v: 1 }, { v: 1, classes: null }, { v: 1, classes: { mage: null } }]) {
+    store.save(junk);
+    assert.equal(new Progression(Mage, store).charXp, 0, "unusable save " + JSON.stringify(junk) + " starts fresh");
+  }
+  store.clear();
+  assert.equal(new Progression(Mage, store).charXp, 0, "an empty store starts fresh");
+  const other = createMemoryStorage();
+  new Progression(Mage, other).addCharXp(40);
+  assert.equal(new Progression(Mage, store).charXp, 0, "two stores do not share a save");
+  assert.equal(new Progression(Mage).charXp, 0, "no storage given: a private in-memory one, nothing leaks between instances");
+  const keep = new Progression(Mage, store);
+  keep.addCharXp(5); keep.addSpecXp(5);
+  const lone = new Progression({ ...Mage, id: "other" }, store);
+  lone.addCharXp(9);
+  assert.deepEqual(Object.keys(store.load().classes).sort(), ["mage", "other"], "a second class adds to the same save");
+  assert.equal(new Progression(Mage, store).charXp, 5, "and leaves the first class alone");
+  const hostile = { load() { throw new Error("down"); }, save() { throw new Error("down"); } };
+  const h = new Progression(Mage, hostile);
+  h.addCharXp(10);
+  assert.equal(h.charXp, 10, "a failing store never breaks play");
   q.reset();
   assert.deepEqual([q.charXp, q.specXp, q.picks, q.charLevel], [0, 0, {}, 1]);
 });
 
 function xpRig() {
-  const w = mkWorld(), p = { prog: new Progression(Mage) };
+  const w = mkWorld(), p = { prog: new Progression(Mage, store) };
   w.player = p;
   new XpSystem(w);
   return { w, p, prog: p.prog };

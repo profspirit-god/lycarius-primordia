@@ -7,6 +7,7 @@ import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { UNIVERSAL } from "../classes/Universal.js";
 import { Progression } from "../progression/Progression.js";
+import { createMemoryStorage } from "../sim/storage.js";
 import { Player } from "../entities/Player.js";
 import { GameAudio } from "../audio/AudioEngine.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
@@ -106,7 +107,7 @@ export function buildTasks(cfg, params = {}) {
         // Dry run of what WorldScene.enter builds from data (no DOM, nothing is kept): progression save, player, skill slots.
         await nextFrame();
         const cls = ClassRegistry.get(classId);
-        const prog = new Progression(cls);
+        const prog = new Progression(cls, createMemoryStorage()); // in memory: the dry run never reads or writes the real save
         const p = new Player(cls, prog);
         if (!(p.caster.slots.length > 0)) throw new Error("The player has no skills");
         if (!(p.vitals.maxHp > 0)) throw new Error("The player has no health");

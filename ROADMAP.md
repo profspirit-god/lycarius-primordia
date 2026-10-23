@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.12.0.05**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.12.0.06**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -9,7 +9,6 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
 | **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Default.** Critical path: the next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Group 1, `FireballProjectile`, is done (V1.12.0.05). Next group: `Fireball` (the skill: charge orb, recoil, release effects) |
-| S1g Storage adapter (`SERVER_PATH.md` S1g) | S1a (done in V1.10.0.05) | G4 | Small and independent: `Progression` gets a `storage` object, then `tests/mage.test.mjs` loses its `localStorage` stub |
 | L2 Items and inventory data model | none | G1, G5 | No server dependency; unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | May ship before S1 closes; owner approves the stage |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
@@ -44,6 +43,7 @@ Default when the user says "you decide": **S1f** (next group: `Fireball`). Never
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.12.0.06 | Cleanup (no gameplay change): **S1g storage adapter**, `Progression` takes a `storage` object (`load()` / `save(data)`); client `core/LocalStorageAdapter.js`, in-memory `sim/storage.js` for tests and the loading dry run; `tests/storage.test.mjs`; audit `dom` debt 3 to 0 |
 | V1.12.0.05 | Cleanup (no gameplay change): **S1f-a projectile presentation out of the sim**, `FireballProjectile` is sim only, its trail, particles, light and drawing moved to `view/FireballView.js` behind `EntityViews` (views by `entity.kind`), new event `projectile:fizzle`, `tests/projectile-view.test.mjs` (9 tests); audit `present` 226 to 204, `random` 138 to 120 |
 | V1.12.0.04 | Cleanup (no gameplay change): **S1e input command layer**, `InputCommand { seq, mx, my, aim, btn }` validated in `sim/InputCommand.js`; client-only `input/PlayerController.js`; `Player` reads only `this.cmd`; `tests/input.test.mjs` (8 tests); audit `input` debt 6 to 0 |
 | V1.12.0.03 | Cleanup (no gameplay change): **S1d damage out of the view**, new `DamageSystem` applies every `hit` through `target.onHit`; `HitEffects` and `BurnFx` are visuals only and set `flash` and `glow`; `onHit` / `onDot` of Player, Graugr and TrainingDummy are sim only; `systems/pipeline.js` is the one ordered list of systems; `tests/damage.test.mjs` (9 tests); audit debt unchanged. M2 is now unblocked (S1b and S1d done) |

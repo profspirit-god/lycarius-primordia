@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.12.0.06 — S1g storage adapter: progression saves through an object, not through the browser (cleanup, no gameplay change)
+
+Seventh step of the server path (`SERVER_PATH.md` S1g, debt P7). `Progression` called `localStorage` itself, so it could not run on a server and every test had to fake a global. It now receives a `storage` object with two methods, and nothing in the sim names the browser's storage.
+
+### Added
+
+- **`sim/storage.js`**: the contract (`load()` returns the saved plain-data object or `null`, `save(data)` stores one, neither throws) and `createMemoryStorage(initial?)`, which keeps the object as JSON so callers can never mutate the stored copy.
+- **`core/LocalStorageAdapter.js`** (client only): `createLocalStorageAdapter(key, backing?)` and `PROGRESS_KEY`. Corrupt JSON, a non-object value, a blocked or full storage all load as `null` and never throw. The key is unchanged (`lycarius.primordia.progress`), so existing saves still load.
+- **`tests/storage.test.mjs`** (6 tests): both adapters, copy semantics, corrupt and throwing storage, lazy read of the global, and a check that `Progression.js` no longer mentions `localStorage`, `sessionStorage`, `document` or `window`.
+
+### Changed
+
+- **`Progression(cls, storage = createMemoryStorage())`** and `progressionFor(classId, storage)`; load and save go through the adapter, same save format (version 1). Without a storage a private in-memory one is used, so a forgotten argument cannot write to a real save.
+- **`WorldScene`** passes the localStorage adapter. **`loadTasks`** (the loading screen's world dry run) passes an in-memory one, so loading no longer reads the real save (P13).
+- **Tests**: `mage.test.mjs` uses a `createMemoryStorage()` store (the global `localStorage` stub is gone) and its save test also covers junk saves, two stores, two classes in one save and a throwing store; the `localStorage` stubs in `abilities`, `damage` and `input` tests are removed; `helpers.mjs` exports `createMemoryStorage` instead of `memoryStorage`.
+- `npm test` runs eleven files. `VERSION` 1.12.0.05 → 1.12.0.06. README, ROADMAP (S1g row removed, Done), `SERVER_PATH.md` (P7, P13, S1g, debt list), `Claude.md` (code map, rule 3), guideline G4 hook.
+
+### Notes
+
+- **Server-ready:** debt went down. Audit `progression/Progression.js` `dom` 3 → 0, total `dom` 3 → 0. Baseline rewritten. `core/Settings.js` still uses `localStorage` directly; it is client-only code, outside the audit.
+- Not tested: playing in a browser. Check: level up and pick a bonus, reload the page, the level and picks are still there; an old save from before this version still loads; Settings → reset progression still clears it; the loading screen still reaches the game.
+
 ## V1.12.0.05 — S1f-a projectile presentation out of the sim: the fireball is sim only, its look is a view (cleanup, no gameplay change)
 
 First group of S1f (`SERVER_PATH.md` S1f, debt P6): the Fireball projectile. Before, `FireballProjectile` spawned embers, smoke and a light, kept a trail history and drew itself, so a headless server could not run it. Now the class holds movement, the hit order (clash, deflect, shield, body), the damage roll and the range; everything you see lives in a view registered by the entity's `kind`.
