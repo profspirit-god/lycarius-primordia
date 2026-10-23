@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.12.0.05** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.12.0.06** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.12.0.05
+## 1. What is in V1.12.0.06
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -17,7 +17,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
-| Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` |
+| Progression    | Experience system with two separate tracks: character level and class specialization level. Class specialization tree (press `K`). Saved in `localStorage` through a storage adapter |
 | Projectile clash | Two enemy fireballs that meet explode and hurt anything near. A stronger charge destroys a weaker one                                |
 | Burn           | Fireball hits can set the target on fire: 8 damage per second for 5 to 10 seconds, with a sound and a flash on every tick              |
 | Vitals         | Health 50 (regen 0.1/s), mana 100 (regen 1/s), stamina 100 (regen 8/s, spent by Dodge), death and respawn                      |
@@ -121,7 +121,7 @@ Flow: **Title menu** (Play, Creator Support, Exit) → **Home** → **Mode Selec
 
 ### Experience and levels
 
-Two separate tracks (`src/progression/Progression.js`). Both are saved per class in `localStorage` (versioned save format).
+Two separate tracks (`src/progression/Progression.js`). Both are saved per class (versioned save format) through a storage adapter: the game passes `core/LocalStorageAdapter.js` (browser `localStorage`, key `lycarius.primordia.progress`, so existing saves still load); tests and the loading dry run pass `sim/storage.js` (in memory).
 
 | Track                        | How you earn it                                                                                              | Curve (XP from level L to L+1) | Cap |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------ | --- |
@@ -543,7 +543,7 @@ git checkout dev && git pull
 
 ---
 
-## 6. Known limitations (V1.12.0.05)
+## 6. Known limitations (V1.12.0.06)
 
 - Characters are plain cylinders; the sprite/animation layer is planned.
 - Sounds are synthesized placeholders, not recorded assets. There is no music yet.

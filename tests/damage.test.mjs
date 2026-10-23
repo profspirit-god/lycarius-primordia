@@ -17,7 +17,6 @@ import { DamageSystem } from "../src/systems/DamageSystem.js";
 import { SIM_SYSTEMS, VIEW_SYSTEMS, createSystems, disposeSystems } from "../src/systems/pipeline.js";
 import { DT, step, capture } from "./helpers.mjs";
 
-globalThis.localStorage ??= { getItem: () => null, setItem() {}, removeItem() {} };
 const mage = ClassRegistry.get("mage");
 let passed = 0;
 const test = (name, fn) => (fn(), passed++, console.log("ok  " + name));

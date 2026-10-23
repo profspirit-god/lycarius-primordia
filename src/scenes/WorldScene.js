@@ -3,6 +3,7 @@ import { EventBus } from "../core/EventBus.js";
 import { Rng } from "../sim/rng.js";
 import { PlayerController } from "../input/PlayerController.js";
 import { Settings } from "../core/Settings.js";
+import { createLocalStorageAdapter, PROGRESS_KEY } from "../core/LocalStorageAdapter.js";
 import { SettingsPanel } from "../ui/SettingsPanel.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { Player } from "../entities/Player.js";
@@ -62,7 +63,7 @@ export class WorldScene extends Scene {
     createSystems(this, VIEW_SYSTEMS); // then the view systems; they read events and never change sim state
     const cls = ClassRegistry.get(this.classId);
     this.cls = cls;
-    this.progression = new Progression(cls);
+    this.progression = new Progression(cls, createLocalStorageAdapter(PROGRESS_KEY)); // the client owns the browser storage; the sim only sees the adapter
     this.player = this.spawn(new Player(cls, this.progression));
     this.controller = new PlayerController(this);
     this.progression.onEvent = (e) => this.onProgress(e);

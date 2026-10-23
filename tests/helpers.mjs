@@ -67,14 +67,5 @@ export function withRng(w, seq, fn) {
   }
 }
 
-/** In-memory stand-in for localStorage (Progression saves through it). */
-export function memoryStorage() {
-  const data = new Map();
-  return {
-    getItem: (k) => (data.has(k) ? data.get(k) : null),
-    setItem: (k, v) => void data.set(k, String(v)),
-    removeItem: (k) => void data.delete(k),
-    clear: () => data.clear(),
-    data,
-  };
-}
+/** In-memory storage adapter for Progression (S1g): `load()` / `save(data)` / `clear()`. */
+export { createMemoryStorage } from "../src/sim/storage.js";
