@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.14.0.00 — L2 phase C: ownership state and a separate versioned save (feature, model only, nothing user-visible)
+
+Second code of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). It adds the one place that records who owns how many of which item, and its save. No screen creates or shows it yet (that is phase D), so the game plays exactly as before.
+
+### Added
+
+- **`sim/items/Inventory.js`**: `Inventory(storage)` / `createInventory`, `grant(itemId, qty, ownerId?)` and `remove(...)` (return `{ok, qty}` or `{ok: false, reason}`; a failure changes and saves nothing), `count`, `owns`, `list` (by id), `freeSlots`, `toSave`, and `readSave(raw)` which validates a save without throwing. The definition's `scope` picks the collection: account items are capped at `maxStack` (a cosmetic is owned once), character items live in slots (`ceil(qty / maxStack)` each, `CHARACTER_SLOTS` = 30, a default to confirm at phase E).
+- **Save, version 1** on its own key, `INVENTORY_KEY` = `lycarius.primordia.inventory` (added to `core/LocalStorageAdapter.js`): `{ v, account: {items}, characters: {ownerId: {items}} }`. Schema and decisions: proposal section 13.4.
+- **`tests/inventory.test.mjs`** (19 tests): grants and removals, duplicate and over-capacity grants, bad quantities and owners, unknown and prototype ids, scope separation, round trip, corrupt and junk saves, a newer-version save kept intact, storage failure, a localStorage round trip that proves the progression save is byte-identical, and no browser, clock or random call.
+
+### Changed
+
+- `npm test` runs thirteen files. `VERSION` 1.13.0.00 → 1.14.0.00. README, ROADMAP (L2 rows, Done), `Claude.md` (test list, code map), engines doc and the proposal (phase status, section 13.4).
+
+### Notes
+
+- **Server-ready:** the new file has zero audit hits; it takes its storage as an adapter and imports nothing from the client.
+- **Safety rules:** an entry that is not fully valid is dropped on load, never repaired into an item. A save from a newer game version is never overwritten (every change is refused). A corrupt save starts empty and the next change replaces it.
+- **Not touched:** `HomeScene`, `Wallet`, the Shop, `Progression`, `PROGRESS_KEY`, `Player`, combat, RNG, loot. localStorage can be edited by the player, so this save is local prototype storage, not an authority for an online economy.
+- Not tested: playing in a browser (nothing user-visible changed). Check: the game starts and loads as before, the Home Inventory button still shows the placeholder, Progression levels still persist across a reload.
+- Next: phase D (Home Account Inventory screen). Currency scope must be settled before L4.
+
 ## V1.13.0.00 — L2 phase B: item definitions and the ItemRegistry (feature, data only, nothing user-visible)
 
 First code of the inventory work (`docs/proposals/Inventory-and-ownership.md`, roadmap L2). It adds the static description of an item type and nothing else: no ownership, no save, no screen, no combat change. The Home Inventory button still shows its placeholder.

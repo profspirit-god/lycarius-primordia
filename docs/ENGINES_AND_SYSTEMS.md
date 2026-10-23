@@ -52,7 +52,7 @@ Goal: from a single-player sandbox to client and server, plus the world and data
 | Room manager | One `Simulation` per room, heartbeats, idle cleanup | Planned S3, S6 | D8 |
 | Prediction and reconciliation | Local input applied at once, server snapshots correct it | Planned S4 | `SERVER_PATH.md` S4 |
 | Entity interpolation | Remote entities rendered slightly in the past | Planned S4 | with S1j render interpolation |
-| Item and inventory engine | Item definitions, slots, equipment stats, wallet | L2 data built in V1.13.0.00 (definitions, `ItemRegistry`); ownership and saves planned (inventory proposal phases C to E); M4 (instances) | `sim/items/`; `lobby/Wallet.js` is a placeholder |
+| Item and inventory engine | Item definitions, slots, equipment stats, wallet | L2 built: definitions and `ItemRegistry` (V1.13.0.00), ownership state `Inventory` with its own versioned local save (V1.14.0.00); UI, equipment and rewards planned (inventory proposal phases D to I); M4 (instances) | `sim/items/`; `lobby/Wallet.js` is a placeholder |
 | Accounts and database | SQLite, scrypt hashing, sessions, migrations | Planned S5 | D6, D7, `better-sqlite3` approved for S5 only |
 | Tilemap and collision grid | Maps and collision as data | Planned T1, T2 | `docs/ART_AND_MAPS.md` |
 | Spatial partitioning | Grid for proximity, collision and interest management | Planned W2 | `docs/proposals/World-Division-and-Lag-Management.md`, `src/sim/spatial/` |
