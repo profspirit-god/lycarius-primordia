@@ -12,7 +12,6 @@ import { Progression } from "../src/progression/Progression.js";
 import { sanitizeCommand, idleCommand, BTN_MASK } from "../src/sim/InputCommand.js";
 import { PlayerController } from "../src/input/PlayerController.js";
 
-globalThis.localStorage ??= { getItem: () => null, setItem() {}, removeItem() {} };
 const DT = 1 / 60;
 const mage = ClassRegistry.get("mage");
 let passed = 0;

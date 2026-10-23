@@ -1,7 +1,7 @@
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { SpecBonusRegistry, computeMods } from "./SpecBonuses.js";
+import { createMemoryStorage } from "../sim/storage.js";
 
-const KEY = "lycarius.primordia.progress";
 const SAVE_VERSION = 1;
 export const MAX_CHAR_LEVEL = 50;
 
@@ -25,13 +25,18 @@ function levelInfo(total, need, max) {
  * Character level and class specialization level are two separate tracks.
  *  - Character XP -> character level (no gameplay effect yet; hook for stats later).
  *  - Specialization XP -> specialization level: unlocks skills and grants one bonus pick per non-unlock level.
- * Persisted per class in localStorage (versioned). `onEvent` receives
+ * Persisted per class through a storage adapter (`load()` / `save(data)`, see sim/storage.js), versioned. `onEvent` receives
  * { type: 'xp'|'levelup'|'pick', ... }.
  */
 export class Progression {
-  /** @param {import('../types.js').ClassDef} cls */
-  constructor(cls) {
+  /**
+   * @param {import('../types.js').ClassDef} cls
+   * @param {import('../sim/storage.js').StorageAdapter} [storage] where the save lives; the client passes a localStorage adapter,
+   *   tests and dry runs pass (or default to) an in-memory one, so nothing is saved by accident
+   */
+  constructor(cls, storage = createMemoryStorage()) {
     this.cls = cls;
+    this.storage = storage;
     this.spec = cls.specialization;
     this.charXp = 0;
     this.specXp = 0;
@@ -119,8 +124,8 @@ export class Progression {
   // --- persistence -------------------------------------------------------
   load() {
     try {
-      const all = JSON.parse(localStorage.getItem(KEY) || "{}");
-      const d = all.v === SAVE_VERSION ? all.classes?.[this.cls.id] : null;
+      const all = this.storage.load();
+      const d = all?.v === SAVE_VERSION ? all.classes?.[this.cls.id] : null;
       if (!d) return;
       this.charXp = Math.max(0, Number(d.charXp) || 0);
       this.specXp = Math.max(0, Number(d.specXp) || 0);
@@ -133,14 +138,14 @@ export class Progression {
   }
   save() {
     try {
-      const all = JSON.parse(localStorage.getItem(KEY) || "{}");
-      const classes = all.v === SAVE_VERSION ? all.classes ?? {} : {};
+      const all = this.storage.load();
+      const classes = all?.v === SAVE_VERSION ? all.classes ?? {} : {};
       classes[this.cls.id] = { charXp: this.charXp, specXp: this.specXp, picks: this.picks };
-      localStorage.setItem(KEY, JSON.stringify({ v: SAVE_VERSION, classes }));
+      this.storage.save({ v: SAVE_VERSION, classes });
     } catch {
       /* storage unavailable */
     }
   }
 }
 
-export const progressionFor = (classId) => new Progression(ClassRegistry.get(classId));
+export const progressionFor = (classId, storage) => new Progression(ClassRegistry.get(classId), storage);
