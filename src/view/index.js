@@ -4,7 +4,16 @@
  * Entities whose kind has no view still draw themselves with `entity.draw` until their S1f group moves out.
  */
 import { FireballView } from "./FireballView.js";
+import { FireballCastView } from "./FireballCastView.js";
 
 export const VIEWS = {
   fireball: FireballView,
+};
+
+/**
+ * Skill views, registered under the SKILL id (`skill.id`). A class takes `(world)` and has `charging(e)` (optional, `skill:charging`),
+ * `cast(e)` (optional, `cast`) and `dispose()`; `SkillViews` dispatches the events to it.
+ */
+export const SKILL_VIEWS = {
+  fireball: FireballCastView,
 };

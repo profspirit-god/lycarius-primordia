@@ -127,6 +127,19 @@
  * @property {CasterOwner} owner
  * @property {number} charge
  * @property {SkillDef} skill
+ * @property {number} [aim]                           Fireball only for now: aim angle at the release (radians).
+ * @property {{x:number,y:number,z:number}} [origin]  Fireball only for now: where the cast came from.
+ */
+
+/**
+ * Emitted on world.events as 'skill:charging' by SkillCaster on every step a hold-to-charge skill is held (S1f). Plain data only.
+ * SkillViews feeds it to the skill's view (view/FireballCastView.js draws the charge look).
+ * @typedef {Object} SkillChargingEvent
+ * @property {CasterOwner} owner
+ * @property {string} skill                           The skill id.
+ * @property {number} charge                          0..1.
+ * @property {number} aim
+ * @property {{x:number,y:number,z:number}} origin
  */
 
 /**

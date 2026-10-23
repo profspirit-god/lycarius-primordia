@@ -16,6 +16,7 @@ import { DodgeFx } from "./DodgeFx.js";
 import { ExplosionFx } from "./ExplosionFx.js";
 import { BlastFx } from "./BlastFx.js";
 import { EntityViews } from "../view/EntityViews.js";
+import { SkillViews } from "../view/SkillViews.js";
 
 export const SIM_SYSTEMS = [
   ["damage", DamageSystem], // hit -> target.onHit (health, knock). Before status and xp.
@@ -32,6 +33,7 @@ export const VIEW_SYSTEMS = [
   ["explosionFx", ExplosionFx],
   ["blastFx", BlastFx],
   ["entityViews", EntityViews], // S1f: views by entity kind (fireball so far); update() after the entities, draw() in render
+  ["skillViews", SkillViews], // S1f: views by skill id (fireball so far); fed by `skill:charging` and `cast`
 ];
 
 /** Create the systems of `list` in order and store each as `world[name]`. */

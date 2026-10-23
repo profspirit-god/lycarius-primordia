@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.16.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.16.0.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -8,13 +8,13 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Default.** Critical path: the next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Group 1, `FireballProjectile`, is done (V1.12.0.05). Next group: `Fireball` (the skill: charge orb, recoil, release effects) |
+| **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Default.** Critical path: the next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
 | L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phases B (definitions), C (ownership state, separate versioned save) and D (read-only Home Account Inventory, client `Inventory` created in `main.js`) done in V1.13.0.00 to V1.15.0.00. Next: L4 (Shop buy flow, needs the currency-scope decision first) or L3 (customization, makes Equip real). Unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | **Done in V1.16.0.00** (`Bag`, `validateBagDef`, `tests/bag.test.mjs`). Next in track M is M2 (Fireball crit from a per-caster bag): its Needs are green, but it waits for two owner decisions, the crit rate (12% via a 22 + 3 pool, or a new 33%) and the bag scope (per attacker or per skill) |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **S1f** (next group: `Fireball`). Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **S1f** (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -43,6 +43,7 @@ Default when the user says "you decide": **S1f** (next group: `Fireball`). Never
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.16.0.01 | Cleanup (no gameplay change): **S1f-b Fireball skill presentation out of the sim**, `Fireball` is sim only, its charge and release look moved to `view/FireballCastView.js` behind `SkillViews` (views by skill id), new event `skill:charging`, `cast` carries `aim` and `origin`, `tests/skill-view.test.mjs` (8 tests); audit `present` 204 to 198, `random` 120 to 93 |
 | V1.16.0.00 | Feature (new files only, nothing user-visible): **M1 bag primitive**, `src/sim/bag/` (`Bag`: tokens dealt as a shuffled cycle and drawn without replacement, `refill_shuffle` / `no_refill`, versioned `serialize` / `restore`; `validateBagDef`), `tests/bag.test.mjs` (24 tests); not wired into any skill, audit unchanged (zero hits in the new files) |
 | V1.15.0.00 | Feature: **L2 phase D**, read-only Home Account Inventory (`ui/InventoryView.js`, `HomeScene.openInventory`): cards by category, data-driven tabs, item detail, empty / unavailable / newer-version / repaired states, Equip shown disabled; client `Inventory` created in `main.js` (`game.inventory`, console `lycarius.inventory`); `tests/inventory-view.test.mjs` (11 tests) |
 | V1.14.0.00 | Feature (model and save only, nothing user-visible): **L2 phase C**, `Inventory` service in `src/sim/items/Inventory.js` (grant, remove, count, list; account stacks capped by `maxStack`, character collections slot based; every failure changes nothing), versioned save on its own key `lycarius.primordia.inventory` (`INVENTORY_KEY`), a newer-version save is never overwritten, `tests/inventory.test.mjs` (19 tests) |
