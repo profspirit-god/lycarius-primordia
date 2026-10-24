@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.19.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.20.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -9,6 +9,7 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
 | **H2 Wire hunger into the player** (`FOUNDER.md` section 6, track H below) | H1 (done in V1.17.0.00), S1d (done) | G1, G5 | **Default** (owner resolution R2). H1 is built and tested, not wired in. H2 applies the tier multipliers to the player, shows the status through `StatusSystem`, adds the HUD bar and the save. Keystone of the cook, eat, fight milestone |
+| **J2 to J6 Jobs path** (track J below) | J1 (done in V1.20.0.00) | G5 | The Lumberjack job exists; the next steps give Velwood a use (J2) and make job levels matter (J3). Parallel to track H, touches different files |
 | **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Background track** (R1): take one group now and then between gameplay steps. The next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
 | L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phases B (definitions), C (ownership state, separate versioned save) and D (read-only Home Account Inventory, client `Inventory` created in `main.js`) done in V1.13.0.00 to V1.15.0.00. Phase E MVP (V1.18.0.00): in-game Character Inventory (key I) with gold as the first item, debug grant only. Next: E2 (more items, equipped references, a real gold source after tracing the loot path), L4 (Shop buy flow, needs the currency-scope decision first) or L3 (customization, makes Equip real). Unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | **Done in V1.16.0.00** (`Bag`, `validateBagDef`, `tests/bag.test.mjs`). Next in track M is M2 (Fireball crit from a per-caster bag): its Needs are green, but it waits for two owner decisions, the crit rate (12% via a 22 + 3 pool, or a new 33%) and the bag scope (per attacker or per skill) |
@@ -44,6 +45,7 @@ Default when the user says "you decide": **H2** (then H3 and the rest of track H
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.20.0.00 | Feature: **J1 Lumberjack job**: `Velthorn` tree (5 swings, 10 to 15 Velwood, fire ruins it and drops nothing, solid, stops fireballs, cuts off Graugr attacks via `sim/jobs/cover.js`), Basic Axe and Velwood items (`sim/items/lumber.js`), `Chop` universal action on `C`, job XP (`progression/JobProgress.js`, own save key, shown in the character panel), `JobSystem` and `JobFx`, 12 trees in the Training Ground, `tests/lumber.test.mjs` |
 | V1.19.0.00 | Feature: **item weight and carrying capacity**: integer-milligram `weightMg` on definitions (`sim/items/weight.js`), `Inventory.weightMg`, the fourteen display-only units Veyt to Kharvorn (`ui/weightUnits.js`), gold 31.10 g, capacity 30 Theryn (30 kg) shown but not enforced; `tests/weight.test.mjs` |
 | V1.18.0.00 | Feature: **L2 phase E (MVP)**, Character Inventory panel (key I, `ui/CharacterInventoryView.js`, `ui/CharacterInventoryPanel.js`) and the first item, **gold** (`sim/items/gameplay.js`, category `currency`, character-owned, 30 slots, no source in the world yet, debug grant and spend only); separate from the account Wallet and the Home Account Inventory; `tests/character-inventory.test.mjs` |
 | V1.17.0.00 | Feature (new files only, nothing user-visible): **H1 hunger primitive**, `src/sim/hunger/` (`Hunger`: 0 to 100 stat, drain 1 per 90 s by `dt`, `eat`, tier lookup, tier-change reports, versioned `serialize` / `restore`; `validateHungerDef` with the hunger-law guardrails; `PRIMORDIA_HUNGER` data with five tiers and start 85), `tests/hunger.test.mjs` (24 tests); not wired into the game, audit unchanged (zero hits in the new files) |
@@ -76,6 +78,19 @@ Source: `FOUNDER.md` (sections 4 to 9) and `BUILD.md`, reconciled in `FOUNDER.md
 | B2 | Stage 1: Stove, Roof, station tiers, shelter check, anti-clutter cap, random buff from a seeded bag (`BUILD.md` sections 5 and 6) | B1, M1 |
 
 Not in this track (deferred): carried-goods loss on death, crafting beyond food, the injury system, Stage 2 and 3 building.
+
+## Jobs path (track J)
+
+A job is a career levelled by doing its work (`src/sim/jobs/`, `JobProgress`). It is separate from the class and from combat XP. Job XP is shown in the character panel, never next to the battle bars. Each row is its own version; start one only when its `Needs` are green.
+
+| Step | Work | Needs |
+| ---- | ---- | ----- |
+| **J1** | **Done in V1.20.0.00.** Lumberjack: Velthorn tree, Velwood, Basic Axe, `Chop` on `C`, job XP and save, fire ruins a tree, trees shield and collide, 12 trees in the Training Ground | L2 B to D |
+| J2 | A use for Velwood: sell, craft or build with it (campfire fuel and the B1 campfire are the natural first user, `BUILD.md`) | J1, B1 or L4 |
+| J3 | Job levels matter: a faster swing, a bigger drop or a rarer tree per level (owner decision first) | J1 |
+| J4 | Real equip slot for tools (the Equip action) and a second tool tier | L3, J1 |
+| J5 | A second job (mining or herbalism) on the same `JobProgress`, `TOOLS` and `JobSystem` | J1 |
+| J6 | Chop sound and swing animation; a Fire Blast that is stopped by trees like the fireball is | A1 or none |
 
 ## Server path (road to online)
 

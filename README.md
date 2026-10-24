@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.19.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.20.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.19.0.00
+## 1. What is in V1.20.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,6 +18,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Character Inventory | Press `I` in the Training Grounds (the game pauses): the items your character carries, in 30 slots, with your **gold** at the top. Gold is the first item. It is separate from the Home Account Inventory and from the Home wallet. Nothing in the world gives gold yet; with Settings, Developer, Show debug on, the panel has +100, +1,000, -100 and -1,000 gold buttons for testing. Saved in the inventory save, so gold is still there after a reload. **Weight:** each gold weighs 31.10 g and the panel shows what you carry against a capacity of 30 Theryn (30 kg), in the game's own units (Veyt, Kirel, Draum, Velkar, Theryn, Korvath, Maelor, Dravon, Aethron, Graveth, Taurak, Orynth, Vaelthar, Kharvorn). Going over capacity turns the bar red; nothing slows or stops you yet |
 | Bags           | The Marble Bag primitive (`src/sim/bag/`, stage M1 of `docs/proposals/Marble-bag-engine.md`): a pool of outcome tokens, for example 4 NORMAL and 2 CRIT, dealt as one shuffled cycle and drawn without replacement, so every complete cycle holds exactly the configured counts. Refill policy `refill_shuffle` or `no_refill`, versioned `serialize` / `restore`, a validator. **Not used by any skill yet**: Fireball crits still roll the old way until stage M2, so nothing about play changed |
 | Hunger         | The hunger primitive (`src/sim/hunger/`, stage H1 of `ROADMAP.md`, design in `FOUNDER.md` section 6): a 0 to 100 stat that falls 1 per 90 s of sim time and is raised by eating, five tiers (Stuffed, Full, Not hungry, Hungry, Starving) as data, versioned save. Never damages. **Not wired into the game yet** (nothing is visible until H2) |
+| Lumberjack job | The first job (`C` to chop): 12 Velthorn trees stand in the Training Ground. A Basic Axe (you get one for free) fells a tree in 5 swings for 10 to 15 Velwood and job XP; fire ruins a tree. Job XP is shown in the character panel. See "Lumberjack job" below |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
@@ -271,6 +272,21 @@ Every class has it, no unlock level. **Press `Shift`**.
 | Visual      | Yellow line trail: a streak through the body plus fading yellow body outlines, and a few sparks |
 | Skill icon  | Yellow human silhouette leaning back with speed lines                                   |
 
+### Lumberjack job (V1.20.0.00)
+
+A job is a career you level by doing its work, separate from your class. The first one is **Lumberjack**. Walk up to a **Velthorn** tree in the Training Ground, face it with the mouse and **press `C`**.
+
+| Rule | Value |
+| ---- | ----- |
+| Tool | **Basic Axe**: a new character receives one once; it is in your Character Inventory (`I`). Owning it is what lets you chop |
+| Swing | 8 stamina, 0.7 s cooldown, reaches 44 px from your body to the trunk, in front of you. A swing at nothing still costs stamina |
+| Tree | 5 landed swings fell it. It drops **10 to 15 Velwood** into your inventory, then it is a stump and grows back after 60 s. A chop bar above the tree shows what is left |
+| Job XP | 3 per landed swing, +15 for the swing that fells it (30 per tree). Level cap 20. Shown in the character panel (profile circle, Info tab), saved in the browser |
+| Fire | A Fireball, Fire Blast or explosion that hits a Velthorn sets it on fire at once. A burning tree cannot be chopped and **drops nothing**; it burns for 6 s, stays as a charred stump for 20 s, then grows back |
+| Cover | A Velthorn is solid and stops Fireballs. Graugr's arms and poke are cut off by a tree standing between it and you, and its Leap stops in front of a tree |
+| Full bag | The Velwood that fits goes in; the rest is lost and a red message says how many |
+| Not allowed | While stunned, downed or dodging |
+
 ### Burn Resistance
 
 Self-only buff with a cast time. **Hold `Q`** until the circle completes; releasing early cancels for free (no mana, no cooldown). Holding on after it completes does not recast.
@@ -367,6 +383,7 @@ Alternative (needs Node.js): `npx serve .` then open the printed address.
 | Hold `R`                     | Cast Fire Blast (level 8; hold until the circle completes) |
 | `F`                          | Mana Regen (Mage passive, free)  |
 | `Shift`                      | Dodge backwards (20 stamina)     |
+| `C`                          | Chop a tree in front of you (needs an axe, 8 stamina) |
 | `K`                          | Skill tree (class specialization) |
 | Click the profile circle     | Character panel (info, skills, attributes, equipment) |
 | `Esc`                        | Pause menu (or close the skill tree / character panel) |
@@ -552,6 +569,7 @@ git checkout dev && git pull
 
 ## 6. Known limitations (V1.16.0.00)
 
+- Lumberjack (V1.20.0.00): there is no equip slot yet, so owning the Basic Axe is enough; Velwood has no use yet (no crafting, shop or building); job levels have no gameplay effect yet; chopping has no sound of its own; the Home Inventory does not list character items. Trees do not block the Fire Blast area itself, only fireballs and Graugr's attacks.
 - The Home Inventory shows what you own but is always empty for now: Shop purchases are placeholders and nothing grants items yet. Equip is shown disabled until character customization (L3). To try the screen, run `lycarius.inventory.grant("ember_robe")` in the browser console (any id from the Shop list, e.g. `molten_veil`, `spark_trail`); it is saved in your browser only.
 - The bag primitive exists but nothing uses it: Fireball crit is still a flat 12% roll. Moving it to a per-caster bag is stage M2 and needs two owner decisions (crit rate, bag scope).
 - Characters are plain cylinders; the sprite/animation layer is planned.
