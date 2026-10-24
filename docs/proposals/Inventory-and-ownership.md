@@ -475,7 +475,8 @@ Then wait for owner approval if the scope, schema, ownership, persistence, or pr
 | B Item definitions and `ItemRegistry` (L2) | **Built in V1.13.0.00**: `src/sim/items/ItemRegistry.js`, `cosmetics.js`, `tests/items.test.mjs`; nine cosmetics registered; nothing user-visible changed |
 | C Ownership state and local persistence | **Built in V1.14.0.00**: `src/sim/items/Inventory.js`, `INVENTORY_KEY` in `core/LocalStorageAdapter.js`, `tests/inventory.test.mjs`; schema in 13.4; not wired into any scene |
 | D Home Account Inventory UI | **Built in V1.15.0.00**: `src/ui/InventoryView.js`, `HomeScene.openInventory`, client `Inventory` in `main.js`, `tests/inventory-view.test.mjs`; read only (list, category tabs for owned categories, detail, empty / unavailable / newer-version / repaired states; Equip disabled until L3); no Claim, Shop or Genesis change |
-| E to I | Not started |
+| E Character Inventory UI and gameplay grants | **MVP built in V1.18.0.00** (13.5): gold as the first character item, in-game panel on key I, debug grant only; no real source, no equipment, no categories tabs |
+| F to I | Not started |
 
 ### 13.4 Save schema, version 1 (Phase C, V1.14.0.00)
 
@@ -494,3 +495,18 @@ Built on the owner's request to work on Phase C; the schema below is the proposa
 | Not decided | Starting contents (none), currency scope (L4), claims (Phase H), equipped references (Phase E), grant-many in one step for the Shop (Phase F) |
 
 localStorage is local prototype storage: the player can edit it, so it is not authoritative for an online economy (section 9).
+
+### 13.5 Character Inventory MVP and gold (Phase E, V1.18.0.00)
+
+Built on the owner's request: an MVP character inventory whose first item is gold, separate from the account inventory.
+
+| Item | Rule |
+| ---- | ---- |
+| Currency decision | Section 8.3 kept currency out of item stacks unless physical currency is a mechanic. The owner chose it: **carried gold is an item** (`gold`, `scope: "character"`, `category: "currency"`). The account Wallet (Home and Shop) stays a separate placeholder and nothing connects them; question 6 still stands for the Wallet's own scope (L4) |
+| Item | `src/sim/items/gameplay.js`: `maxStack` 9999, `actions: []`, common. Registered in `content/index.js`. One new category, `currency`, ordered before `equipment` |
+| Capacity | No special case: gold takes slots like any item (one per 9,999; 30 slots hold at most 299,970). **Default, confirm**: a full inventory refuses gold with `inventory_full`. Alternatives: gold needs no slot, or a higher gold stack limit |
+| Surface | `I` in the world opens `CharacterInventoryPanel` (pauses, Esc or I closes). It shows the gold total, 30 slots and the slot count. Read only; no detail view, tabs, sort or filters yet (one category has content) |
+| Writes | Only the debug buttons (+100, +1,000, -100, -1,000), gated by Settings "Show debug", through `grant` and `remove` with the world's `classId` as owner |
+| Source | None. No loot path exists, so no kill, quest or pickup gives gold. Connecting one waits for the traced and approved loot pipeline (Phase E rule, and `FOUNDER.md` section 11 for the first carried items) |
+| Not built | Equipment and equipped references, sell, discard, trade, storage, stack split, drag and drop, a gold readout on the HUD, losing gold on death (a death-law question, `FOUNDER.md` section 5) |
+| Naming | The Wallet and carried gold are both labelled "Gold". Owner to decide whether one is renamed before the Shop sells anything |
