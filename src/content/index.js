@@ -14,6 +14,7 @@ import { defineItem } from '../sim/items/ItemRegistry.js';
 import { COSMETIC_ITEMS } from '../sim/items/cosmetics.js';
 import { GAMEPLAY_ITEMS } from '../sim/items/gameplay.js';
 import { LUMBER_ITEMS } from '../sim/items/lumber.js';
+import { TICKET_ITEMS } from '../sim/items/tickets.js';
 
 SkillRegistry.register(Fireball);
 SkillRegistry.register(FlameShield);
@@ -27,3 +28,4 @@ SPEC_BONUSES.forEach((b) => SpecBonusRegistry.register(b));
 COSMETIC_ITEMS.forEach(defineItem);
 GAMEPLAY_ITEMS.forEach(defineItem);
 LUMBER_ITEMS.forEach(defineItem);
+TICKET_ITEMS.forEach(defineItem);

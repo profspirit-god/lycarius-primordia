@@ -25,6 +25,7 @@ export class Player extends Entity {
     super();
     this.cls = cls;
     this.prog = prog;
+    this.training = {}; // permanent stat bonus from used stat tickets (sim/stats/StatTraining.js `bonus`), set by the world
     this.stats = { ...cls.stats }; // base stats + specialization bonuses
     this.mods = null; // specialization modifiers (castTimeMult, cooldownMult, elementDamage, skillDamage)
     this.radius = cls.stats.radius;
@@ -39,7 +40,7 @@ export class Player extends Entity {
     this.kick = 0;
     this.t = 0;
     this.solid = true;
-    this.isPlayer = true; // JobSystem looks for this (R7: no world.player)
+    this.isPlayer = true; // JobSystem and LootSystem look for this (R7: no world.player); gold is paid only to a player
     this.toolId = null; // item id of the job tool carried (basic_axe), written by JobSystem from the Inventory, read by the Chop skill
     this.hittable = true;
     this.damageColor = "#ff6b6b";
@@ -57,19 +58,43 @@ export class Player extends Entity {
     this.syncProgression();
   }
 
-  /** Re-read the Progression: recompute stats and modifiers, add newly unlocked skill slots. Call after a level-up or pick. */
+  /** Set the permanent stat bonus from used stat tickets (`{ maxHp: 10, speed: 5, ... }`) and apply it. Unknown keys are ignored. */
+  setTraining(bonus) {
+    this.training = bonus && typeof bonus === "object" ? { ...bonus } : {};
+    this.syncProgression();
+  }
+
+  /** Re-read the Progression and the stat training: recompute stats and modifiers, add newly unlocked skill slots. Call after a level-up, a pick or a used ticket. */
   syncProgression() {
     const prog = this.prog,
       base = this.cls.stats;
     this.mods = prog ? prog.mods() : null;
-    const add = this.mods?.stats;
-    this.stats = { ...base, maxMana: base.maxMana + (add?.maxMana ?? 0), manaRegen: base.manaRegen + (add?.manaRegen ?? 0) };
+    const add = this.mods?.stats,
+      t = this.training;
+    const r3 = (n) => Math.round(n * 1000) / 1000; // 0.1 + 3 x 0.05 would otherwise be 0.25000000000000006
+    const num = (n) => (Number.isFinite(n) ? n : 0);
+    this.stats = {
+      ...base,
+      maxHp: r3(base.maxHp + num(t.maxHp)),
+      hpRegen: r3(base.hpRegen + num(t.hpRegen)),
+      maxMana: r3(base.maxMana + (add?.maxMana ?? 0) + num(t.maxMana)),
+      manaRegen: r3(base.manaRegen + (add?.manaRegen ?? 0) + num(t.manaRegen)),
+      maxStamina: r3(base.maxStamina + num(t.maxStamina)),
+      staminaRegen: r3(base.staminaRegen + num(t.staminaRegen)),
+      speed: r3(base.speed + num(t.speed)),
+    };
     const v = this.vitals,
-      gained = this.stats.maxMana - v.maxMana;
-    v.maxMana = this.stats.maxMana;
-    v.manaRegen = this.stats.manaRegen;
-    if (gained > 0) v.mana += gained;
+      s = this.stats,
+      gainedHp = s.maxHp - v.maxHp,
+      gainedMana = s.maxMana - v.maxMana,
+      gainedStamina = s.maxStamina - v.maxStamina;
+    Object.assign(v, { maxHp: s.maxHp, hpRegen: s.hpRegen, maxMana: s.maxMana, manaRegen: s.manaRegen, maxStamina: s.maxStamina, staminaRegen: s.staminaRegen });
+    if (gainedHp > 0 && v.hp > 0) v.hp += gainedHp; // a higher maximum also fills what it added, never revives
+    if (gainedMana > 0) v.mana += gainedMana;
+    if (gainedStamina > 0) v.stamina += gainedStamina;
+    v.hp = Math.min(v.hp, v.maxHp);
     v.mana = Math.min(v.mana, v.maxMana);
+    v.stamina = Math.min(v.stamina, v.maxStamina);
     for (const id of prog ? prog.unlockedSkills() : this.cls.skills) this.caster.addSkill(id, this.cls.bindings[id] ?? []);
     for (const id of UNIVERSAL.skills) this.caster.addSkill(id, UNIVERSAL.bindings[id] ?? []);
   }
@@ -185,7 +210,7 @@ export class Player extends Entity {
     const dodging = this.stepDodge(dt),
       len = Math.max(1, Math.hypot(mx, my)), // a command is already within the unit circle; this keeps a weaker stick slower
       free = this.stunT > 0 || dodging ? 0 : 1; // stunned or dodging: no steering, no casting
-    const sp = this.cls.stats.speed * (this.caster.charging ? 0.55 : 1);
+    const sp = this.stats.speed * (this.caster.charging ? 0.55 : 1);
     const k = 1 - Math.exp(-14 * dt);
     this.vx += ((mx / len) * sp * free - this.vx) * k;
     this.vy += ((my / len) * sp * free - this.vy) * k;
@@ -231,7 +256,7 @@ export class Player extends Entity {
   }
 
   draw(ctx) {
-    const moving = Math.hypot(this.vx, this.vy) / this.cls.stats.speed,
+    const moving = Math.hypot(this.vx, this.vy) / this.stats.speed,
       c = Math.cos(this.aim),
       s = Math.sin(this.aim);
     const bob = Math.sin(this.t * 14) * 1.6 * moving;

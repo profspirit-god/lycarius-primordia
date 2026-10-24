@@ -477,6 +477,7 @@ Then wait for owner approval if the scope, schema, ownership, persistence, or pr
 | D Home Account Inventory UI | **Built in V1.15.0.00**: `src/ui/InventoryView.js`, `HomeScene.openInventory`, client `Inventory` in `main.js`, `tests/inventory-view.test.mjs`; read only (list, category tabs for owned categories, detail, empty / unavailable / newer-version / repaired states; Equip disabled until L3); no Claim, Shop or Genesis change |
 | E Character Inventory UI and gameplay grants | **MVP built in V1.18.0.00** (13.5): gold as the first character item, in-game panel on key I, debug grant only; no real source, no equipment, no categories tabs |
 | E2 Weight and carrying capacity | **Built in V1.19.0.00** (13.6): `weightMg` on definitions, display-only fictional units, capacity 30 kg shown not enforced |
+| E3 Gold source, merchant, tickets | **Built in V1.21.0.00** (13.7): gold from Graugr and raids, John the Merchant, seven stat tickets, atomic `exchange`; full-inventory rule decided (refuse, gold lost) |
 | F to I | Not started |
 
 ### 13.4 Save schema, version 1 (Phase C, V1.14.0.00)
@@ -526,4 +527,21 @@ Built on the owner's request: gold is a heavy carried item, with the game's own 
 | Size | Separate: size is the slot and `maxStack` rule. Weight never changes slots and slots never change weight |
 | Capacity | `carryCapacityMg(ownerId)`, 30,000,000 mg (30 Theryn, 30 kg) for every character. Shown as a bar; over capacity is a colour only |
 | Not decided | Enforcement (refuse a pickup or slow the player), how capacity grows (stats, bags, buffs), weight of equipment and containers, whether the Wallet's Gold ever has weight (no) |
+
+### 13.7 Gold source, John the Merchant and stat tickets (Phase E, V1.21.0.00)
+
+Built on the owner's request: gold drops from Graugr, each raid pays gold, and a merchant sells stat tickets for it. This is the first real loot path, approved by that request (section 5 Phase E asked for approval before connecting one).
+
+| Item | Rule |
+| ---- | ---- |
+| Graugr drop | 1 to 10 gold, uniform, one roll per kill from `world.rng`, to the player who got the kill. Not a Marble Bag draw (M2 may move it) |
+| Raid reward | 20 + 10 x raid number, once per cleared raid, to every player present; a stopped raid pays nothing |
+| Delivery | Straight into the killer's collection through `Inventory.grant`. **Full-inventory rule (default, confirm):** the grant is refused and the gold is lost, shown as "Inventory full". Alternatives: a coin left on the ground, or a claim queue (Phase H) |
+| Weight | Gold weighs what 13.6 says; capacity is still not enforced, so loot is never refused for weight |
+| Tickets | One consumable per sim stat (seven), `scope: "character"`, 1 g, `maxStack` 20, action `use`. Using one is `StatTraining.use`: ticket out, stat up |
+| Training save | `lycarius.primordia.training`, `{ v: 1, characters: { owner: { stat: ticketsUsed } } }`. Bonus derived, never saved. Cap 10 per stat per character. A hostile or newer save never invents training |
+| Sale | `Inventory.exchange(owner, take, give)`: all or nothing, one save, capacity checked on the result. John refuses a ticket you could not use (used + carried at the cap) |
+| Prices | `sim/shop/john.js`: 150, 200, 100, 120, 100, 100, 250 gold (health, health regen, mana, mana regen, stamina, stamina regen, speed). One table, tuned by the owner |
+| NPC | `Merchant` entity (solid, not hittable), trade range 110 px, view by kind, key T |
+| Not decided | Selling back, coins on the ground, gold on death (death law), the six core attributes (no ticket until they exist), whether the Wallet's Gold ever relates to carried gold |
 

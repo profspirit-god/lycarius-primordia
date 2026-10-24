@@ -334,7 +334,7 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 @media (max-width:520px) { .st-foot { flex-wrap:wrap; } .st-state { flex-basis:100%; } .st-btns { flex:1; } .st-btns .btn { flex:1; } }
 .st-chip { padding:5px 9px; letter-spacing:.08em; }
 
-/* ---------- V1.18.0.00 / V1.19.0.00: Character Inventory (key I) and carried weight ---------- */
+/* ---------- V1.18.0.00 to V1.19.0.00: Character Inventory (key I) and carried weight ---------- */
 .ci-panel { min-height:0; }
 .ci-gold { display:flex; align-items:center; gap:10px; margin:2px 0 12px; padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:rgba(0,0,0,.3); }
 .ci-gold i { font-style:normal; font-size:22px; color:var(--gold); }
@@ -347,7 +347,7 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .ci-weight.over .lvline span { color:#ff8a6a; }
 .ci-weight.over .xpbar i { background:#e05a3a; }
 .ci-grid { grid-template-columns:repeat(6,1fr); }
-.ci-slot { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; }
+.ci-slot { aspect-ratio:1.2; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; }
 .ci-slot.full { border:1px solid var(--rar); background:rgba(0,0,0,.45); }
 .ci-slot.full:hover { box-shadow:0 0 12px var(--rar); }
 .ci-ic { font-size:24px; color:var(--gold); }
@@ -357,3 +357,25 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .ci-dev > span { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#8d836b; margin-right:4px; }
 .ci-dev .btn.sm { width:auto; margin:0; padding:4px 10px; }
 .ci-msg { flex-basis:100%; min-height:1.2em; font-size:11px; color:#b9a77f; }
+
+/* ---------- V1.21.0.00: selected slot, ticket use, John the Merchant ---------- */
+button.ci-slot { font:inherit; color:inherit; cursor:pointer; padding:0; }
+.ci-slot.sel { box-shadow:0 0 0 2px var(--gold), 0 0 14px var(--rar); }
+.ci-detail { margin-top:10px; padding:10px 12px; border:1px solid var(--rar); border-radius:10px; background:rgba(0,0,0,.35); font-size:13px; }
+.ci-detail em { font-style:normal; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--rar); }
+.ci-detail p { margin:6px 0; line-height:1.45; color:#cfc4aa; }
+.ci-detail small { color:#8d836b; }
+.ci-use { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
+.ci-use .btn.sm { width:auto; margin:0; padding:5px 14px; }
+.ci-main-msg { margin-top:6px; text-align:center; }
+.ms-panel { min-height:0; }
+.ms-greet { margin:0 0 10px; font-style:italic; font-size:13px; color:#cfc4aa; }
+.ms-list { display:flex; flex-direction:column; gap:6px; }
+.ms-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; border:1px solid rgba(255,255,255,.12); border-left:3px solid var(--rar); border-radius:8px; background:rgba(0,0,0,.28); }
+.ms-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.ms-info b { font-size:14px; }
+.ms-info span { font-size:12px; color:#cfc4aa; }
+.ms-info small { font-size:11px; color:#8d836b; }
+.ms-row .ms-buy.btn.sm { flex:none; width:104px; margin:0; padding:6px 0; display:flex; align-items:center; justify-content:center; gap:6px; }
+.ms-row .ms-buy i { font-style:normal; color:var(--gold); display:flex; }
+.ms-row .ms-buy:disabled { opacity:.45; cursor:not-allowed; }
