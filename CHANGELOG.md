@@ -2,6 +2,33 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.19.0.00 — Item weight, the game's own weight units, and carrying capacity (feature)
+
+Gold is now a **heavy carried item**: each gold weighs 31.10 g, and the Character Inventory shows what the character carries against a carrying capacity of 30 Theryn (30 kg). The weight system is the game's own, with fictional unit names that are display only.
+
+### Added
+
+- **`src/sim/items/weight.js`** (sim): weight is stored as an **integer number of milligrams** (`weightMg`), so 31.10 g is exactly 31,100 and sums never drift (`3 * 31.1` is not `93.3` in floating point). `gramsToMg`, `isWeightMg`, `unitWeightMg`, `STARTING_CARRY_CAPACITY_MG` (30 kg), `carryCapacityMg(ownerId)` (one function, so a later system changes capacity in one place), `MAX_ITEM_WEIGHT_MG` (1 metric ton for one item; with the 299,970 item maximum a total stays near 3e14, inside 2^53).
+- **`src/ui/weightUnits.js`** (client, display only): the fourteen units, Veyt 1 g, Kirel 10 g, Draum 100 g, Velkar 500 g, Theryn 1 kg, Korvath 5 kg, Maelor 10 kg, Dravon 50 kg, Aethron 100 kg, Graveth 500 kg, Taurak 1 t, Orynth 10 t, Vaelthar 100 t, Kharvorn 1,000 t. `formatWeight(mg, { unit })` picks the largest unit not heavier than the weight (31.10 g reads "3.11 Kr"), shows up to two decimals, moves up a unit when rounding would reach the next one, and can be pinned to a unit.
+- **`Inventory.weightMg(ownerId)`**: total carried weight of a character, integer milligrams, order independent.
+- **Definition field `weightMg`** (optional, validated: integer, 0 to 1 t). No field means weightless (the account cosmetics).
+- **Gold** weighs 31,100 mg.
+- **Character Inventory**: a weight bar "29.98 Th / 30 Th" (both numbers in Theryn so they compare), "3.11 Kr each" beside the gold total, the stack weight in each slot's tooltip. Over capacity turns the bar red.
+- **`tests/weight.test.mjs`** (11 tests): the unit table against the owner's list, exact integer sums, definition validation, weight separate from slots, the heaviest inventory summing exactly, capacity, unit choice and rounding, forced units, bad input, the panel text.
+
+### Changed
+
+- `ItemRegistry` accepts `weightMg`; `gameplay.js` gives gold its weight; `Claude.md` (code map, test list, gotcha), README, ROADMAP, proposal 13.6. `npm test` runs nineteen files. `VERSION` 1.18.0.00 to 1.19.0.00.
+
+### Notes
+
+- **Weight is separate from item size.** Size stays the slot rule (`maxStack`, 30 slots); neither reads the other. A heavy item does not take more slots and a bulky one does not weigh more.
+- **Capacity is defined, not enforced.** You said carry topics come later, so a grant that takes you over 30 Th still succeeds and the bar turns red. Enforcement (refuse a pickup, slow the player) is one new refusal reason in `Inventory.grant` and a speed multiplier, when you decide the rule. At 31.1 g each, 30 kg is 964 gold.
+- **Stored in milligrams, not grams:** needed to hold 31.10 g exactly as an integer. Everything shown to a player is in your units; grams and milligrams never appear.
+- **Unit choice:** automatic, "largest unit not heavier than the weight". Capacity is shown as "30 Th" because the bar pins both numbers to Theryn; an item of 30 kg on its own would read "3 Ml".
+- Gold is still a **stack with a quantity**, not 964 separate coin objects. Per-coin instances wait for M4.
+- **Server-ready:** yes. `weight.js` has zero audit hits; the unit names are client only.
+
 ## V1.18.0.00 — L2 phase E (MVP): the Character Inventory and its first item, gold (feature)
 
 First slice of inventory phase E (`docs/proposals/Inventory-and-ownership.md` section 13.5). A character now has an **in-game inventory**, separate from the Home Account Inventory, and the first item in it is **gold**. Press **I** in the Training Grounds to open it.

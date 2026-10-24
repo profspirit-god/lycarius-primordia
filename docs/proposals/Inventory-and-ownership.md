@@ -476,6 +476,7 @@ Then wait for owner approval if the scope, schema, ownership, persistence, or pr
 | C Ownership state and local persistence | **Built in V1.14.0.00**: `src/sim/items/Inventory.js`, `INVENTORY_KEY` in `core/LocalStorageAdapter.js`, `tests/inventory.test.mjs`; schema in 13.4; not wired into any scene |
 | D Home Account Inventory UI | **Built in V1.15.0.00**: `src/ui/InventoryView.js`, `HomeScene.openInventory`, client `Inventory` in `main.js`, `tests/inventory-view.test.mjs`; read only (list, category tabs for owned categories, detail, empty / unavailable / newer-version / repaired states; Equip disabled until L3); no Claim, Shop or Genesis change |
 | E Character Inventory UI and gameplay grants | **MVP built in V1.18.0.00** (13.5): gold as the first character item, in-game panel on key I, debug grant only; no real source, no equipment, no categories tabs |
+| E2 Weight and carrying capacity | **Built in V1.19.0.00** (13.6): `weightMg` on definitions, display-only fictional units, capacity 30 kg shown not enforced |
 | F to I | Not started |
 
 ### 13.4 Save schema, version 1 (Phase C, V1.14.0.00)
@@ -510,3 +511,19 @@ Built on the owner's request: an MVP character inventory whose first item is gol
 | Source | None. No loot path exists, so no kill, quest or pickup gives gold. Connecting one waits for the traced and approved loot pipeline (Phase E rule, and `FOUNDER.md` section 11 for the first carried items) |
 | Not built | Equipment and equipped references, sell, discard, trade, storage, stack split, drag and drop, a gold readout on the HUD, losing gold on death (a death-law question, `FOUNDER.md` section 5) |
 | Naming | The Wallet and carried gold are both labelled "Gold". Owner to decide whether one is renamed before the Shop sells anything |
+
+### 13.6 Weight, units and carrying capacity (Phase E, V1.19.0.00)
+
+Built on the owner's request: gold is a heavy carried item, with the game's own weight units.
+
+| Item | Rule |
+| ---- | ---- |
+| Storage | `weightMg` on a definition: an integer number of milligrams, 0 to 1,000,000,000 (1 t), optional (none = weightless). Milligrams, not grams, so 31.10 g is the exact integer 31,100 (an owner-approved reading of "grams as an integer or a sufficiently precise number") |
+| Total | `Inventory.weightMg(ownerId)` = sum of quantity x weight. Derived, never saved: the save schema (13.4) is unchanged |
+| Units | Display only, in `ui/weightUnits.js`: Veyt (Vt) 1 g, Kirel (Kr) 10 g, Draum (Dr) 100 g, Velkar (Vk) 500 g, Theryn (Th) 1 kg, Korvath (Kv) 5 kg, Maelor (Ml) 10 kg, Dravon (Dv) 50 kg, Aethron (Ae) 100 kg, Graveth (Gv) 500 kg, Taurak (Tr) 1 t, Orynth (Or) 10 t, Vaelthar (Va) 100 t, Kharvorn (Kh) 1,000 t. Never in a save, a definition or a client message |
+| Display rule | The largest unit not heavier than the weight; two decimals; up a unit when rounding reaches the next; under 1 g stays in Veyt. A bar may pin a unit |
+| Gold | 31,100 mg (31.10 g) |
+| Size | Separate: size is the slot and `maxStack` rule. Weight never changes slots and slots never change weight |
+| Capacity | `carryCapacityMg(ownerId)`, 30,000,000 mg (30 Theryn, 30 kg) for every character. Shown as a bar; over capacity is a colour only |
+| Not decided | Enforcement (refuse a pickup or slow the player), how capacity grows (stats, bags, buffs), weight of equipment and containers, whether the Wallet's Gold ever has weight (no) |
+

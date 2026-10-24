@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.18.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.19.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -44,6 +44,7 @@ Default when the user says "you decide": **H2** (then H3 and the rest of track H
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.19.0.00 | Feature: **item weight and carrying capacity**: integer-milligram `weightMg` on definitions (`sim/items/weight.js`), `Inventory.weightMg`, the fourteen display-only units Veyt to Kharvorn (`ui/weightUnits.js`), gold 31.10 g, capacity 30 Theryn (30 kg) shown but not enforced; `tests/weight.test.mjs` |
 | V1.18.0.00 | Feature: **L2 phase E (MVP)**, Character Inventory panel (key I, `ui/CharacterInventoryView.js`, `ui/CharacterInventoryPanel.js`) and the first item, **gold** (`sim/items/gameplay.js`, category `currency`, character-owned, 30 slots, no source in the world yet, debug grant and spend only); separate from the account Wallet and the Home Account Inventory; `tests/character-inventory.test.mjs` |
 | V1.17.0.00 | Feature (new files only, nothing user-visible): **H1 hunger primitive**, `src/sim/hunger/` (`Hunger`: 0 to 100 stat, drain 1 per 90 s by `dt`, `eat`, tier lookup, tier-change reports, versioned `serialize` / `restore`; `validateHungerDef` with the hunger-law guardrails; `PRIMORDIA_HUNGER` data with five tiers and start 85), `tests/hunger.test.mjs` (24 tests); not wired into the game, audit unchanged (zero hits in the new files) |
 | V1.16.0.02 | Docs only (no gameplay change): `FOUNDER.md` and `BUILD.md` added (design intent for hunger, death, cooking, stations; first drafts by DeepSeek, reconciled with this repo), owner resolutions R1 to R10 in `FOUNDER.md` section 12, new tracks H and B below, default work now H1, S1f a background track, L4 and L5 parked, doc map and rule 13 in `Claude.md` |
