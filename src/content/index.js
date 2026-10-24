@@ -11,6 +11,7 @@ import { Mage } from '../classes/Mage.js';
 import { SpecBonusRegistry, SPEC_BONUSES } from '../progression/SpecBonuses.js';
 import { defineItem } from '../sim/items/ItemRegistry.js';
 import { COSMETIC_ITEMS } from '../sim/items/cosmetics.js';
+import { GAMEPLAY_ITEMS } from '../sim/items/gameplay.js';
 
 SkillRegistry.register(Fireball);
 SkillRegistry.register(FlameShield);
@@ -21,3 +22,4 @@ SkillRegistry.register(Dodge);
 ClassRegistry.register(Mage);
 SPEC_BONUSES.forEach((b) => SpecBonusRegistry.register(b));
 COSMETIC_ITEMS.forEach(defineItem);
+GAMEPLAY_ITEMS.forEach(defineItem);

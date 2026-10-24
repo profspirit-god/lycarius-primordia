@@ -141,6 +141,7 @@ export const LOADING = {
       "Hold the fire button longer: a bigger charge hits harder and costs more mana.",
       "Two enemy fireballs that meet explode and hurt everyone nearby, including you.",
       "Press K for the specialization tree. Pending picks pulse green.",
+      "Press I to open your inventory and see the gold you carry.",
       "Flame Shield absorbs damage, but explosions go through it.",
       "Burn Resistance halves burn damage and can snuff a burn outright.",
     ],
