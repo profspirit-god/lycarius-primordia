@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.16.0.02**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.17.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -8,14 +8,14 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **H1 Hunger primitive** (`FOUNDER.md` section 6, track H below) | S1c (done), S1g (done) | G1, G5 | **Default** since V1.16.0.02 (owner resolution R2). New files only in `src/sim/hunger/`, not wired in, so it cannot break anything. Keystone of the cook, eat, fight milestone |
+| **H2 Wire hunger into the player** (`FOUNDER.md` section 6, track H below) | H1 (done in V1.17.0.00), S1d (done) | G1, G5 | **Default** (owner resolution R2). H1 is built and tested, not wired in. H2 applies the tier multipliers to the player, shows the status through `StatusSystem`, adds the HUD bar and the save. Keystone of the cook, eat, fight milestone |
 | **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Background track** (R1): take one group now and then between gameplay steps. The next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
 | L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phases B (definitions), C (ownership state, separate versioned save) and D (read-only Home Account Inventory, client `Inventory` created in `main.js`) done in V1.13.0.00 to V1.15.0.00. Next: L4 (Shop buy flow, needs the currency-scope decision first) or L3 (customization, makes Equip real). Unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | **Done in V1.16.0.00** (`Bag`, `validateBagDef`, `tests/bag.test.mjs`). Next in track M is M2 (Fireball crit from a per-caster bag): its Needs are green, but it waits for two owner decisions, the crit rate (12% via a 22 + 3 pool, or a new 33%) and the bag scope (per attacker or per skill) |
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | **Low priority, wanted** (R3): the game gets its own artwork. A feature whose effect really needs a sprite pulls just that asset forward. Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **H1** (then H2 and the rest of track H in order). When the user wants server work, S1f (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **H2** (then H3 and the rest of track H in order). When the user wants server work, S1f (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -44,6 +44,7 @@ Default when the user says "you decide": **H1** (then H2 and the rest of track H
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.17.0.00 | Feature (new files only, nothing user-visible): **H1 hunger primitive**, `src/sim/hunger/` (`Hunger`: 0 to 100 stat, drain 1 per 90 s by `dt`, `eat`, tier lookup, tier-change reports, versioned `serialize` / `restore`; `validateHungerDef` with the hunger-law guardrails; `PRIMORDIA_HUNGER` data with five tiers and start 85), `tests/hunger.test.mjs` (24 tests); not wired into the game, audit unchanged (zero hits in the new files) |
 | V1.16.0.02 | Docs only (no gameplay change): `FOUNDER.md` and `BUILD.md` added (design intent for hunger, death, cooking, stations; first drafts by DeepSeek, reconciled with this repo), owner resolutions R1 to R10 in `FOUNDER.md` section 12, new tracks H and B below, default work now H1, S1f a background track, L4 and L5 parked, doc map and rule 13 in `Claude.md` |
 | V1.16.0.01 | Cleanup (no gameplay change): **S1f-b Fireball skill presentation out of the sim**, `Fireball` is sim only, its charge and release look moved to `view/FireballCastView.js` behind `SkillViews` (views by skill id), new event `skill:charging`, `cast` carries `aim` and `origin`, `tests/skill-view.test.mjs` (8 tests); audit `present` 204 to 198, `random` 120 to 93 |
 | V1.16.0.00 | Feature (new files only, nothing user-visible): **M1 bag primitive**, `src/sim/bag/` (`Bag`: tokens dealt as a shuffled cycle and drawn without replacement, `refill_shuffle` / `no_refill`, versioned `serialize` / `restore`; `validateBagDef`), `tests/bag.test.mjs` (24 tests); not wired into any skill, audit unchanged (zero hits in the new files) |
@@ -62,8 +63,8 @@ Source: `FOUNDER.md` (sections 4 to 9) and `BUILD.md`, reconciled in `FOUNDER.md
 
 | Step | Work | Needs |
 | ---- | ---- | ----- |
-| **H1** | Pure hunger primitive in `src/sim/hunger/`: 0 to 100 stat, drain 1 per 90 s by `dt`, tier lookup as data (Stuffed, Full, Not hungry, Hungry, Starving), versioned `serialize` / `restore`, tests. New files, not wired in | S1c, S1g |
-| H2 | Wire hunger into the player: regen, speed and stamina multipliers, status effect through `StatusSystem`, saved through the storage adapter, HUD bar and tier icon (view only) | H1, S1d |
+| **H1** | **Done in V1.17.0.00.** Pure hunger primitive in `src/sim/hunger/`: 0 to 100 stat, drain 1 per 90 s by `dt`, tier lookup as data (Stuffed, Full, Not hungry, Hungry, Starving), versioned `serialize` / `restore`, tests. New files, not wired in | S1c, S1g |
+| **H2** | **Next (default).** Wire hunger into the player: regen, speed and stamina multipliers, status effect through `StatusSystem`, saved through the storage adapter, HUD bar and tier icon (view only) | H1, S1d |
 | H3 | Food items as data (Raw Meat, Cooked Meat) in `ItemRegistry`; Graugr drops Raw Meat (about 25%, seeded); the carried-item location decision (`FOUNDER.md` section 11) | L2 B to D, H2 |
 | H4 | Eat action: about 1 s, hunger +15 raw or +45 cooked, +5% regen for 60 s for cooked, no eating when Stuffed | H3 |
 | B0 | Dev spawner (`BUILD.md` section 8): place any registered entity or item at the mouse, no save. Small, any time after H3 (it also helps test H) | none |

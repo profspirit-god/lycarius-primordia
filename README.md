@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.16.0.02** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.17.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.16.0.02
+## 1. What is in V1.17.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,6 +16,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Settings       | Sectioned (Audio, Graphics, Interface) with a footer that stays put: Reset, Save, Back (Back asks Save / Discard when there are unsaved changes). Pause menu → Settings adds Training Dummy (attacks, skills, movement) and Developer (FPS overlay, cast timer, XP tools). Persisted in `localStorage`. |
 | Items          | Item definitions in an `ItemRegistry` (`src/sim/items/`): id, name, category, rarity, scope, stack size, allowed actions. The nine Shop cosmetics are registered as account-owned items. An `Inventory` service (`src/sim/items/Inventory.js`) records who owns how many of each item (account cosmetics, owned once; character items in 30 slots) and saves it under its own key, `lycarius.primordia.inventory`, separate from your progression save. The Home **Inventory** button opens a read-only Account Inventory: owned cosmetics as cards with a tab per category you own something in, and a detail view (rarity, description, how many, account-wide). It starts empty, and nothing grants items yet (inventory phases E to I, `docs/proposals/Inventory-and-ownership.md`) |
 | Bags           | The Marble Bag primitive (`src/sim/bag/`, stage M1 of `docs/proposals/Marble-bag-engine.md`): a pool of outcome tokens, for example 4 NORMAL and 2 CRIT, dealt as one shuffled cycle and drawn without replacement, so every complete cycle holds exactly the configured counts. Refill policy `refill_shuffle` or `no_refill`, versioned `serialize` / `restore`, a validator. **Not used by any skill yet**: Fireball crits still roll the old way until stage M2, so nothing about play changed |
+| Hunger         | The hunger primitive (`src/sim/hunger/`, stage H1 of `ROADMAP.md`, design in `FOUNDER.md` section 6): a 0 to 100 stat that falls 1 per 90 s of sim time and is raised by eating, five tiers (Stuffed, Full, Not hungry, Hungry, Starving) as data, versioned save. Never damages. **Not wired into the game yet** (nothing is visible until H2) |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
 | Class          | **Mage** (the only class)                                                                                                              |
 | Skills         | **Fireball**: hold to charge (magic circle), release to cast. **Flame Shield**: toggle a flame arc that absorbs damage. **Burn Resistance**: cast-time self buff against fire and burn. **Fire Blast**: cast-time AOE burst around you with knockback and a chance to burn. You start with Fireball only; the other three unlock in the specialization tree |
