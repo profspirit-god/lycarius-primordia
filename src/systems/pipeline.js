@@ -1,6 +1,6 @@
 /**
  * The ONE ordered list of world systems (S1d). Listeners on one event run in creation order, so the order below is the rule:
- * SIM systems first (damage lands, then status, then explosions, then XP), VIEW systems after (they only read events and
+ * SIM systems first (damage lands, then status, then explosions, then XP, then loot), VIEW systems after (they only read events and
  * state, and may be absent on a server). Add a system here, in the group it belongs to, never with a loose `new` in a scene.
  * Each entry is [property name on the world, class]; every class takes `(world)` and has `dispose()`.
  * AudioSystem and RaidSystem need the finished world (player, dummy) and are created by the scene after these.
@@ -11,12 +11,14 @@ import { ExplosionSystem } from "./ExplosionSystem.js";
 import { XpSystem } from "./XpSystem.js";
 import { JobSystem } from "../sim/jobs/JobSystem.js";
 import { JobFx } from "./JobFx.js";
+import { LootSystem } from "./LootSystem.js";
 import { HitEffects } from "./HitEffects.js";
 import { BurnFx } from "./BurnFx.js";
 import { ManaRegenFx } from "./ManaRegenFx.js";
 import { DodgeFx } from "./DodgeFx.js";
 import { ExplosionFx } from "./ExplosionFx.js";
 import { BlastFx } from "./BlastFx.js";
+import { LootFx } from "./LootFx.js";
 import { EntityViews } from "../view/EntityViews.js";
 import { SkillViews } from "../view/SkillViews.js";
 
@@ -26,6 +28,7 @@ export const SIM_SYSTEMS = [
   ["explosions", ExplosionSystem], // explosion -> aoe hit events
   ["xp", XpSystem], // hit / burn / cast -> player XP; reads world.player when an event arrives
   ["jobs", JobSystem], // chop -> tree, job XP, Velwood into the Inventory; keeps each player's `toolId` current (J1)
+  ["loot", LootSystem], // kill / raid:cleared -> carried gold through world.inventory; emits `loot`
 ];
 
 export const VIEW_SYSTEMS = [
@@ -36,6 +39,7 @@ export const VIEW_SYSTEMS = [
   ["explosionFx", ExplosionFx],
   ["blastFx", BlastFx],
   ["jobFx", JobFx], // J1: chop sparks, chips, "+XP" and "+Velwood" numbers, job level-up banner
+  ["lootFx", LootFx], // `loot` -> floating "+7 gold" text
   ["entityViews", EntityViews], // S1f: views by entity kind (fireball so far); update() after the entities, draw() in render
   ["skillViews", SkillViews], // S1f: views by skill id (fireball so far); fed by `skill:charging` and `cast`
 ];

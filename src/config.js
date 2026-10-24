@@ -2,5 +2,5 @@
 // Version scheme: V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>  (see README.md "Versioning")
 export const GAME_NAME = "Lycarius MMORPG";
 export const EDITION = "Primordia";
-export const VERSION = "1.20.0.00";
+export const VERSION = "1.21.0.00";
 export const VERSION_LABEL = `V${VERSION}`;

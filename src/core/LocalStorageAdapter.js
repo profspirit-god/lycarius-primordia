@@ -7,6 +7,8 @@ export const PROGRESS_KEY = "lycarius.primordia.progress";
 export const INVENTORY_KEY = "lycarius.primordia.inventory";
 /** localStorage key of the job save (progression/JobProgress.js): job XP per character. Its own key and shape, like the two above. */
 export const JOBS_KEY = "lycarius.primordia.jobs";
+/** localStorage key of the stat training save (sim/stats/StatTraining.js): which stat tickets a character has used. Its own key and shape. */
+export const TRAINING_KEY = "lycarius.primordia.training";
 
 /**
  * @param {string} key

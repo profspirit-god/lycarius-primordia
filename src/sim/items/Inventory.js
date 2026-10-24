@@ -152,6 +152,42 @@ export class Inventory {
     return this.#commit(def, t, have - qty);
   }
 
+  /**
+   * Take some items and give others in ONE step, for a character's collection (a purchase: gold out, ticket in). Either every
+   * part succeeds and the save is written once, or nothing changes and nothing is saved. Capacity is checked on the result, so
+   * paying with the stack that frees the slot a new item needs is allowed. Character-scoped items only.
+   * @param {string} ownerId
+   * @param {Array<[string, number]>} take [itemId, qty] pairs removed
+   * @param {Array<[string, number]>} give [itemId, qty] pairs added
+   * @returns {{ ok: true } | { ok: false, reason: string }}
+   */
+  exchange(ownerId, take, give) {
+    if (this.readOnly) return fail("read_only");
+    if (typeof ownerId !== "string" || !OWNER_ID_PATTERN.test(ownerId)) return fail("bad_owner");
+    if (!Array.isArray(take) || !Array.isArray(give)) return fail("bad_quantity");
+    const items = Object.assign(Object.create(null), this.characters[ownerId]); // a draft: the real collection is untouched until the end
+    for (const [list, sign] of [[take, -1], [give, 1]]) {
+      for (const pair of list) {
+        if (!Array.isArray(pair)) return fail("bad_quantity");
+        const [id, qty] = pair, def = findItem(id);
+        if (!def) return fail("unknown_item");
+        if (!isQty(qty)) return fail("bad_quantity");
+        if (def.scope !== "character") return fail("wrong_scope");
+        const next = (items[id] ?? 0) + sign * qty;
+        if (next < 0) return fail("not_enough");
+        if (next > 0) items[id] = next; else delete items[id];
+      }
+    }
+    if (this.#slots(items) > CHARACTER_SLOTS) return fail("inventory_full");
+    if (Object.keys(items).length) this.characters[ownerId] = items; else delete this.characters[ownerId];
+    try {
+      this.storage.save(this.toSave());
+    } catch {
+      /* storage unavailable: the change stays in memory for this session */
+    }
+    return { ok: true };
+  }
+
   /** How many are owned. Unknown ids, a wrong collection or a bad owner count as 0. Never throws. */
   count(itemId, ownerId = null) {
     const def = findItem(itemId);

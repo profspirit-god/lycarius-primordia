@@ -11,6 +11,7 @@ import { GOLD_ID, GAMEPLAY_ITEMS } from "../src/sim/items/gameplay.js";
 import { inventoryModel, inventoryHtml, CATEGORY_LABELS } from "../src/ui/InventoryView.js";
 import { characterInventoryModel, characterInventoryHtml, DEV_GOLD_STEPS } from "../src/ui/CharacterInventoryView.js";
 import { Wallet } from "../src/lobby/Wallet.js";
+import { createStatTraining } from "../src/sim/stats/StatTraining.js";
 
 let passed = 0;
 const test = (name, fn) => (fn(), passed++, console.log("ok  " + name));
@@ -160,7 +161,7 @@ test("the HTML shows the gold total, the slot grid and the slot count", () => {
   assert.match(h, /9,999/);
   assert.match(h, /2,346/);
   assert.match(h, /Slots 2 \/ 30/);
-  assert.match(h, /Gold has no source in the world yet/);
+  assert.match(h, /Gold drops from Graugr and raids/);
 });
 
 test("the debug buttons exist only when asked, and carry no state of their own", () => {
@@ -184,6 +185,26 @@ test("the panel and the view write only through the service, and sim files are N
   assert.ok(/Settings\.get\("showDebug"\)/.test(dev), "the debug write is gated by the debug setting");
   const sim = readFileSync(new URL("../src/sim/items/gameplay.js", import.meta.url), "utf8");
   assert.ok(!/\b(window|document|localStorage|Date\.now|Math\.random|performance)\b/.test(sim));
+});
+
+test("selecting a stat ticket shows its use button; a maxed stat disables it; other items have none", () => {
+  const { inv } = mk();
+  const tr = createStatTraining(createMemoryStorage());
+  inv.grant("ticket_max_health", 12, "mage");
+  inv.grant(GOLD_ID, 5, "mage");
+  const at = (selected) => characterInventoryHtml(characterInventoryModel(inv, "mage", tr), { selected });
+  let h = at("ticket_max_health");
+  assert.match(h, /Max Health Ticket/);
+  assert.match(h, /Max Health \+5 per ticket\. Used 0 \/ 10\./);
+  assert.match(h, /data-a="ci-use" data-id="ticket_max_health">Use ticket</);
+  assert.ok(!h.includes("ci-use\" data-id=\"gold"), "gold has no use button");
+  assert.ok(!/data-a="ci-use"/.test(at(GOLD_ID)), "gold cannot be used");
+  assert.ok(!/ci-detail/.test(at(null)) && !/ci-detail/.test(at("not_owned")), "nothing selected, or not carried: no detail");
+  for (let i = 0; i < 10; i++) tr.use(inv, "mage", "ticket_max_health");
+  h = at("ticket_max_health");
+  assert.match(h, /Used 10 \/ 10/);
+  assert.match(h, /data-a="ci-use" data-id="ticket_max_health" disabled>Stat at its limit</);
+  assert.match(h, /class="slot ci-slot full sel"/, "the selected slot is marked");
 });
 
 console.log(`\n${passed} tests passed`);

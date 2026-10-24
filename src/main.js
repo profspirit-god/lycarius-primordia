@@ -11,12 +11,14 @@ import { CreatorSupportScene } from "./scenes/CreatorSupportScene.js";
 import { HomeScene } from "./scenes/HomeScene.js";
 import { ModeSelectScene } from "./scenes/ModeSelectScene.js";
 import { LoadingScene } from "./scenes/LoadingScene.js";
-import { createLocalStorageAdapter, INVENTORY_KEY } from "./core/LocalStorageAdapter.js";
+import { createLocalStorageAdapter, INVENTORY_KEY, TRAINING_KEY } from "./core/LocalStorageAdapter.js";
 import { createInventory } from "./sim/items/Inventory.js";
+import { createStatTraining } from "./sim/stats/StatTraining.js";
 
 Settings.load();
 const game = new Game();
 game.inventory = createInventory(createLocalStorageAdapter(INVENTORY_KEY)); // the one ownership record; the client owns the browser storage, the service only sees the adapter
+game.training = createStatTraining(createLocalStorageAdapter(TRAINING_KEY)); // which stat tickets were used; its own save, never the progression or inventory save
 game.register("menu", () => new MenuScene());
 game.register("settings", () => new SettingsScene());
 game.register("exit", () => new ExitScene());
@@ -50,4 +52,4 @@ document.addEventListener("visibilitychange", () =>
 
 game.goto("menu");
 game.start();
-window.lycarius = { game, inventory: game.inventory }; // handy for console debugging, e.g. lycarius.inventory.grant("ember_robe")
+window.lycarius = { game, inventory: game.inventory, training: game.training }; // handy for console debugging, e.g. lycarius.inventory.grant("ember_robe")
