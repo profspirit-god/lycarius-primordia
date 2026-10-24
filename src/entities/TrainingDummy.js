@@ -1,4 +1,5 @@
 import { Entity } from "./Entity.js";
+import { pushOutOfCover } from "../sim/jobs/cover.js";
 import { SkillCaster } from "../systems/SkillCaster.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { Vitals } from "../systems/Vitals.js";
@@ -288,6 +289,8 @@ export class TrainingDummy extends Entity {
       this.x += (this.vx + this.knock.x) * dt;
       this.y += (this.vy + this.knock.y) * dt;
     }
+
+    pushOutOfCover(world, this); // trees are solid
 
     if (this.glow > 0) {
       // the dummy emits light after a hit

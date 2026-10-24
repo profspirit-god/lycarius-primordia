@@ -5,6 +5,8 @@
 export const PROGRESS_KEY = "lycarius.primordia.progress";
 /** localStorage key of the inventory save (sim/items/Inventory.js). A separate key and shape: it never touches the progression save. */
 export const INVENTORY_KEY = "lycarius.primordia.inventory";
+/** localStorage key of the job save (progression/JobProgress.js): job XP per character. Its own key and shape, like the two above. */
+export const JOBS_KEY = "lycarius.primordia.jobs";
 
 /**
  * @param {string} key

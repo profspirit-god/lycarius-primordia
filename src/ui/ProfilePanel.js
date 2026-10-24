@@ -2,6 +2,7 @@ import { icon } from "./icons.js";
 import { PROFILE } from "../lobby/lobbyData.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { UNIVERSAL } from "../classes/Universal.js";
+import { JOBS, jobIds } from "../sim/jobs/jobs.js";
 
 const pct = (v) => `${v >= 0 ? "+" : ""}${Math.round(v * 100)}%`;
 const PLACEHOLDER = "--";
@@ -48,6 +49,13 @@ export class ProfilePanel {
     return `<div><small>${k}</small><b>${v}</b></div>`;
   }
 
+  /** Job levels (not battle related, so they live here and not next to the battle bars). One bar per job. */
+  jobs() {
+    const jp = this.world.jobProgress;
+    if (!jp) return "";
+    return jobIds().map((id) => this.xp(`${JOBS[id].name} Level`, jp.info(id), "#7bd88f")).join("");
+  }
+
   infoTab(p, prog) {
     const v = p.vitals;
     const res = (ic, cls, label, cur, max) =>
@@ -55,6 +63,7 @@ export class ProfilePanel {
     return `
       ${this.xp("Character Level", prog.char, "#6aa8ff")}
       ${this.xp(`${p.cls.specialization.element[0].toUpperCase()}${p.cls.specialization.element.slice(1)} Specialization Level`, prog.specInfo, "#f2c46d")}
+      ${this.jobs()}
       <div class="pr-res-row">
         ${res("heart", "hp", "Health", Math.ceil(v.hp), v.maxHp)}
         ${res("drop", "mp", "Mana", Math.floor(v.mana), v.maxMana)}

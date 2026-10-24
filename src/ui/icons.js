@@ -32,6 +32,7 @@ export const ICONS = {
   manaRegen: `<circle cx="9.6" cy="9.4" r="2.9" fill="#e6edff" stroke="none"/><path fill="#e6edff" stroke="none" d="M3.6 21.4v-4.6c0-3 2.4-5.2 6-5.2s6 2.2 6 5.2v4.6z"/><path ${F} d="M18.6 2.2l3.4 4.1h-2.3v4h-2.2v-4h-2.3z"/><path ${F} d="M18.6 12.4l3.4 4.1h-2.3v4h-2.2v-4h-2.3z" fill-opacity=".6"/>`,
   // human silhouette leaning back mid-evade with speed lines (takes the tone colour, yellow)
   dodge: `<circle cx="14.6" cy="5.4" r="2.7" ${F}/><path d="M13.2 9.6 9.6 15.2M9.6 15.2 5.4 21M9.6 15.2l4.4 5.6M12.6 10.8l5 1.6M12 11.4 8.4 9.2" ${S} stroke-width="3"/><path d="M21.4 8.2h-3M22 14h-3.6M20.6 19.2h-3" ${S} stroke-width="1.5" stroke-opacity=".7"/>`,
+  axe: `<path ${S} d="M4.5 19.5 13 11"/><path ${F} d="M11.2 5.4c2.9-1.6 6.6-.9 8.6 1.6l-3.1 3.6-3.4 1-3-3.1z"/>`,
   stun: `<path ${F} d="M12 2.8l2.2 5.6 6 .5-4.6 3.9 1.5 5.9L12 15.5l-5.1 3.2 1.5-5.9-4.6-3.9 6-.5z"/>`,
   lock: `<rect x="5" y="10.5" width="14" height="10.5" rx="2.4" ${S}/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" ${S}/><circle cx="12" cy="15.6" r="1.3" ${F}/>`,
   help: `<circle cx="12" cy="12" r="9.5" ${S}/><path d="M9.3 9.4a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.9" ${S}/><circle cx="12" cy="17" r="1.1" ${F}/>`,
