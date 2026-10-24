@@ -3,11 +3,14 @@ import { EventBus } from "../core/EventBus.js";
 import { Rng } from "../sim/rng.js";
 import { PlayerController } from "../input/PlayerController.js";
 import { Settings } from "../core/Settings.js";
-import { createLocalStorageAdapter, PROGRESS_KEY } from "../core/LocalStorageAdapter.js";
+import { createLocalStorageAdapter, PROGRESS_KEY, JOBS_KEY } from "../core/LocalStorageAdapter.js";
 import { SettingsPanel } from "../ui/SettingsPanel.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { Player } from "../entities/Player.js";
 import { TrainingDummy } from "../entities/TrainingDummy.js";
+import { Velthorn } from "../entities/Velthorn.js";
+import { TRAINING_TREES } from "../sim/jobs/cover.js";
+import { JobProgress } from "../progression/JobProgress.js";
 import { Camera } from "../systems/Camera.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { Lights } from "../systems/Lights.js";
@@ -60,6 +63,8 @@ export class WorldScene extends Scene {
     this.paused = false;
     this.fps = 60;
 
+    this.inventory = game.inventory; // the ownership service; the job rules read it (world.inventory), the client owns the storage behind it
+    this.jobProgress = new JobProgress(this.classId, createLocalStorageAdapter(JOBS_KEY)); // job XP of this character (J1)
     createSystems(this, SIM_SYSTEMS); // the one ordered list: damage, status, explosions, xp (systems/pipeline.js)
     createSystems(this, VIEW_SYSTEMS); // then the view systems; they read events and never change sim state
     const cls = ClassRegistry.get(this.classId);
@@ -80,6 +85,9 @@ export class WorldScene extends Scene {
         rng: this.rng,
       }),
     );
+    for (const t of TRAINING_TREES) this.spawn(new Velthorn(t.x, t.y)); // the training-ground forest (J1)
+    this.jobs.ensureStarterTool(this.player); // a character that never had one gets the Basic Axe, once
+    this.jobs.update();
     this.raid = new RaidSystem(this);
     this.audio = new AudioSystem(this);
     this.camera.x = this.player.x;
@@ -324,6 +332,7 @@ export class WorldScene extends Scene {
     this.entities = this.entities.filter((e) => !e.dead);
     this.raid.update(dt);
     this.status.update(edt);
+    this.jobs.update(edt); // the carried tool follows the Inventory
     this.burnFx.update(edt); // after lights.update: its one-frame lights must survive to render
     this.manaRegenFx.update(edt);
     this.dodgeFx.update(edt);

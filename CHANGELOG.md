@@ -2,6 +2,30 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.20.0.00 — Lumberjack job: Velthorn trees, Velwood, the Basic Axe and job XP (feature)
+
+The first **job**, separate from your class: chop Velthorn trees in the Training Ground with a Basic Axe, collect Velwood, and level the Lumberjack job. Job XP has its own save and its own bar in the character panel; it never touches character or specialization XP.
+
+### Added
+
+- **`src/entities/Velthorn.js`** (sim): a tree that is solid and hittable. **5 landed axe swings fell it**; it drops **10 to 15 Velwood** (uniform, rolled from the seeded `world.rng`) and becomes a stump that regrows after 60 s. Constants at the top (`VELTHORN`).
+- **Fire rule:** any hit that is not an enemy's body (a Fireball, Fire Blast, an explosion) sets the tree on fire **at once** (no roll). A burning tree cannot be chopped, drops **nothing** and gives no job XP; it stays solid and keeps shielding until the fire ends (6 s), then it is a dead stump for 20 s and regrows. Graugr's body (arms, poke, leap) bounces off a tree without scorching it.
+- **Shielding and collision:** a Fireball stops on the first tree in its path (what stands behind is untouched). `src/sim/jobs/cover.js` (`firstCover`, `pushOutOfCover`) cuts off Graugr's Arm Swing Barrage and Piercing Poke when a tree stands between it and the player (the tree takes the poke), and stops its Leap in front of a tree. The player, the training dummy and the Graugrs cannot walk through a tree.
+- **Items** (`src/sim/items/lumber.js`): **Basic Axe** (equipment, one, 1.8 kg) and **Velwood** (material, stacks to 999, 1.2 kg each). Both character-owned, so they sit in the Character Inventory (key `I`). A character that never had an axe receives one **once** (the flag is saved), so a discarded axe is not handed out again. Real equip slots do not exist yet: **owning the axe is what lets you chop** (the tool table is `src/sim/jobs/jobs.js`, `TOOLS`, keyed by item id).
+- **Chop** (`src/skills/Chop.js`, a universal action like Dodge, press **`C`**): one swing, 8 stamina, 0.7 s cooldown, reach 44 px from your body edge to the trunk edge, 0.9 rad swing arc. A swing in empty air still costs stamina. It deals no damage and gives no combat XP.
+- **Job XP** (`src/progression/JobProgress.js`, `src/sim/jobs/jobs.js`): Lumberjack, level cap 20, `60 * level^1.5` XP per level. **3 XP per landed swing, +15 for the swing that fells the tree** (30 per tree). Saved per character on its own key `lycarius.primordia.jobs` (versioned, validated on load, unknown jobs and bad numbers dropped).
+- **`src/sim/jobs/JobSystem.js`** (sim system `world.jobs`): applies `chop` events, grants Velwood through the Inventory (a bag that cannot hold it all takes what fits and reports the rest as lost), awards job XP, and keeps each player's `toolId` in step with the Inventory.
+- **Training Ground forest:** 12 Velthorn trees at fixed spots (`TRAINING_TREES` in `cover.js`), away from the spawn and the dummy.
+- **View:** `view/VelthornView.js` (trunk, canopy that turns see-through when you stand behind it, one pale notch per chop, a chop bar, wobble and flash, burning and charred looks, stumps) and `systems/JobFx.js` (swing sparks, wood chips, falling leaves, shake, floating `+3 XP` and `+12 Velwood` numbers, "Scorched: no wood", job level-up banner). New `axe` icon.
+- **Stats:** the Lumberjack level bar is in the character panel (click the profile circle, Info tab), under the specialization bar, not next to the battle bars.
+- `tests/lumber.test.mjs` (22 tests), the item-count check in `tests/items.test.mjs` now counts the lumber items, `npm test` includes the new file.
+
+### Changed
+
+- `Player` has `isPlayer` and `toolId`; `Universal` lists `chop` on `KeyC`; `Graugr` and `TrainingDummy` call `pushOutOfCover`, and `Graugr` checks cover in `swingHit`, `pokeHit` and `leap`; `WorldScene` creates `world.inventory` and `world.jobProgress`, spawns the trees and ticks `world.jobs`; `pipeline.js` lists `jobs` (sim) and `jobFx` (view).
+- Fireballs that hit a tree pay the usual damage XP, like hitting the dummy.
+- Server-ready: every new sim file has zero audit hits (the baseline did not change).
+
 ## V1.19.0.00 — Item weight, the game's own weight units, and carrying capacity (feature)
 
 Gold is now a **heavy carried item**: each gold weighs 31.10 g, and the Character Inventory shows what the character carries against a carrying capacity of 30 Theryn (30 kg). The weight system is the game's own, with fictional unit names that are display only.

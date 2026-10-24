@@ -5,9 +5,11 @@
  */
 import { FireballView } from "./FireballView.js";
 import { FireballCastView } from "./FireballCastView.js";
+import { VelthornView } from "./VelthornView.js";
 
 export const VIEWS = {
   fireball: FireballView,
+  velthorn: VelthornView,
 };
 
 /**
