@@ -2,6 +2,7 @@
 // A definition holds no owner, quantity, equipped state or purchase history: that is ownership state (a later phase).
 // Sim code: no browser, no clock, no randomness (Claude.md 5b). Definitions are validated and frozen when registered.
 import { Registry } from "../../core/Registry.js";
+import { isWeightMg, MAX_ITEM_WEIGHT_MG } from "./weight.js";
 
 /** Where an item may be owned. `account` = shared by all characters, `character` = tied to one character (class id today). */
 export const ITEM_SCOPES = ["account", "character"];
@@ -18,7 +19,7 @@ export const ITEM_ID_PATTERN = /^[a-z][a-z0-9_]{1,39}$/;
 const NAME_MAX = 60;
 const DESCRIPTION_MAX = 200;
 /** The only keys a definition may have. A new system (slots, stat modifiers, recipes) extends this list on purpose. */
-const KEYS = ["id", "name", "description", "category", "rarity", "scope", "maxStack", "actions"];
+const KEYS = ["id", "name", "description", "category", "rarity", "scope", "maxStack", "actions", "weightMg"];
 
 /**
  * Returns a list of problems (empty = valid). Never throws, whatever the input.
@@ -40,6 +41,7 @@ export function validateItemDef(def) {
   if (!ITEM_SCOPES.includes(def.scope)) errs.push("scope must be one of " + ITEM_SCOPES.join(", "));
   if (!Number.isInteger(def.maxStack) || def.maxStack < 1 || def.maxStack > MAX_STACK_LIMIT)
     errs.push(`maxStack must be an integer from 1 to ${MAX_STACK_LIMIT} (1 = not stackable)`);
+  if (def.weightMg !== undefined && !isWeightMg(def.weightMg)) errs.push(`weightMg must be an integer number of milligrams from 0 to ${MAX_ITEM_WEIGHT_MG}`);
   if (!Array.isArray(def.actions)) errs.push("actions must be an array");
   else {
     for (const a of def.actions) if (!ITEM_ACTIONS.includes(a)) errs.push(`unknown action "${a}"`);
