@@ -334,12 +334,18 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 @media (max-width:520px) { .st-foot { flex-wrap:wrap; } .st-state { flex-basis:100%; } .st-btns { flex:1; } .st-btns .btn { flex:1; } }
 .st-chip { padding:5px 9px; letter-spacing:.08em; }
 
-/* ---------- V1.18.0.00: Character Inventory (key I) ---------- */
+/* ---------- V1.18.0.00 / V1.19.0.00: Character Inventory (key I) and carried weight ---------- */
 .ci-panel { min-height:0; }
 .ci-gold { display:flex; align-items:center; gap:10px; margin:2px 0 12px; padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:rgba(0,0,0,.3); }
 .ci-gold i { font-style:normal; font-size:22px; color:var(--gold); }
-.ci-gold span { flex:1; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:#b9a77f; }
+.ci-gold span { flex:none; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:#b9a77f; }
+.ci-gold small { flex:1; font-size:11px; color:#8d836b; }
 .ci-gold b { font-size:22px; color:var(--gold); }
+.ci-weight { margin:0 0 12px; }
+.ci-weight .lvline { margin:0 0 4px; }
+.ci-weight .xpbar i { background:#6aa8ff; }
+.ci-weight.over .lvline span { color:#ff8a6a; }
+.ci-weight.over .xpbar i { background:#e05a3a; }
 .ci-grid { grid-template-columns:repeat(6,1fr); }
 .ci-slot { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; }
 .ci-slot.full { border:1px solid var(--rar); background:rgba(0,0,0,.45); }

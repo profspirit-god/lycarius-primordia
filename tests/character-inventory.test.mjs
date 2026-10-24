@@ -149,7 +149,7 @@ test("the model never throws: no service, bad owner, newer save", () => {
 test("the HTML shows the gold total, the slot grid and the slot count", () => {
   const { inv } = mk();
   let h = view(inv);
-  assert.match(h, /<span>Gold<\/span><b>0<\/b>/);
+  assert.match(h, /<span>Gold<\/span><small>[^<]*<\/small><b>0<\/b>/);
   assert.equal((h.match(/class="slot ci-slot"/g) ?? []).length, CHARACTER_SLOTS, "all slots empty");
   assert.match(h, /Slots 0 \/ 30/);
   inv.grant(GOLD_ID, 12345, "mage");

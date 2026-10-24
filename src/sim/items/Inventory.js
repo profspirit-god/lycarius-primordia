@@ -11,6 +11,7 @@
 //                        CHARACTER_SLOTS slots in total.
 // Replicated fields (what a client may see later): the whole save shape above. Nothing here is hidden state.
 import { findItem, MAX_STACK_LIMIT } from "./ItemRegistry.js";
+import { unitWeightMg } from "./weight.js";
 
 export const INVENTORY_SAVE_VERSION = 1;
 /** Slots of one character collection. A default (Phase E confirms it); one constant, so changing it is one line. */
@@ -167,6 +168,15 @@ export class Inventory {
   freeSlots(ownerId) {
     if (typeof ownerId !== "string" || !OWNER_ID_PATTERN.test(ownerId)) return 0;
     return Math.max(0, CHARACTER_SLOTS - this.#slots(this.characters[ownerId] ?? {}));
+  }
+
+  /** Total weight a character carries, in integer milligrams (sum of quantity x the definition's weight). Never throws; a bad owner is 0. */
+  weightMg(ownerId) {
+    if (typeof ownerId !== "string" || !OWNER_ID_PATTERN.test(ownerId)) return 0;
+    const items = this.characters[ownerId] ?? {};
+    let total = 0;
+    for (const id of Object.keys(items)) total += items[id] * unitWeightMg(findItem(id));
+    return total;
   }
 
   /** What is owned in one collection, ordered by id (R9): the account's with no argument, one owner's with an owner id. */
