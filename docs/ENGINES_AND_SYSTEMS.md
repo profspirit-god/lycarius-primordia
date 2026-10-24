@@ -33,6 +33,7 @@ Goal: a decoupled, deterministic simulation with tests, before any networking.
 | Entity views | Presentation of an entity (trail, particles, light, drawing) lives in a client-only view found by `entity.kind`; the sim emits plain-data events | Built for the Fireball ball (V1.12.0.05) and the Fireball cast, by skill id (V1.16.0.01); the other groups are planned S1f | `view/EntityViews.js`, `view/SkillViews.js`, `view/FireballView.js`, `view/FireballCastView.js`, `view/index.js` |
 | Data registries | Classes, skills and spec bonuses are data | Built (items since V1.13.0.00; status effects: not yet) | `content/index.js`, `core/Registry.js`, `classes/`, `skills/` |
 | Universal skill caster | Any entity casts through one interface | Built | `systems/SkillCaster.js` |
+| Survival need (hunger) | A 0 to 100 stat that falls with sim time and is raised by eating; its tier gives regen, speed and stamina multipliers and a status id; never damages (`FOUNDER.md` section 6) | H1 built (V1.17.0.00): pure primitive, tiers as data, versioned save, not wired in; H2 to H5 planned | `src/sim/hunger/`, `tests/hunger.test.mjs`, track H in `ROADMAP.md` |
 | Status system | Burn (damage over time), stun, wards by data offers on hit | Built | `systems/StatusSystem.js`, `skills/BurnWardEffect.js` |
 | Stat and modifier engine | Compounding bonuses: element, skill, cooldown, cast time | Built | `progression/SpecBonuses.js`, `Mods.js` |
 | Headless tests | Node tests with no DOM pin formulas, cooldowns, RNG | Built (6 files) | `tests/`, `npm test` |
