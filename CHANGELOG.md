@@ -2,6 +2,30 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.21.0.01 — The H2 hunger proposal reviewed against V1.21.0.00 and settled (docs only, two comment lines in `src/sim/hunger/`)
+
+The owner shared a hunger proposal written with ChatGPT and asked for a review before any code. The first review was written against an older copy of the repo; it was **redone against V1.21.0.00**, and the owner's decisions on every conflict are recorded as owner resolutions R12 to R22 in `FOUNDER.md` section 12. The proposal stays **extra information, not the truth**.
+
+### Added
+
+- **`docs/proposals/Hunger-statuses.md`**: the reconciled spec of the hunger statuses: the shared rules (Bag draws, one outcome per draw, stacking and refresh, non-lethal damage, timers and saves), the provisional bags and statuses per tier, the systems each status needs (N1, X1 to X8) with what exists today, the dispositions of the proposal, the acceptance tests and the open tuning list. Nothing in it is built.
+- **`ROADMAP.md`** tracks H and **HS**: steps H1b, H2a, H2b and the system rows N1 and X1 to X8 listed before the statuses HS1 to HS7 that need them (owner resolution R19: the system comes first).
+
+### Changed
+
+- **`FOUNDER.md` section 6 rewritten:** hunger **may damage but can never kill** (statuses only, non-lethal, never below 1 HP); hunger points 0 to 1000 with a percentage HUD; separate HP, mana and stamina regeneration (mana unchanged for now); speed floor 75% of normal; eating allowed below 100% and refused at 100% or while Overeating, an overflow starts Overeating; Marble Bag draws on an eat that ends in Stuffed (or Full) and on entering Hungry or Starving; Malnourished after 15 minutes below 25%; respawn raises hunger to at least 25%.
+- **`FOUNDER.md` brought up to date with V1.18 to V1.21:** primitives table (Character Inventory, gold, weight, tickets, Lumberjack job, John the Merchant), the anti-drift list (the account Shop buy flow stays parked, John's tickets are the only in-world sale), the milestone (gathering exists), open decision 2 (food lives in the Character Inventory), R4 note and R22. `BUILD.md` decision 7 (does a campfire burn Velwood).
+- Default next work is **H1b** (align the primitive with the settled design), then H2a, X1, H2b. `README.md`, `docs/ENGINES_AND_SYSTEMS.md` (new rows) and the `Claude.md` doc map updated. `VERSION` 1.21.0.00 to 1.21.0.01.
+- Two comment lines in `src/sim/hunger/Hunger.js` and `validateHunger.js` no longer say hunger "never damages"; the class and the tiers still carry no damage.
+
+### Notes
+
+- **What changed the review (V1.18 to V1.21):** stat tickets add a **permanent** bonus to `player.stats` through `Player.syncProgression`, so the temporary hunger modifiers (row X1) must multiply the final stats and never touch `StatTraining`; `carryCapacityMg` already exists as the one capacity function but returns a constant and is not enforced (row X4 is partly built: Famished needs a modifier input and an owner decision on what over capacity does); `syncProgression` already handles a higher max HP, not a lower one (row X2); carried food lives in the Character Inventory; the loot path for a Raw Meat drop is `LootSystem`.
+- **Not changed on purpose:** the H1 code still has the 0 to 100 scale, one shared regen multiplier and the per-tier `canEat`. H1b brings it in line, with its tests, as its own version. The docs say so where they differ.
+- **Defaults taken, flagged:** Stuffed bag of 20 tokens (8 NONE, 4 Bloated, 3 Stamina Drain, 2 Evasion Penalty, 2 Nausea, 1 Vomiting), Gluttony 0.1% outside the bag as `HP = min(HP, 30)` (never heals, never kills), Overeating budget capped at 50% of max HP (2 per second for 30 s would be 60), Perishing ends on leaving Starving or when downed, "1 hour starving" means one hour in the Starving tier. All marked provisional in the doc.
+- **Server-ready:** not applicable (docs and comments); the audit is unchanged.
+- Not tested: playing in a browser (no behaviour changed).
+
 ## V1.21.0.00 — Gold drops, raid rewards, John the Merchant and stat tickets (feature)
 
 Gold now has a reason. Graugr drop it, every cleared raid pays it, and a new NPC, **John the Merchant**, sells **stat tickets** for it. Using a ticket raises one stat for good. Press **T** next to John to trade, **I** to use tickets from your inventory.

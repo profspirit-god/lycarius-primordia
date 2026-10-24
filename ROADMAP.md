@@ -1,6 +1,6 @@
 # Roadmap
 
-Current version: **V1.21.0.00**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.21.0.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
@@ -8,7 +8,7 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **H2 Wire hunger into the player** (`FOUNDER.md` section 6, track H below) | H1 (done in V1.17.0.00), S1d (done) | G1, G5 | **Default** (owner resolution R2). H1 is built and tested, not wired in. H2 applies the tier multipliers to the player, shows the status through `StatusSystem`, adds the HUD bar and the save. Keystone of the cook, eat, fight milestone |
+| **H1b Align the hunger primitive with the settled design** (`FOUNDER.md` section 6, track H below) | H1 (done in V1.17.0.00) | G1, G5 | **Default** (owner resolutions R12 to R22). Small, primitive only, still not wired in: 0 to 1000 points, separate HP, mana and stamina regen, the eat and overeat rule, speed floor. It goes first because H2a saves and shows the stat and should not be rebuilt afterwards. Then H2a, X1, H2b |
 | **J2 to J6 Jobs path** (track J below) | J1 (done in V1.20.0.00) | G5 | The Lumberjack job exists; the next steps give Velwood a use (J2) and make job levels matter (J3). Parallel to track H, touches different files |
 | **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Background track** (R1): take one group now and then between gameplay steps. The next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
 | L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phases B (definitions), C (ownership state, separate versioned save) and D (read-only Home Account Inventory, client `Inventory` created in `main.js`) done in V1.13.0.00 to V1.15.0.00. Phase E (V1.18.0.00 to V1.20.0.00): in-game Character Inventory (key I), gold with weight, gold from Graugr and raids, John the Merchant and stat tickets. Next: E2 (more items, equipped references, a real gold source after tracing the loot path), L4 (Shop buy flow, needs the currency-scope decision first) or L3 (customization, makes Equip real). Unlocks L3, L4, L5 and M4 |
@@ -16,7 +16,7 @@ Procedure for any Claude session: (1) read this section, (2) check the `Needs` o
 | A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | **Low priority, wanted** (R3): the game gets its own artwork. A feature whose effect really needs a sprite pulls just that asset forward. Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **H2** (then H3 and the rest of track H in order). When the user wants server work, S1f (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **H1b** (then H2a, X1, H2b, H3 and the rest of track H in order; the systems of track HS come before the statuses that need them; the jobs track J is the parallel alternative). When the user wants server work, S1f (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -45,6 +45,7 @@ Default when the user says "you decide": **H2** (then H3 and the rest of track H
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.21.0.01 | Docs only (plus two comment lines in `src/sim/hunger/`): the H2 hunger proposal reviewed against V1.21.0.00 and settled, owner resolutions R12 to R22 in `FOUNDER.md` section 12 (hunger may damage but never kills, points scale with a percentage HUD, eat and Overeating rule, Bag draws, separate regens, speed floor 75%, respawn floor 25%); `FOUNDER.md` section 6 rewritten and sections 4, 8, 9, 11 brought up to date with V1.18 to V1.21; new `docs/proposals/Hunger-statuses.md`; roadmap tracks H and HS with the missing systems (N1, X1 to X8) listed before the statuses that need them |
 | V1.21.0.00 | Feature: **gold drops, raid rewards, John the Merchant and stat tickets**: `LootSystem` (Graugr 1 to 10 gold, raid 20 + 10 x N), seven stat tickets (one per sim stat, cap 10 each, `sim/items/tickets.js`), `StatTraining` with its own save, `Inventory.exchange` (atomic sale), `Merchant` NPC and shop (`sim/shop/john.js`, key T), ticket use in the Character Inventory; tests `loot`, `training`, `merchant` |
 | V1.20.0.00 | Feature: **J1 Lumberjack job**: `Velthorn` tree (5 swings, 10 to 15 Velwood, fire ruins it and drops nothing, solid, stops fireballs, cuts off Graugr attacks via `sim/jobs/cover.js`), Basic Axe and Velwood items (`sim/items/lumber.js`), `Chop` universal action on `C`, job XP (`progression/JobProgress.js`, own save key, shown in the character panel), `JobSystem` and `JobFx`, 12 trees in the Training Ground, `tests/lumber.test.mjs` |
 | V1.19.0.00 | Feature: **item weight and carrying capacity**: integer-milligram `weightMg` on definitions (`sim/items/weight.js`), `Inventory.weightMg`, the fourteen display-only units Veyt to Kharvorn (`ui/weightUnits.js`), gold 31.10 g, capacity 30 Theryn (30 kg) shown but not enforced; `tests/weight.test.mjs` |
@@ -68,10 +69,12 @@ Source: `FOUNDER.md` (sections 4 to 9) and `BUILD.md`, reconciled in `FOUNDER.md
 
 | Step | Work | Needs |
 | ---- | ---- | ----- |
-| **H1** | **Done in V1.17.0.00.** Pure hunger primitive in `src/sim/hunger/`: 0 to 100 stat, drain 1 per 90 s by `dt`, tier lookup as data (Stuffed, Full, Not hungry, Hungry, Starving), versioned `serialize` / `restore`, tests. New files, not wired in | S1c, S1g |
-| **H2** | **Next (default).** Wire hunger into the player: regen, speed and stamina multipliers, status effect through `StatusSystem`, saved through the storage adapter, HUD bar and tier icon (view only) | H1, S1d |
-| H3 | Food items as data (Raw Meat, Cooked Meat) in `ItemRegistry`; Graugr drops Raw Meat (about 25%, seeded; the loot path now exists as `LootSystem`, V1.21.0.00); the carried-item location decision (`FOUNDER.md` section 11) | L2 B to D, H2 |
-| H4 | Eat action: about 1 s, hunger +15 raw or +45 cooked, +5% regen for 60 s for cooked, no eating when Stuffed | H3 |
+| **H1** | **Done in V1.17.0.00.** Pure hunger primitive in `src/sim/hunger/` (0 to 100 stat, tiers as data, versioned save, tests). New files, not wired in. Scale and eat rules are revised by H1b | S1c, S1g |
+| **H1b** | **Next (default).** Align the primitive with `FOUNDER.md` section 6: 0 to 1000 hunger points (start 850, 1 point per 9 s), separate `hpRegenMult`, `manaRegenMult`, `staminaRegenMult` (mana 1.0), per-tier speed floor 0.85, retire the per-tier `canEat` (eat allowed below the maximum, refused at the maximum), `eat(points)` reports `overeat` and `excess`, tests updated. Primitive only, still not wired in | H1 |
+| H2a | Hunger on the player and the HUD: `player.hunger`, drain in `Player.update` (not while downed or paused), fourth bar showing a percentage after HP, Mana, Stamina, versioned save `lycarius.primordia.hunger` through the adapter, respawn floor 25%, a Developer setting to set or eat hunger for testing (no food items yet). No modifiers yet | H1b, S1d |
+| H2b | Apply the tier modifiers through X1 (HP, mana, stamina regen, move speed with the 75% floor, multiplied onto the final `player.stats`); Hungry and Starving icons through `PlayerHud.setFx`; no duplicate penalties | H2a, X1 |
+| H3 | Food items as data (Raw Meat, Cooked Meat) in `ItemRegistry` with a hunger point value and a weight; Graugr drops Raw Meat through `LootSystem` (about 25%, seeded); carried food lives in the Character Inventory (settled by V1.18.0.00) | L2 B to D, H2a |
+| H4 | Eat action: about 1 s, +150 points raw or +450 cooked (provisional), +5% HP regen for 60 s for cooked; refused at 100% or while Overeating (an overflow starts Overeating, HS1) | H3, H2b |
 | B0 | Dev spawner (`BUILD.md` section 8): place any registered entity or item at the mouse, no save. Small, any time after H3 (it also helps test H) | none |
 | B1 | Stage 0 campfire: `PlacedObject`, `PlacementSystem` command, collision, versioned `lycarius.primordia.buildings` save, 2 s cook (`BUILD.md` section 4). Needs a plan-only version first | H3 |
 | H5 | Cook interaction at the campfire: Raw Meat to Cooked Meat. **Milestone reached** | H4, B1 |
@@ -79,6 +82,31 @@ Source: `FOUNDER.md` (sections 4 to 9) and `BUILD.md`, reconciled in `FOUNDER.md
 | B2 | Stage 1: Stove, Roof, station tiers, shelter check, anti-clutter cap, random buff from a seeded bag (`BUILD.md` sections 5 and 6) | B1, M1 |
 
 Not in this track (deferred): carried-goods loss on death, crafting beyond food, the injury system, Stage 2 and 3 building.
+
+## Hunger statuses and their systems (track HS)
+
+Source: `docs/proposals/Hunger-statuses.md` (the reconciled H2 proposal, reviewed against V1.21.0.00) and `FOUNDER.md` section 12 (R12 to R22). **The system comes before the status that needs it** (R19): a status row starts only when every system in its `Needs` is built. System rows are small and independent; they also help the rest of the game.
+
+| Step | Work | Needs |
+| ---- | ---- | ----- |
+| N1 | Non-lethal damage: `damageNonLethal`, a damage over time with a floor of 1 HP and a bounded budget, never calls `down()` | none |
+| X1 | Owned **temporary** stat-modifier layer: owner keys, product, total caps (speed floor 75%), recalculated on change; HP, mana and stamina regeneration, move speed, stamina cost, damage. Multiplies the final `player.stats`, composes with the permanent stat tickets (`StatTraining`) and keeps `ManaRegenEffect` working | none |
+| X2 | Max-HP decreases and owned max-HP modifiers with clamping (`syncProgression` already handles a higher maximum) | X1 |
+| X3 | Status registry: data-defined statuses (id, duration, stacking family, icon id) inside `StatusSystem`; burn and stun keep working unchanged | none |
+| X4 | **Partly built (V1.19.0.00).** Carry capacity: `carryCapacityMg` exists as one function but is a constant and is not enforced; needs a modifier input through X1 and an owner decision on what over capacity does | X1, owner decision |
+| X5 | XP multiplier hook for character and specialization XP in `XpSystem` | X1 |
+| X6 | Accuracy, evasion and hitbox model (the game has no miss mechanic yet) | combat depth design |
+| X7 | Environmental hazards (zones) | World track (W) |
+| X8 | Screen blur, a view-only effect | none |
+| HS1 | **Overeating** (overflow past 100%: 2 damage per second for 30 s, non-lethal, budget cap, no eating while active) | H1b, H2a, X3, N1 |
+| HS2 | Stuffed bag: Stamina Drain, Vomiting, Bloated (speed part only) | HS1, H2b, M1, X3, N1 |
+| HS3 | Hungry and Starving: Malnourished (15 min below 25%), Weakened (1 h), Severely Weakened (70% on entering Starving), Perishing (1 h Starving, non-lethal) | H2b, X2, X3, N1 |
+| HS4 | Famished (40% on entering Hungry; less carry capacity) | X3, X4, H2b |
+| HS5 | Full bag: Satiated, Well-Fed | H2b, M1, X3, X5 |
+| HS6 | Nausea, Evasion Penalty, Bloated hitbox, Gluttony (0.1%) | HS2, X5, X6, X8 |
+| HS7 | Nourished (environmental immunity, more max HP) | HS5, X2, X7 |
+
+Max-HP tier effects (a bonus when Stuffed, a reduction when Starving) wait for X2 and their magnitudes. All magnitudes marked provisional in the doc are tuned in one tuning pass after H2b is playable.
 
 ## Jobs path (track J)
 

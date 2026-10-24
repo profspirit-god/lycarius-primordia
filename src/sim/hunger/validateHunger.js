@@ -4,7 +4,8 @@
 // Sim code: no browser, no clock, no randomness (Claude.md 5b). Not wired into the game yet (H2 does that).
 //
 // The guardrails of the hunger law are enforced HERE, so no tier table can break them:
-//  - hunger never damages: a tier only carries multipliers and a status id, there is nothing that could hurt;
+//  - a tier never damages: it only carries multipliers and a status id. (Hunger may damage but never kill, FOUNDER.md 6b, R12, and
+//    only through statuses, non-lethal, never below 1 HP: later work, track HS);
 //  - no tier slows movement by more than 10% (`MIN_MOVE_MULT`), so a player can never be trapped;
 //  - no tier switches regeneration off (`MIN_MULT`), so hunger never stops recovery completely;
 //  - the lowest tier can always eat, so food is never a soft-lock.
