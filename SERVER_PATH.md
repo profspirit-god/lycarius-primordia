@@ -45,6 +45,7 @@ Every phase = one branch from `dev`, one or more commits, one PR, one tag. Versi
 | D11 | **Hit-stop and camera shake become view-only.** The server never slows time. | A server cannot freeze for one player. The feel changes slightly; this is a known, accepted cost. | Yes |
 | D12 | **Art style: semi-pixelated** (owner, V1.10.0.03). Sprites and tiles are pixel art at 1 world unit = 1 art pixel; effects stay smooth. Art and map plan: `docs/ART_AND_MAPS.md`. Only the collision grid (T2) is sim code; sprites and tiles are views, so no phase is blocked. | Owner decision. | Costly once art exists (tile and frame sizes) |
 | D13 | **The exe is a wrapper, not a fork.** A desktop build (S10) is a thin shell in its own `desktop/` folder with its own `package.json` that loads the same game files. The repository root stays free of dependencies. Needs owner approval before any dependency is added. | One code base and one set of tests; the browser version can never break because of the exe. | Yes |
+| D14 | **The server path is a background track** (owner resolution R1, V1.16.0.02). Multiplayer stays last; S1 steps continue one at a time between gameplay steps. | Gameplay (`FOUNDER.md`) is the active milestone; the sim stays server-ready so nothing is redone. | Yes |
 
 ---
 

@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.16.0.02 — FOUNDER.md and BUILD.md: design intent reconciled with the roadmap (docs only, no gameplay change)
+
+Two design docs written as first drafts by DeepSeek were reviewed against the repo (V1.16.0.01) and the owner's decisions. They are kept as **design intent and extra information, not the truth**; each conflict was resolved so that no existing plan is hindered.
+
+### Added
+
+- **`FOUNDER.md`**: design laws, working rhythm, primitives order, death law, hunger law and spec (five tiers, Stuffed included), food economy, anti-drift list, current milestone (gather, cook, eat, fight better), open decisions, and section 12 with owner resolutions R1 to R10.
+- **`BUILD.md`**: build system Stage 0 (campfire) and Stage 1 (stove, roof shelter, station tiers, anti-clutter cap), integration points, dev spawner, open decisions.
+- **`ROADMAP.md`**: tracks **H** (hunger and cooking) and **B** (build), default work H1.
+- **`SERVER_PATH.md`** decision D14 (background track). **`Claude.md`** doc-map rows and rule 13.
+
+### Changed
+
+- **`ROADMAP.md`**: default is H1 (was S1f); S1f is a background track; L4 and L5 parked; art stays low priority but wanted; second class allowed if deep; authority order lists the owner resolutions first.
+- **`tools/check-docs.mjs`** checks `FOUNDER.md` and `BUILD.md`. `VERSION` 1.16.0.01 to 1.16.0.02.
+
+### Notes
+
+- **Server-ready:** not applicable (docs only); the audit is unchanged.
+- Conflicts resolved: the campfire gives +5% regen (stoves add a random-buff chance on top), the Stuffed tier is in v1, the game is not browser-only (exe path S10 stays), the draft's stale inventory status was corrected.
+- Not tested: playing in a browser (no code changed).
+
 ## V1.16.0.01 — S1f-b Fireball skill presentation out of the sim: the charge and release look is a view (cleanup, no gameplay change)
 
 Second group of S1f (`SERVER_PATH.md` S1f, debt P6): the `Fireball` skill. Before, `onCharging` and `onRelease` spawned rune motes, spiralling embers, the charge light, the discharge ring, the muzzle flash, shook the camera and leaned the caster, so a headless server could not cast. Now the skill holds the numbers, the mana cost, the cooldown, the ball it spawns and the recoil impulse; the look lives in a view found by skill id.
