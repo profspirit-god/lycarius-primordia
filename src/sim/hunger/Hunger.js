@@ -4,7 +4,8 @@
 // never drains while the game is closed and gives the same result at any frame rate. It has no rng: hunger is deterministic.
 //
 // What it does NOT do, on purpose (H2 and later do these):
-//  - It does not deal damage, ever. It cannot kill: there is no such code path (the hunger law).
+//  - The Hunger class deals no damage and cannot kill. Hunger may damage but never kill (FOUNDER.md 6b, R12), and only through
+//    statuses, non-lethal (never below 1 HP): that is later work (track HS), never this class.
 //  - It does not touch Vitals, StatusSystem, items, the HUD or storage. It reports a tier (`tier.status`, `regenMult`, ...) and the
 //    caller applies it. The save is plain data; the caller writes it through the storage adapter.
 //

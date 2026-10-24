@@ -107,6 +107,7 @@ A **Developer, Spawner** option in the in-game Settings: click to place any regi
 | 4 | Removing a station | refunds nothing / partial | Partial (feels fair) |
 | 5 | Random buff on stove | yes / no | Yes, 20% (the "reserve food" payoff) |
 | 6 | Does hunger drain while the game is closed? | yes / no | No (anti-chore law) |
+| 7 | Does a campfire burn Velwood (the Lumberjack job gives it a use, `ROADMAP.md` J2)? | fuel needed / free fire | Decide with B1; fuel gives the job a sink |
 
 ## 11. Hand-offs
 
