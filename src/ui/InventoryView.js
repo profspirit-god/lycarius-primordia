@@ -5,12 +5,12 @@ import { findItem, ITEM_CATEGORIES } from "../sim/items/ItemRegistry.js";
 import { icon } from "./icons.js";
 
 export const CATEGORY_LABELS = {
-  outfit: "Outfits", aura: "Auras", effect: "Effects", emote: "Emotes", title: "Titles", equipment: "Equipment",
+  outfit: "Outfits", aura: "Auras", effect: "Effects", emote: "Emotes", title: "Titles", currency: "Currency", equipment: "Equipment",
   consumable: "Consumables", material: "Materials", quest: "Quest items", container: "Containers", misc: "Miscellaneous",
 };
 /** Icon NAMES from ui/icons.js. Items have no art yet, so a card shows its category icon (ROADMAP L1: shop item images). */
-const CATEGORY_ICONS = {
-  outfit: "user", aura: "sparkles", effect: "bolt", emote: "heart", title: "crown", equipment: "shield",
+export const CATEGORY_ICONS = {
+  outfit: "user", aura: "sparkles", effect: "bolt", emote: "heart", title: "crown", currency: "coin", equipment: "shield",
   consumable: "drop", material: "gem", quest: "star", container: "box", misc: "dot",
 };
 export const RARITY_COLORS = { common: "#9aa3b2", rare: "#5aa8ff", epic: "#c27bff", legendary: "#ffb347" };

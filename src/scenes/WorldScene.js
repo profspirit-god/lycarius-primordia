@@ -23,6 +23,7 @@ import { Progression } from "../progression/Progression.js";
 import { SkillTreePanel } from "../ui/SkillTreePanel.js";
 import { PlayerHud } from "../ui/PlayerHud.js";
 import { ProfilePanel } from "../ui/ProfilePanel.js";
+import { CharacterInventoryPanel } from "../ui/CharacterInventoryPanel.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
@@ -87,6 +88,7 @@ export class WorldScene extends Scene {
     this.buildRaidButton();
     this.tree = new SkillTreePanel(this);
     this.profile = new ProfilePanel(this);
+    this.inventoryPanel = new CharacterInventoryPanel(this); // the character's carried items (key I); reads game.inventory
     this.hud = new PlayerHud(this);
     this.fadeIn();
   }
@@ -169,6 +171,18 @@ export class WorldScene extends Scene {
   toggleProfile() {
     if (this.profile.isOpen) this.closeProfile();
     else this.openProfile();
+  }
+  /** Character Inventory (key I): items the character carries. Opens from a running game and closes back to it. */
+  openInventory() {
+    if (this.paused) return;
+    this.paused = true;
+    this.player.caster.cancel();
+    this.audio.silence();
+    this.inventoryPanel.open();
+  }
+  closeInventory() {
+    this.inventoryPanel.close();
+    this.paused = false;
   }
 
   spawn(e) {
@@ -272,11 +286,15 @@ export class WorldScene extends Scene {
     if (inp.wasPressed("Escape")) {
       if (this.settingsPanel) this.settingsPanel.requestBack();
       else if (this.profile.isOpen) this.closeProfile();
+      else if (this.inventoryPanel.isOpen) this.closeInventory();
       else if (this.tree.isOpen) this.closeTree();
       else this.setPaused(!this.paused);
     } else if (inp.wasPressed("KeyK") && (!this.paused || this.tree.isOpen)) {
       if (this.tree.isOpen) this.closeTree();
       else this.openTree();
+    } else if (inp.wasPressed("KeyI") && (!this.paused || this.inventoryPanel.isOpen)) {
+      if (this.inventoryPanel.isOpen) this.closeInventory();
+      else this.openInventory();
     }
     this.fps += (1 / Math.max(dt, 0.0001) - this.fps) * 0.1;
     this.hud.update();

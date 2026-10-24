@@ -5,10 +5,10 @@ import { Registry } from "../../core/Registry.js";
 
 /** Where an item may be owned. `account` = shared by all characters, `character` = tied to one character (class id today). */
 export const ITEM_SCOPES = ["account", "character"];
-/** Cosmetic categories first, then gameplay categories. Only categories with content are shown by a UI. */
+/** Cosmetic categories first, then gameplay categories (`currency` = coins carried by a character, e.g. gold; not the account Wallet). Only categories with content are shown by a UI. */
 export const ITEM_CATEGORIES = [
   "outfit", "aura", "effect", "emote", "title",
-  "equipment", "consumable", "material", "quest", "container", "misc",
+  "currency", "equipment", "consumable", "material", "quest", "container", "misc",
 ];
 export const ITEM_RARITIES = ["common", "rare", "epic", "legendary"];
 /** What a definition may allow. The inventory service (a later phase) decides whether an action is valid right now. */
