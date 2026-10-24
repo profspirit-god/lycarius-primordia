@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.17.0.00 — H1: the pure hunger primitive (feature, new files only, nothing user-visible)
+
+First step of track H (`ROADMAP.md`, design in `FOUNDER.md` section 6): the keystone of the gather, cook, eat, fight milestone. A hunger stat that falls with sim time and is raised by eating, with five tiers as data. It is **not wired into the game**: nothing creates a `Hunger` until H2, so there is no change to play.
+
+### Added
+
+- **`src/sim/hunger/Hunger.js`**: `Hunger` (`value`, `tier`, `tierId`, `canEat`, `regenMult`, `moveMult`, `staminaRegenMult`, `status`). `update(dt)` drains `dt / drainSeconds` and floors at 0, returning `{ from, to }` when a tier changed (plain data for a later event) or null; a bad `dt` is ignored. `eat(amount)` adds up to `max` and returns `{ ok, gained, value, change }`, or `cannot_eat` (Stuffed refuses) or `invalid_amount`; a refused call changes nothing. `serialize()` and `Hunger.restore(def, raw)` give a versioned plain save (`corrupt`, `newer_version`, `mismatch` are refused with a reason and nothing is created). `tierFor(def, value)` is the pure lookup. All state is `#private`.
+- **`src/sim/hunger/validateHunger.js`**: `validateHungerDef` / `normalizeHungerDef`. The hunger-law guardrails are limits here, so no tier table can break them: a tier has no damage field, `moveMult` is at least 0.9 (never more than -10% speed), regen multipliers are at least 0.1 (never off), one tier starts at 0 and the lowest tier can eat (food is never a soft-lock). Tiers are sorted high to low whatever order the content lists them.
+- **`src/sim/hunger/definition.js`**: `PRIMORDIA_HUNGER`, the tuning as data: max 100, 1 point per 90 s, tiers Stuffed 90, Full 60, Not hungry 25, Hungry 8, Starving 0 with the multipliers of `FOUNDER.md` section 6. All numbers live in this file only.
+- **`tests/hunger.test.mjs`** (24 tests): the tier table, the validator and its guardrails, exact tier edges, the drain math (100 to 0 in 9000 s), tier-change reports, frame-rate independence (60, 30 and 1 steps per second), eating (cap, Stuffed refuses, bad amounts), a save round trip through the storage adapter contract, every refused save shape, a Node child-process import with no globals, and a source scan.
+
+### Changed
+
+- `npm test` runs seventeen files. `VERSION` 1.16.0.02 to 1.17.0.00. README (Hunger row), ROADMAP (H1 done, default now H2), `Claude.md` (rule 3 test list, code map), `docs/ENGINES_AND_SYSTEMS.md` (new row), `FOUNDER.md` (R11, decision 6, session log).
+
+### Notes
+
+- **Default taken, flagged (R11):** `start` is **85 (Full)**, not the 100 of the first draft. At 100 a new character would begin Stuffed (cannot eat, -10% move speed) for its first 15 minutes. One number in `definition.js`.
+- **Flagged for tuning (`FOUNDER.md` section 11, decision 6):** one Cooked Meat (+45) eaten at 55 or more reaches Stuffed, and Stuffed costs -10% move speed until the value falls under 90 (up to 15 min). Raw Meat (+15) only reaches it from 75. This may feel like a chore; decide in the tuning doc once H2 is playable.
+- **Server-ready:** yes. Zero audit hits in the new files; totals unchanged (`random` 93, `present` 198). No rng is used: hunger is deterministic. The caller must pass only sim `dt`, so hunger never drains while the game is closed (the "no offline drain" leaning).
+- Not tested: playing in a browser (nothing is wired in). The tests are the proof.
+
 ## V1.16.0.02 — FOUNDER.md and BUILD.md: design intent reconciled with the roadmap (docs only, no gameplay change)
 
 Two design docs written as first drafts by DeepSeek were reviewed against the repo (V1.16.0.01) and the owner's decisions. They are kept as **design intent and extra information, not the truth**; each conflict was resolved so that no existing plan is hindered.
