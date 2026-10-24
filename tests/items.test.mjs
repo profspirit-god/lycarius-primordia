@@ -10,6 +10,7 @@ import {
 import { COSMETIC_ITEMS } from "../src/sim/items/cosmetics.js";
 import { GAMEPLAY_ITEMS } from "../src/sim/items/gameplay.js";
 import { LUMBER_ITEMS } from "../src/sim/items/lumber.js";
+import { TICKET_ITEMS } from "../src/sim/items/tickets.js";
 import { SkillRegistry } from "../src/skills/SkillRegistry.js";
 import { ClassRegistry } from "../src/classes/ClassRegistry.js";
 import { SpecBonusRegistry } from "../src/progression/SpecBonuses.js";
@@ -109,7 +110,7 @@ test("allItems is ordered by id, whatever the registration order", () => {
 test("content: the nine Shop cosmetics are registered, account-owned, single, equippable and valid", () => {
   assert.equal(COSMETIC_ITEMS.length, 9);
   assert.equal(new Set(COSMETIC_ITEMS.map((d) => d.id)).size, 9, "ids are unique");
-  assert.equal(allItems().length, 9 + GAMEPLAY_ITEMS.length + LUMBER_ITEMS.length, "the cosmetics, the gameplay items (gold) and the lumber items are all that is registered");
+  assert.equal(allItems().length, 9 + GAMEPLAY_ITEMS.length + LUMBER_ITEMS.length + TICKET_ITEMS.length, "the cosmetics, gold, the lumber items and the stat tickets are all that is registered");
   for (const d of COSMETIC_ITEMS) {
     assert.deepEqual(problems(d), [], d.id);
     assert.deepEqual([d.scope, d.maxStack, [...d.actions]], ["account", 1, ["equip"]], d.id);

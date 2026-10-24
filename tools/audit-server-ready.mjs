@@ -16,7 +16,7 @@ const BASELINE = join(ROOT, "tools", "server-ready-baseline.json");
 const SIM_DIRS = ["sim", "entities", "skills", "classes", "progression", "content"];
 const SIM_FILES = [
   "systems/Vitals.js", "systems/SkillCaster.js", "systems/DamageSystem.js", "systems/StatusSystem.js", "systems/ExplosionSystem.js",
-  "systems/XpSystem.js", "systems/RaidSystem.js", "core/EventBus.js", "core/Registry.js", "core/math.js", "types.js",
+  "systems/XpSystem.js", "systems/RaidSystem.js", "systems/LootSystem.js", "core/EventBus.js", "core/Registry.js", "core/math.js", "types.js",
 ];
 
 const RULES = {

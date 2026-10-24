@@ -11,6 +11,7 @@ import { TrainingDummy } from "../entities/TrainingDummy.js";
 import { Velthorn } from "../entities/Velthorn.js";
 import { TRAINING_TREES } from "../sim/jobs/cover.js";
 import { JobProgress } from "../progression/JobProgress.js";
+import { Merchant } from "../entities/Merchant.js";
 import { Camera } from "../systems/Camera.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
 import { Lights } from "../systems/Lights.js";
@@ -27,9 +28,13 @@ import { SkillTreePanel } from "../ui/SkillTreePanel.js";
 import { PlayerHud } from "../ui/PlayerHud.js";
 import { ProfilePanel } from "../ui/ProfilePanel.js";
 import { CharacterInventoryPanel } from "../ui/CharacterInventoryPanel.js";
+import { MerchantPanel } from "../ui/MerchantPanel.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
 import { rand, TAU } from "../core/math.js";
+
+/** Where John the Merchant stands on the training ground (px from the start point): left of the player, clear of the dummy. */
+const MERCHANT_POS = { x: -230, y: -120 };
 
 /**
  * The playable world. Acts as the `world` object handed to entities and skills:
@@ -49,6 +54,7 @@ export class WorldScene extends Scene {
   enter(game) {
     super.enter(game);
     this.input = game.input;
+    this.training = game.training; // stat tickets used so far (sim/stats/StatTraining.js)
     this.events = new EventBus();
     this.camera = new Camera();
     this.particles = new ParticleSystem();
@@ -63,7 +69,7 @@ export class WorldScene extends Scene {
     this.paused = false;
     this.fps = 60;
 
-    this.inventory = game.inventory; // the ownership service; the job rules read it (world.inventory), the client owns the storage behind it
+    this.inventory = game.inventory; // the ownership service; the job rules (JobSystem) and LootSystem read it (world.inventory), the client owns the storage behind it
     this.jobProgress = new JobProgress(this.classId, createLocalStorageAdapter(JOBS_KEY)); // job XP of this character (J1)
     createSystems(this, SIM_SYSTEMS); // the one ordered list: damage, status, explosions, xp (systems/pipeline.js)
     createSystems(this, VIEW_SYSTEMS); // then the view systems; they read events and never change sim state
@@ -71,6 +77,7 @@ export class WorldScene extends Scene {
     this.cls = cls;
     this.progression = new Progression(cls, createLocalStorageAdapter(PROGRESS_KEY)); // the client owns the browser storage; the sim only sees the adapter
     this.player = this.spawn(new Player(cls, this.progression));
+    this.player.setTraining(this.training?.bonus(this.classId) ?? {}); // permanent stat bonus from used stat tickets
     this.controller = new PlayerController(this);
     this.progression.onEvent = (e) => this.onProgress(e);
     this.offLevel = this.events.on("levelup", (e) => this.levelFx(e));
@@ -88,6 +95,7 @@ export class WorldScene extends Scene {
     for (const t of TRAINING_TREES) this.spawn(new Velthorn(t.x, t.y)); // the training-ground forest (J1)
     this.jobs.ensureStarterTool(this.player); // a character that never had one gets the Basic Axe, once
     this.jobs.update();
+    this.merchant = this.spawn(new Merchant(MERCHANT_POS.x, MERCHANT_POS.y)); // John the Merchant
     this.raid = new RaidSystem(this);
     this.audio = new AudioSystem(this);
     this.camera.x = this.player.x;
@@ -97,6 +105,7 @@ export class WorldScene extends Scene {
     this.tree = new SkillTreePanel(this);
     this.profile = new ProfilePanel(this);
     this.inventoryPanel = new CharacterInventoryPanel(this); // the character's carried items (key I); reads game.inventory
+    this.merchantPanel = new MerchantPanel(this); // John's shop (key T next to him)
     this.hud = new PlayerHud(this);
     this.fadeIn();
   }
@@ -190,6 +199,18 @@ export class WorldScene extends Scene {
   }
   closeInventory() {
     this.inventoryPanel.close();
+    this.paused = false;
+  }
+  /** John's shop (key T within his range). Opens from a running game and closes back to it. */
+  openMerchant() {
+    if (this.paused || !this.merchant.canTrade(this.player)) return;
+    this.paused = true;
+    this.player.caster.cancel();
+    this.audio.silence();
+    this.merchantPanel.open();
+  }
+  closeMerchant() {
+    this.merchantPanel.close();
     this.paused = false;
   }
 
@@ -295,6 +316,7 @@ export class WorldScene extends Scene {
       if (this.settingsPanel) this.settingsPanel.requestBack();
       else if (this.profile.isOpen) this.closeProfile();
       else if (this.inventoryPanel.isOpen) this.closeInventory();
+      else if (this.merchantPanel.isOpen) this.closeMerchant();
       else if (this.tree.isOpen) this.closeTree();
       else this.setPaused(!this.paused);
     } else if (inp.wasPressed("KeyK") && (!this.paused || this.tree.isOpen)) {
@@ -303,6 +325,9 @@ export class WorldScene extends Scene {
     } else if (inp.wasPressed("KeyI") && (!this.paused || this.inventoryPanel.isOpen)) {
       if (this.inventoryPanel.isOpen) this.closeInventory();
       else this.openInventory();
+    } else if (inp.wasPressed("KeyT") && (!this.paused || this.merchantPanel.isOpen)) {
+      if (this.merchantPanel.isOpen) this.closeMerchant();
+      else this.openMerchant();
     }
     this.fps += (1 / Math.max(dt, 0.0001) - this.fps) * 0.1;
     this.hud.update();

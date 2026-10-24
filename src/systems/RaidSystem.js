@@ -83,6 +83,7 @@ export class RaidSystem {
     }
     if (this.alive() === 0) {
       this.wait = INTERMISSION;
+      this.world.events.emit("raid:cleared", { number: this.number, tier: this.tier, total: this.total }); // LootSystem pays every player in the world
       this.world.pushBanner(`RAID ${this.number} CLEARED`, `Next raid in ${INTERMISSION}s`, 2.8);
     }
   }

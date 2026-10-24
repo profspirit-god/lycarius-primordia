@@ -2,6 +2,46 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.21.0.00 — Gold drops, raid rewards, John the Merchant and stat tickets (feature)
+
+Gold now has a reason. Graugr drop it, every cleared raid pays it, and a new NPC, **John the Merchant**, sells **stat tickets** for it. Using a ticket raises one stat for good. Press **T** next to John to trade, **I** to use tickets from your inventory.
+
+### Added
+
+- **Gold drops** (`src/systems/LootSystem.js`, sim): a Graugr killed by a player drops **1 to 10 gold** (one integer roll from `world.rng`, each value equally likely), straight into the killer's inventory. A cleared raid pays **20 + 10 x its number** (raid 1 = 30, raid 2 = 40, ...) to every player in the world, no roll. Stopping a raid pays nothing. The system emits `loot { item, amount, owner, from, ok, reason?, total?, x, y }`; `src/systems/LootFx.js` (view) shows it as floating "+7 gold" text. `RaidSystem` now emits `raid:cleared` once per cleared raid.
+- **Stat tickets** (`src/sim/items/tickets.js`, data): one ticket for **every stat the sim has**, seven in all: Max Health +5, Health Regen +0.05/s, Max Mana +10, Mana Regen +0.1/s, Max Stamina +10, Stamina Regen +0.8/s, Move Speed +5. Each is a consumable (1 g), at most **10 per stat** per character. The six core attributes (Strength ... Luck) are placeholders in the character panel and have no ticket yet.
+- **Stat training** (`src/sim/stats/StatTraining.js`): which tickets a character has used, in its **own versioned save** (`lycarius.primordia.training`), never the progression or inventory save. `use()` takes the ticket out of the inventory and raises the stat; a maxed stat refuses before the ticket is taken. The bonus is derived (tickets used x gain), never saved, and exact (no floating point drift).
+- **`Player.setTraining(bonus)`**: stats and vitals include the bonus (all seven stats; a higher maximum also fills what it added and never revives a downed player). Movement now reads `player.stats.speed`, not the class base.
+- **John the Merchant**: `src/entities/Merchant.js` (sim body: solid, cannot be hit, `canTrade(player)` within 110 px edge to edge), `src/view/MerchantView.js` (a gold-brown robed figure, his name, "Press T to trade" when close), `src/sim/shop/john.js` (his offers, prices and `buy`). He stands left of the start point on the Training Grounds.
+- **The sale**: `buy(inv, training, ownerId, offerId, { near })` uses the new **`Inventory.exchange`**, so gold out and ticket in happen in **one step** (all or nothing, saved once, capacity checked on the result). John does not sell a ticket you could not use: tickets used plus carried may not pass the cap.
+- **UI**: `ui/MerchantShopView.js` + `ui/MerchantPanel.js` (his window: your gold, seven offers, a reason on every disabled button). The Character Inventory now selects a slot, shows its detail and a **Use ticket** button on tickets (`ui/CharacterInventoryView.js`, `ui/CharacterInventoryPanel.js`).
+- **Tests**: `tests/loot.test.mjs` (10), `tests/training.test.mjs` (10), `tests/merchant.test.mjs` (12), one more in `tests/character-inventory.test.mjs`.
+
+### Prices (gold per ticket, one table in `sim/shop/john.js`)
+
+| Ticket | Price | Why |
+| ------ | ----- | --- |
+| Max Health (+5) | 150 | health is the scarcest stat (base 50): +10% |
+| Health Regen (+0.05/s) | 200 | +50% of the base 0.1/s: a big gain |
+| Max Mana (+10) | 100 | +10% |
+| Mana Regen (+0.1/s) | 120 | +10% |
+| Max Stamina (+10) | 100 | +10% |
+| Stamina Regen (+0.8/s) | 100 | +10% |
+| Move Speed (+5) | 250 | rare; +2% of 230 |
+
+Raid 1 is worth about 40 gold (2 Graugr at about 5.5 each, plus 30), raid 5 about 125; one ticket takes a few raids early on. Maxing one stat costs 10 x its price; maxing all seven costs 10,200.
+
+### Changed
+
+- `ItemRegistry` registers the seven tickets; `content/index.js`, `pipeline.js` (`loot` after `xp`, `lootFx` in the view group), `view/index.js` (`merchant`), `WorldScene` (merchant, panel, keys, `world.training`; `world.inventory` was already created there for the Lumberjack job and now also serves `LootSystem`), `main.js` (`game.training`), `LocalStorageAdapter.js` (`TRAINING_KEY`), `tools/audit-server-ready.mjs` (LootSystem is sim). `npm test` runs twenty-three files. `VERSION` 1.20.0.00 to 1.21.0.00. `Player.isPlayer` is one flag shared by `JobSystem` and `LootSystem`.
+
+### Notes
+
+- **Decisions taken, flagged:** (1) gold goes **straight into the inventory** (no coin on the ground); a full inventory refuses it and **the gold is lost**, shown in red. (2) The Graugr roll is a plain uniform roll on `world.rng`, not a Marble Bag draw; M2 and later can replace it. (3) Prices, the 10-per-stat cap and the raid formula are mine; each is one number. (4) Tickets cannot be sold back or traded; the proximity rule is the buyer's range to John.
+- **Not touched:** Graugr drop rates (none existed), combat, skills, the Home wallet and Shop, the progression save.
+- **Server-ready:** yes. New sim files have zero audit hits, the totals are unchanged, and `RaidSystem` reads no `world.player` (a raid reward goes to every player in the entity list, R7). The raid still uses `world.player` for spawn positions, as before.
+- **Tested:** `npm test`, the audit, `node --check`, the docs check, and a Playwright run in Chromium: three raids paid 168 gold (drops 2 to 9, rewards 30, 40, 50), John sold a Max Health ticket for 150, using it moved max health from 50 to 55, T far from John did nothing, and the bonus and the gold were still there after a reload, with no console errors. Not tested: other browsers, touch, or a long play session.
+
 ## V1.20.0.00 — Lumberjack job: Velthorn trees, Velwood, the Basic Axe and job XP (feature)
 
 The first **job**, separate from your class: chop Velthorn trees in the Training Ground with a Basic Axe, collect Velwood, and level the Lumberjack job. Job XP has its own save and its own bar in the character panel; it never touches character or specialization XP.
