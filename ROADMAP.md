@@ -1,20 +1,21 @@
 # Roadmap
 
-Current version: **V1.16.0.01**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
+Current version: **V1.16.0.02**. Completed work is recorded in `CHANGELOG.md`; this file lists what is planned. Order is a guide, not a promise, and each step ships as its own version.
 
 ## Choosing work (read this when the user does not know what to work on)
 
-Procedure for any Claude session: (1) read this section, (2) check the `Needs` of the candidate in its table below, (3) recommend one item and name two alternatives, (4) before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`node tools/sec.mjs docs/MMORPG_GUIDELINE.md G2`). The guideline is **a guide, not the truth**: its evidence is unmeasured, and the authority order is `Claude.md` > `SERVER_PATH.md` decisions > `ASSESSMENT.md` > guideline. Keep this table current: when a step ships, update its row.
+Procedure for any Claude session: (1) read this section, (2) check the `Needs` of the candidate in its table below, (3) recommend one item and name two alternatives, (4) before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`node tools/sec.mjs docs/MMORPG_GUIDELINE.md G2`). The guideline is **a guide, not the truth**: its evidence is unmeasured, and the authority order is `Claude.md` > owner resolutions (`FOUNDER.md` section 12) > `SERVER_PATH.md` decisions > `ASSESSMENT.md` > `FOUNDER.md` / `BUILD.md` design intent > guideline. Keep this table current: when a step ships, update its row.
 
 | Candidate | Needs | Guideline | Why pick it |
 | --------- | ----- | --------- | ----------- |
-| **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Default.** Critical path: the next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
+| **H1 Hunger primitive** (`FOUNDER.md` section 6, track H below) | S1c (done), S1g (done) | G1, G5 | **Default** since V1.16.0.02 (owner resolution R2). New files only in `src/sim/hunger/`, not wired in, so it cannot break anything. Keystone of the cook, eat, fight milestone |
+| **S1f Presentation out of the sim** (`SERVER_PATH.md` S1f) | S1d (done in V1.12.0.03) | G3, G5 | **Background track** (R1): take one group now and then between gameplay steps. The next server step, one group per version. The sim part emits plain-data events; drawing and particles move to a view by `kind` (`src/view/`). Groups 1 (`FireballProjectile`, V1.12.0.05) and 2 (`Fireball`, V1.16.0.01) are done. Next group: `FlameShieldEffect` (385 lines, the most `present` hits after `Graugr`) |
 | L2 Items and inventory data model (`docs/proposals/Inventory-and-ownership.md`) | none | G1, G5 | Phases B (definitions), C (ownership state, separate versioned save) and D (read-only Home Account Inventory, client `Inventory` created in `main.js`) done in V1.13.0.00 to V1.15.0.00. Next: L4 (Shop buy flow, needs the currency-scope decision first) or L3 (customization, makes Equip real). Unlocks L3, L4, L5 and M4 |
 | M1 Pure bag primitive in `src/sim/bag/` | none (new files, not wired in) | G1 | **Done in V1.16.0.00** (`Bag`, `validateBagDef`, `tests/bag.test.mjs`). Next in track M is M2 (Fireball crit from a per-caster bag): its Needs are green, but it waits for two owner decisions, the crit rate (12% via a 22 + 3 pool, or a new 33%) and the bag scope (per attacker or per skill) |
-| A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | Art production can start now (sizes fixed) |
+| A1 / T1 art and map groundwork | S1f for A1, A2 for T1 | G3 | **Low priority, wanted** (R3): the game gets its own artwork. A feature whose effect really needs a sprite pulls just that asset forward. Art production can start now (sizes fixed) |
 | Combat depth items (section "Next: combat depth") | none; follow `Claude.md` 5b | G5 | Content work that never blocks S1 |
 
-Default when the user says "you decide": **S1f** (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
+Default when the user says "you decide": **H1** (then H2 and the rest of track H in order). When the user wants server work, S1f (next group: `FlameShieldEffect`). Never start an item whose `Needs` are not green, and never more than one step per version.
 
 ## Done
 
@@ -43,6 +44,7 @@ Default when the user says "you decide": **S1f** (next group: `FlameShieldEffect
 | V1.11.2.01 | Cleanup (no gameplay change): **S1b seeded RNG**, `src/sim/rng.js` (mulberry32) and `world.rng`; every gameplay roll moved off `Math.random`, visual randomness stays; `tests/rng.test.mjs` (10 tests: same-seed Fireball lists, three scripted fights, `Math.random` independence); audit `random` debt 160 to 139 |
 | V1.12.0.00 | Fix: Home modal X. Feature: buff visual language (circles = regen, ribbons = resistance, dashes = motion), sectioned Settings (`ui/SettingsPanel.js`) with fixed Reset / Save / Back footer and unsaved-changes prompt; dummy and developer options moved to the in-game Settings. |
 | V1.12.0.01 | Docs: `docs/ENGINES_AND_SYSTEMS.md`, a phased catalogue of engines and systems (early, mid, scale) with repo status; referenced from `Claude.md` rule 11 and the doc map. Guideline, not truth. |
+| V1.16.0.02 | Docs only (no gameplay change): `FOUNDER.md` and `BUILD.md` added (design intent for hunger, death, cooking, stations; first drafts by DeepSeek, reconciled with this repo), owner resolutions R1 to R10 in `FOUNDER.md` section 12, new tracks H and B below, default work now H1, S1f a background track, L4 and L5 parked, doc map and rule 13 in `Claude.md` |
 | V1.16.0.01 | Cleanup (no gameplay change): **S1f-b Fireball skill presentation out of the sim**, `Fireball` is sim only, its charge and release look moved to `view/FireballCastView.js` behind `SkillViews` (views by skill id), new event `skill:charging`, `cast` carries `aim` and `origin`, `tests/skill-view.test.mjs` (8 tests); audit `present` 204 to 198, `random` 120 to 93 |
 | V1.16.0.00 | Feature (new files only, nothing user-visible): **M1 bag primitive**, `src/sim/bag/` (`Bag`: tokens dealt as a shuffled cycle and drawn without replacement, `refill_shuffle` / `no_refill`, versioned `serialize` / `restore`; `validateBagDef`), `tests/bag.test.mjs` (24 tests); not wired into any skill, audit unchanged (zero hits in the new files) |
 | V1.15.0.00 | Feature: **L2 phase D**, read-only Home Account Inventory (`ui/InventoryView.js`, `HomeScene.openInventory`): cards by category, data-driven tabs, item detail, empty / unavailable / newer-version / repaired states, Equip shown disabled; client `Inventory` created in `main.js` (`game.inventory`, console `lycarius.inventory`); `tests/inventory-view.test.mjs` (11 tests) |
@@ -54,9 +56,27 @@ Default when the user says "you decide": **S1f** (next group: `FlameShieldEffect
 | V1.12.0.03 | Cleanup (no gameplay change): **S1d damage out of the view**, new `DamageSystem` applies every `hit` through `target.onHit`; `HitEffects` and `BurnFx` are visuals only and set `flash` and `glow`; `onHit` / `onDot` of Player, Graugr and TrainingDummy are sim only; `systems/pipeline.js` is the one ordered list of systems; `tests/damage.test.mjs` (9 tests); audit debt unchanged. M2 is now unblocked (S1b and S1d done) |
 | V1.12.0.02 | Cleanup (no gameplay change): **S1c sim clock**, `world.time` advanced per sim step, the dummy's DPS readout moved off `performance.now`; `onHit` / `onDot` receive the world; `tests/clock.test.mjs` (4 tests); audit `clock` debt 6 to 3 (the rest is draw code) |
 
+## Hunger, cooking and build path (tracks H and B)
+
+Source: `FOUNDER.md` (sections 4 to 9) and `BUILD.md`, reconciled in `FOUNDER.md` section 12. Milestone: **gather, cook, eat, fight better.** Each row is its own version; start one only when its `Needs` are green. All new code follows `Claude.md` 5b (sim only, `dt`, seeded RNG, storage adapter, plain data).
+
+| Step | Work | Needs |
+| ---- | ---- | ----- |
+| **H1** | Pure hunger primitive in `src/sim/hunger/`: 0 to 100 stat, drain 1 per 90 s by `dt`, tier lookup as data (Stuffed, Full, Not hungry, Hungry, Starving), versioned `serialize` / `restore`, tests. New files, not wired in | S1c, S1g |
+| H2 | Wire hunger into the player: regen, speed and stamina multipliers, status effect through `StatusSystem`, saved through the storage adapter, HUD bar and tier icon (view only) | H1, S1d |
+| H3 | Food items as data (Raw Meat, Cooked Meat) in `ItemRegistry`; Graugr drops Raw Meat (about 25%, seeded); the carried-item location decision (`FOUNDER.md` section 11) | L2 B to D, H2 |
+| H4 | Eat action: about 1 s, hunger +15 raw or +45 cooked, +5% regen for 60 s for cooked, no eating when Stuffed | H3 |
+| B0 | Dev spawner (`BUILD.md` section 8): place any registered entity or item at the mouse, no save. Small, any time after H3 (it also helps test H) | none |
+| B1 | Stage 0 campfire: `PlacedObject`, `PlacementSystem` command, collision, versioned `lycarius.primordia.buildings` save, 2 s cook (`BUILD.md` section 4). Needs a plan-only version first | H3 |
+| H5 | Cook interaction at the campfire: Raw Meat to Cooked Meat. **Milestone reached** | H4, B1 |
+| DL1 | Respawn delay (tuning constant), the next step of the death law (`FOUNDER.md` section 5) | none |
+| B2 | Stage 1: Stove, Roof, station tiers, shelter check, anti-clutter cap, random buff from a seeded bag (`BUILD.md` sections 5 and 6) | B1, M1 |
+
+Not in this track (deferred): carried-goods loss on death, crafting beyond food, the injury system, Stage 2 and 3 building.
+
 ## Server path (road to online)
 
-The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decisions, an audit of today's code, ten phases with exact steps and "done when" tests, hosting, costs, security and legal flags. Summary:
+Since V1.16.0.02 the server path is a **background track** (multiplayer comes last, `FOUNDER.md` R1): one step now and then between gameplay steps, never abandoned, and every new gameplay file stays server-ready. The full contract is **[SERVER_PATH.md](SERVER_PATH.md)**: architecture decisions, an audit of today's code, ten phases with exact steps and "done when" tests, hosting, costs, security and legal flags. Summary:
 
 | Phase | Version | Goal | Sessions (rough) |
 | ----- | ------- | ---- | ---------------- |
@@ -112,8 +132,8 @@ The lobby shell exists with placeholder data. Everything below plugs into it wit
 | L1 | **Partly done in V1.8.0.00** (scenery, Mode Select video, card pictures, training loading art; lazy loader `lobby/assets.js` with placeholder fallback). Still to do: Home character art (replace the cylinder), shop item images, profile avatar, per-mode videos, loading art for Campaign and Live | `HomeScene.render`, `Shop` cards, `ART` / `MODES[].pic` / `LOADING[].image` in `lobbyData.js` | Art from the user |
 | L2 | Items and inventory data model: items as definitions in a `Registry` (`ItemRegistry`), registered in `content/index.js`; versioned save | Inventory button (`HomeScene.openInventory`, read only) | None. **Phases B, C and D done** (V1.13.0.00 definitions and registry; V1.14.0.00 ownership state and separate save; V1.15.0.00 Home Account Inventory); phases E to I in the inventory proposal |
 | L3 | Character customization: pick outfit / aura / skill effect and apply it in `Player.draw` / `drawCylinder` tint and `drawAura` | Character button; Shop cosmetics | L2 |
-| L4 | Wallet persistence and the Shop buy flow (`Wallet.spend`, ownership check, versioned save), then server-side checks | `Wallet.js`, `HomeScene.openShop` (`data-a="buy"`) | L2 |
-| L5 | Genesis Path: reward track data (free and premium lanes), XP source (play time / quests), claim UI. Subscription price and model are the user's decision | `GENESIS_PATH`, `HomeScene.openGenesis` | L2, L4 |
+| L4 | **Parked** until trade and crafting exist (R4). Wallet persistence and the Shop buy flow (`Wallet.spend`, ownership check, versioned save), then server-side checks | `Wallet.js`, `HomeScene.openShop` (`data-a="buy"`) | L2 |
+| L5 | **Parked** (R4). Genesis Path: reward track data (free and premium lanes), XP source (play time / quests), claim UI. Subscription price and model are the user's decision | `GENESIS_PATH`, `HomeScene.openGenesis` | L2, L4 |
 | L6 | Season Info and Rank: season calendar, ranked ladder and tiers | Bottom row placeholders | Rank needs V2.0.0.00 (server) |
 | L7 | Messages inbox: subscribe the bell to events (system, creator, events); unread dot | `HomeScene.openMessages`, `MESSAGES` | EventBus |
 | L8 | Profile and login (Google sign-in), friends, guild | Profile circle, `PROFILE` | V2.0.0.00 |
@@ -133,7 +153,7 @@ Rules for this area: keep content as data in `lobbyData.js` (or registries once 
 - More status effects on the new `StatusSystem` (any skill can offer one through the `burn` field on its `hit` event).
 - Skill hotkey rebinding and a Settings row for it.
 - Make character level matter (stat growth per level) and add a respec option for the specialization tree.
-- Second class and a second specialization element; explosions that can ignite; clash rules for other projectile types.
+- Second class and a second specialization element, **deep not wide** (R5): a class must reach the Mage depth bar (charge curves, previews, statuses, clash, AI modes, spec tree), never a short kit; lower priority than track H; explosions that can ignite; clash rules for other projectile types.
 
 ## Art and maps (V1.10.0.03, plan only)
 
@@ -151,7 +171,7 @@ Style: **semi-pixelated** (pixel-art sprites and tiles, smooth effects); 32 px t
 | T4 | Two zones, transitions, lazy zone loading | T3, L10 |
 | T5 | Dev overlay: collision, spawns, grid cells | T2 |
 
-Art production can start now (sizes are fixed); nothing in A or T blocks S1.
+Art production can start now (sizes are fixed); nothing in A or T blocks S1. Priority is low but the artwork is wanted (R3): pull a sprite forward only when an effect needs it.
 
 ## Then: world
 
@@ -160,7 +180,7 @@ Art production can start now (sizes are fixed); nothing in A or T blocks S1.
 
 ## Later
 
-1. More classes and skills; cooldowns and a skill bar.
+1. More classes and skills (deep, see R5); cooldowns and a skill bar.
 2. Progression (levels and specialization exist; still to do): stats, items, inventory.
 2b. **Campaign** (single-player story) and **Live Server** (online open world) replace the menu placeholders.
 3. NPCs, dialogue, quests and branching story.
