@@ -9,6 +9,8 @@ import { DamageSystem } from "./DamageSystem.js";
 import { StatusSystem } from "./StatusSystem.js";
 import { ExplosionSystem } from "./ExplosionSystem.js";
 import { XpSystem } from "./XpSystem.js";
+import { JobSystem } from "../sim/jobs/JobSystem.js";
+import { JobFx } from "./JobFx.js";
 import { HitEffects } from "./HitEffects.js";
 import { BurnFx } from "./BurnFx.js";
 import { ManaRegenFx } from "./ManaRegenFx.js";
@@ -23,6 +25,7 @@ export const SIM_SYSTEMS = [
   ["status", StatusSystem], // hit -> stun / ignition; update() counts burns and stuns down
   ["explosions", ExplosionSystem], // explosion -> aoe hit events
   ["xp", XpSystem], // hit / burn / cast -> player XP; reads world.player when an event arrives
+  ["jobs", JobSystem], // chop -> tree, job XP, Velwood into the Inventory; keeps each player's `toolId` current (J1)
 ];
 
 export const VIEW_SYSTEMS = [
@@ -32,6 +35,7 @@ export const VIEW_SYSTEMS = [
   ["dodgeFx", DodgeFx],
   ["explosionFx", ExplosionFx],
   ["blastFx", BlastFx],
+  ["jobFx", JobFx], // J1: chop sparks, chips, "+XP" and "+Velwood" numbers, job level-up banner
   ["entityViews", EntityViews], // S1f: views by entity kind (fireball so far); update() after the entities, draw() in render
   ["skillViews", SkillViews], // S1f: views by skill id (fireball so far); fed by `skill:charging` and `cast`
 ];

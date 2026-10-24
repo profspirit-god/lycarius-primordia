@@ -1,4 +1,5 @@
 import { Entity } from "./Entity.js";
+import { firstCover, pushOutOfCover } from "../sim/jobs/cover.js";
 import { Vitals } from "../systems/Vitals.js";
 import { scaled as n } from "../systems/ParticleSystem.js";
 import { drawCylinder } from "../render/drawCylinder.js";
@@ -316,6 +317,7 @@ export class Graugr extends Entity {
       dy = p.y - this.y,
       d = Math.hypot(dx, dy) || 1;
     if (d - p.radius > this.radius + GRAUGR.barrage.reach) return;
+    if (firstCover(world, this.x, this.y, p.x, p.y)) return; // a tree between soaks the arms
     this.strike(world, p, GRAUGR.barrage.damage, { dx: dx / d, dy: dy / d, charge: 0.2, aoe: true }); // aoe: no hit-stop spam on repeated ticks
   }
 
@@ -329,6 +331,8 @@ export class Graugr extends Entity {
       along = rx * c + ry * s,
       side = Math.abs(-rx * s + ry * c);
     if (along < 0 || along > K.length + p.radius || side > K.half + p.radius) return;
+    const cover = firstCover(world, this.x, this.y, p.x, p.y);
+    if (cover) return void this.strike(world, cover, K.damage, { dx: c, dy: s, charge: 0.9 }); // the tree takes the poke
     this.strike(world, p, K.damage, { dx: c, dy: s, charge: 0.9 });
   }
 
@@ -351,6 +355,12 @@ export class Graugr extends Entity {
         hit = true;
         travel = clamp(along - r - 2, 0, L.distance);
       }
+    }
+    const tree = firstCover(world, this.x, this.y, this.x + dx * travel, this.y + dy * travel),
+      ahead = tree ? (tree.x - this.x) * dx + (tree.y - this.y) * dy : 0;
+    if (tree && ahead > 0) {
+      travel = clamp(ahead - tree.radius - this.radius - 2, 0, travel); // the dash stops at a tree and cannot reach the player behind it
+      hit = false;
     }
     const sx = this.x,
       sy = this.y;
@@ -434,6 +444,7 @@ export class Graugr extends Entity {
         this.y += (dy / d) * push;
       }
     }
+    pushOutOfCover(world, this); // trees are solid
   }
 
   deathFx(world) {

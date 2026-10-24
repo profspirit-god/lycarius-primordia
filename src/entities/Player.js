@@ -17,7 +17,7 @@ const RESPAWN_TIME = 3; // seconds spent downed
 
 /**
  * The local or remote player. It never reads input: each tick it is given an InputCommand (`applyCommand`, see sim/InputCommand.js).
- * Replicated fields (S1e): cmd { seq mx my aim btn } plus the existing x y vx vy knock aim dodge stunT downed.
+ * Replicated fields (S1e): cmd { seq mx my aim btn } plus the existing x y vx vy knock aim dodge stunT downed, and toolId (J1: the job tool carried).
  */
 export class Player extends Entity {
   /** @param {import('../progression/Progression.js').Progression} [prog] specialization state; without it the player owns every class skill */
@@ -39,6 +39,8 @@ export class Player extends Entity {
     this.kick = 0;
     this.t = 0;
     this.solid = true;
+    this.isPlayer = true; // JobSystem looks for this (R7: no world.player)
+    this.toolId = null; // item id of the job tool carried (basic_axe), written by JobSystem from the Inventory, read by the Chop skill
     this.hittable = true;
     this.damageColor = "#ff6b6b";
     this.home = { x: 0, y: 0 };

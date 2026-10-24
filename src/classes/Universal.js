@@ -3,6 +3,6 @@
  * Pure data, like a class. Player.syncProgression adds them to the caster; the HUD shows them after the class skills.
  */
 export const UNIVERSAL = {
-  skills: ["dodge"],
-  bindings: { dodge: ["ShiftLeft", "ShiftRight"] },
+  skills: ["dodge", "chop"], // chop is the lumberjack job action (needs an axe, see skills/Chop.js)
+  bindings: { dodge: ["ShiftLeft", "ShiftRight"], chop: ["KeyC"] },
 };

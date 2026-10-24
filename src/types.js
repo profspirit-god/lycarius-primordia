@@ -238,6 +238,22 @@
  */
 
 /**
+ * Emitted on world.events as 'chop' by the Chop skill (job track J1). JobSystem applies it to the tree and the job; JobFx and
+ * VelthornView draw it. Related plain-data events: 'tree:felled' { tree, source, itemId, qty, x, y, z }, 'tree:scorched',
+ * 'tree:burnedout', 'tree:regrown' { tree, x, y, z }, 'job:xp' { source, job, amount, x, y, z }, 'job:levelup' { source, job, level },
+ * 'job:reward' { source, itemId, granted, lost, x, y, z }.
+ * @typedef {Object} ChopEvent
+ * @property {CasterOwner} source
+ * @property {object|null} target                     The standing tree the swing reached, or null (a miss).
+ * @property {string} tool                            Tool item id (sim/jobs/jobs.js TOOLS).
+ * @property {number} aim                             Facing in radians.
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {{x:number,y:number}} dir
+ */
+
+/**
  * Emitted on world.events as 'levelup' (re-emitted from Progression by WorldScene).
  * @typedef {Object} LevelUpEvent
  * @property {'char'|'spec'} track
