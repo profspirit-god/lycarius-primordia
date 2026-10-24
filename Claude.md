@@ -8,6 +8,7 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 - Stack: HTML5 Canvas + vanilla JS ES modules. No bundler, deps or build step. Run with VS Code Live Server on `index.html` (modules need http).
 - Version: `VERSION` in `src/config.js`. History `CHANGELOG.md`, plan `ROADMAP.md`, full docs `README.md`.
 - Pseudo-3D: characters are cylinders; entities have ground `(x,y)` + height `z`, drawn at `y - z`. Ground rings are drawn squashed (0.5) but hit tests are circles in `(x,y)`.
+- Gameplay direction and the owner's design laws: `FOUNDER.md` (hunger and cooking milestone, death law) and `BUILD.md`; they are intent, and the owner resolutions in `FOUNDER.md` section 12 settled their conflicts with the roadmap.
 - Long-term: factions, guild wars, branching story, real-party missions, server-authoritative multiplayer (V2). **Road to online: `SERVER_PATH.md` (incl. hosting on the owner's own PC and the optional exe build); code server-ready from now on (section 5b).**
 
 ## 1b. Doc map (open a section, never a whole doc)
@@ -17,6 +18,8 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
 | File | Open when | Sections |
 | ---- | --------- | -------- |
 | `Claude.md` | every session | 1 snapshot, 2 protocol, 3 git, 4 code map, 5/5b rules, 6 perf, 7 GitHub, 8 done, 9 gotchas |
+| `FOUNDER.md` | designing or reviewing gameplay (hunger, food, death, careers, classes), or the owner resolutions that settled doc conflicts. **Design intent, not the truth** | 0 authority, 2 laws, 4 primitives, 5 death, 6 hunger, 8 not now, 9 milestone, 11 open decisions, 12 owner resolutions |
+| `BUILD.md` | placement, stations, campfire, stove, roof, shelter, dev spawner. **Design intent, not the truth** | 2 laws, 3 ladder, 4 Stage 0, 5 Stage 1, 6 anti-clutter, 7 integration, 8 spawner, 10 open decisions |
 | `ROADMAP.md` | **user does not know what to work on**, choosing or planning work | **Choosing work**, Done, Server path, **Proposals**, Lobby path, combat depth, art and maps, world, Later |
 | `docs/MMORPG_GUIDELINE.md` | after picking work from the roadmap, for ideas and risks on the same topic (a guide, never the truth) | G0 use, G1 shared data, G2 server loop, G3 rendering, G4 sessions and saves, G5 entities and combat, G6 AI rules, G7 load tests, G8 conflicts, G9 order |
 | `SERVER_PATH.md` | any server-path work | 0 gates, 1 decisions, 2 audit, S1..S10 (`S1f`), 4 cost, 5 flags, 6 debt, 7 not-to-do, 8 proposal hooks |
@@ -46,6 +49,7 @@ Read first, every session. Keep it short (it is loaded each time). Update it whe
     3. Before building, read the matching section of `docs/MMORPG_GUIDELINE.md` (`G1`-`G7`). It is **a guide, not the absolute truth**: its evidence is mostly unmeasured, so verify claims in the repo or with a test, and where it conflicts with this file, `SERVER_PATH.md` or the assessment, it loses (G0, G8). Flag the conflict in one line.
 11. **Systems and engines:** before creating, planning or reviewing one, open `docs/ENGINES_AND_SYSTEMS.md` E0 and the row in E1-E3, and run its E5 checklist. It is **a guideline, not the absolute truth**: where it conflicts with this file, `SERVER_PATH.md` or the assessment, it loses (flag it in E4). Update its `Status` when a system ships.
 12. **Doc structure (every doc, every edit):** a `#` title, numbered `##` sections with stable ids, one topic per section, sections of at most 60 lines (split or add `###` above that), tables and lists over long paragraphs, and a doc-map row here when a doc is added. New or changed docs must pass `npm run docs`. Source files: keep the code map (section 4) current, one purpose per file, short header comment saying what the file is for.
+13. **Design intent (`FOUNDER.md`, `BUILD.md`):** before designing a gameplay system, open `FOUNDER.md` section 2 (laws) and the section for the feature. They are **extra information, not the absolute truth**: authority is this file, then `FOUNDER.md` section 12, then `SERVER_PATH.md`, then the assessment, then those two docs, then the guideline. Where they conflict with a higher source, flag it in one line and follow the higher source. New gameplay stays server-ready (5b) and follows depth over breadth (a class or career must reach the Mage depth bar).
 
 ## 3. Versioning and git
 

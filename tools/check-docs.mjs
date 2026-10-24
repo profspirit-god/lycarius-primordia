@@ -9,7 +9,7 @@ import { join } from "node:path";
 const LEAF_MAX = 60; // lines; split a leaf section above this
 const LINES_PER_HEADING = 60; // a long file should have at least one heading per this many lines
 const LONG_FILE = 120;
-const ROOT_DOCS = ["Claude.md", "ROADMAP.md", "README.md", "CHANGELOG.md", "SERVER_PATH.md"];
+const ROOT_DOCS = ["Claude.md", "ROADMAP.md", "README.md", "CHANGELOG.md", "SERVER_PATH.md", "FOUNDER.md", "BUILD.md"];
 const strict = process.argv.includes("--strict");
 
 const walk = (dir) =>
