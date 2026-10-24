@@ -2,6 +2,31 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.18.0.00 — L2 phase E (MVP): the Character Inventory and its first item, gold (feature)
+
+First slice of inventory phase E (`docs/proposals/Inventory-and-ownership.md` section 13.5). A character now has an **in-game inventory**, separate from the Home Account Inventory, and the first item in it is **gold**. Press **I** in the Training Grounds to open it.
+
+### Added
+
+- **`src/sim/items/gameplay.js`**: `GAMEPLAY_ITEMS` and `GOLD_ID`. Gold is a character-scoped item (`category: "currency"`, common, `maxStack` 9999, no actions), registered through `content/index.js`. Sim code, zero server-ready audit hits.
+- **`src/ui/CharacterInventoryView.js`**: pure `characterInventoryModel(inv, ownerId)` and `characterInventoryHtml(model, { dev, message })`. Gold total, a grid of exactly `CHARACTER_SLOTS` (30) slots, stacks ordered by category then name (gold first), an amount above 9,999 fills the next slot, slot count. Never throws: unavailable, corrupt, repaired and newer-version states are shown, not crashed on.
+- **`src/ui/CharacterInventoryPanel.js`**: the DOM shell. Reads `game.inventory` for the world's character (`classId`). Its only writes are the debug buttons (+100, +1,000, -100, -1,000 gold), shown while Settings, Developer, **Show debug** is on; they call `grant` / `remove`, so every rule still applies and a refusal ("Not enough gold", "Inventory full") is shown.
+- **`WorldScene`**: key **I** opens and closes the panel, the game pauses while it is open, Esc closes it (same pattern as the character panel). Three small hooks, no change to combat or systems.
+- **`tests/character-inventory.test.mjs`** (12 tests): the definition, grant / count / spend per character, failed calls changing nothing and saving nothing, slot use and `inventory_full` at 30 slots, a save round trip, hostile saves never creating gold, account / Wallet / Home list never seeing character gold, the slot model, the HTML, the debug buttons being opt-in, and the view and panel writing only through the service.
+- A loading-screen tip: "Press I to open your inventory".
+
+### Changed
+
+- `ItemRegistry`: new category `currency` (before `equipment`); `InventoryView` gives it a label and the coin icon. `tests/items.test.mjs`: the registry holds the nine cosmetics plus the gameplay items. `npm test` runs eighteen files. `VERSION` 1.17.0.00 to 1.18.0.00.
+
+### Notes
+
+- **Owner decision taken (proposal 8.3 and 11 question 6):** the proposal kept currency out of item stacks "unless physical currency is an explicit game mechanic". The owner asked for gold as the first inventory item, so **carried gold is an item**. The account Wallet (Home and Shop Gold, Crystals, Points) is unchanged and unconnected; its Gold is a placeholder with a different meaning. Both are called "Gold" on screen today: a naming question for the owner.
+- **Defaults taken, flagged:** gold uses slots like any item (one slot per 9,999, so 30 slots hold at most 299,970 gold); a full inventory refuses gold (`inventory_full`); no use, sell, discard or trade (decision 8).
+- **No source of gold exists in the world.** Nothing drops it: the Graugr loot path does not exist and was not touched (proposal Phase E, "Do not touch"). The debug buttons are the only grant.
+- **Server-ready:** yes. New sim file has zero hits; `random` 93 and `present` 198 unchanged. The panel and view are client code.
+- Tested: `npm test`, the audit, `node --check` on every `src` file, and a Playwright run in Chromium (open with I, pause, grant and spend with the refusal message, Esc and I close, gold saved under the inventory key and back after a reload, no console errors). Not tested: other browsers or touch.
+
 ## V1.17.0.00 — H1: the pure hunger primitive (feature, new files only, nothing user-visible)
 
 First step of track H (`ROADMAP.md`, design in `FOUNDER.md` section 6): the keystone of the gather, cook, eat, fight milestone. A hunger stat that falls with sim time and is raised by eating, with five tiers as data. It is **not wired into the game**: nothing creates a `Hunger` until H2, so there is no change to play.
