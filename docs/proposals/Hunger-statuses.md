@@ -64,6 +64,7 @@ Separate rare event: **Gluttony** (0.1% per Stuffed roll): HP becomes the **lowe
 **Overeating** is not a bag outcome (R13): food has a point value; when `stat + points` would exceed the maximum, the stat becomes 100%, the excess is wasted, and Overeating starts.
 
 - **Effect (owner's design):** 2 damage per second for 30 s, non-lethal. Provisional budget: at most 50% of max HP per episode (2/s for 30 s is 60, more than a 50 HP character has).
+- **How the code reports it:** `Hunger.eat(points)` (H1b) works in every tier below the maximum and returns `overeat` and `excess`; it does not start the status. HS1 starts Overeating from that report and refuses food while it runs.
 - **After it:** the player cannot eat while the stat is at 100% **or** while Overeating is active (`reason: "overeating"` or `"cannot_eat"`). Needs N1, X3. Visual: mouth pierced vertically by a sword.
 
 ## 4. Full (60% to 89%)

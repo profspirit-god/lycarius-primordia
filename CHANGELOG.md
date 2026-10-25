@@ -2,6 +2,26 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.22.0.00 — H1b: the hunger primitive follows the settled design (feature, primitive only, nothing user-visible)
+
+Second step of track H. The pure hunger primitive of V1.17.0.00 is brought in line with `FOUNDER.md` section 6 and the owner resolutions R12 to R20, before H2a saves and shows it. It is still **not wired into the game**: nothing creates a `Hunger` until H2a, so there is no change to play.
+
+### Changed
+
+- **Hunger points (R16):** the stat is 0 to **1000** points (`max` 1000, start **850**, `drainSeconds` 9: 1 point per 9 s, the same 2.5 hours from full to empty). Tiers in points: Stuffed 900, Full 600, Not hungry 250, Hungry 80, Starving 0. New getter **`percent`** (0 to 100, rounded down, 100 only at the real maximum) for the HUD.
+- **Separate regeneration (R18):** a tier carries `hpRegenMult`, `manaRegenMult` and `staminaRegenMult` instead of one `regenMult`. Provisional values: Stuffed and Full +5% health regen; Hungry -25% health and stamina; Starving -50% health and stamina; **mana 1.0 in every tier** until the owner sets values. Stuffed no longer gets +5% stamina regen (the proposal listed health only).
+- **Speed (R14):** the per-tier floor is now `MIN_MOVE_MULT` **0.85** (Starving 0.85, was 0.9); the total floor for all hunger sources together, `HUNGER_MOVE_FLOOR` **0.75**, is exported with the rest of the law for the modifier layer (row X1) to apply.
+- **Eating (R13):** `eat(points)` works in **every tier** below the maximum (Stuffed may eat, that is the risk) and **refuses only at the maximum** (`cannot_eat`). It returns `{ ok, gained, value, overeat, excess, change }`: when the points do not fit, the stat becomes the maximum, `overeat` is true and `excess` is the wasted part; filling the stat exactly is not an overflow. The per-tier `canEat` is gone; the instance getter `canEat` now means "below the maximum". The Overeating status and the refusal while it runs are HS1, not this class.
+- `tests/hunger.test.mjs` rewritten for points: **28 tests** (was 24). New: the ten percentage edges of the design (0, 7, 8, 24, 25, 59, 60, 89, 90, 100) through `percent` and `tierId`, exact fill versus overflow, eating in every tier, separate regeneration fields, the total speed floor constant. Everything else carried over (validator, drain, reports, frame-rate independence, save refusals, Node child import, source scan).
+- README, ROADMAP (H1b done, default is H2a), `FOUNDER.md` (hand-offs, section 6a note), `docs/ENGINES_AND_SYSTEMS.md`, `docs/proposals/Hunger-statuses.md` and the `Claude.md` code map updated. `VERSION` 1.21.0.01 to 1.22.0.00.
+
+### Notes
+
+- **Defaults taken, flagged:** Starving's speed 0.85 uses the whole per-tier -15% (the proposal said "greatly reduced"). Eating at 99.9% still takes a small meal and reports a small overflow (the stat is a real number); HS1's rule "no eating while Overeating runs" is what stops repeats. Save version stays 1: no hunger was ever saved before H2a, so there is nothing older to migrate.
+- **Still flagged for tuning (`FOUNDER.md` section 11, decision 6):** one Cooked Meat (+450 points, provisional) eaten from 55% or more reaches Stuffed and an overflow from 55.1%; decide the food values in H3.
+- **Server-ready:** yes. Zero audit hits in the new code; totals unchanged. No rng is used.
+- Not tested: playing in a browser (nothing is wired in). The tests are the proof.
+
 ## V1.21.0.01 — The H2 hunger proposal reviewed against V1.21.0.00 and settled (docs only, two comment lines in `src/sim/hunger/`)
 
 The owner shared a hunger proposal written with ChatGPT and asked for a review before any code. The first review was written against an older copy of the repo; it was **redone against V1.21.0.00**, and the owner's decisions on every conflict are recorded as owner resolutions R12 to R22 in `FOUNDER.md` section 12. The proposal stays **extra information, not the truth**.

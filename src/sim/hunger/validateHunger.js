@@ -1,18 +1,23 @@
-// Hunger definitions (H1, FOUNDER.md section 6): the STATIC description of the hunger stat and its tiers.
+// Hunger definitions (H1, aligned by H1b with FOUNDER.md section 6): the STATIC description of the hunger stat and its tiers.
 // A definition holds no current value: that is runtime state (Hunger.js). Every limit is a constant here (Claude.md 5b, R11),
 // because a definition will later come from content files and a saved value from a database.
-// Sim code: no browser, no clock, no randomness (Claude.md 5b). Not wired into the game yet (H2 does that).
+// Sim code: no browser, no clock, no randomness (Claude.md 5b). Not wired into the game yet (H2a does that).
+//
+// The stat is counted in HUNGER POINTS (the maximum is usually 1000) and shown to the player as a percentage (R16); a tier's `min` is
+// in points. Regeneration is SEPARATE per stat (R18): a tier carries `hpRegenMult`, `manaRegenMult` and `staminaRegenMult`.
 //
 // The guardrails of the hunger law are enforced HERE, so no tier table can break them:
 //  - a tier never damages: it only carries multipliers and a status id. (Hunger may damage but never kill, FOUNDER.md 6b, R12, and
 //    only through statuses, non-lethal, never below 1 HP: later work, track HS);
-//  - no tier slows movement by more than 10% (`MIN_MOVE_MULT`), so a player can never be trapped;
-//  - no tier switches regeneration off (`MIN_MULT`), so hunger never stops recovery completely;
-//  - the lowest tier can always eat, so food is never a soft-lock.
+//  - no tier slows movement by more than 15% (`MIN_MOVE_MULT`); all hunger sources together never go below 75% (`HUNGER_MOVE_FLOOR`,
+//    applied by the modifier layer, row X1), so a player can never be trapped;
+//  - no tier switches a regeneration off (`MIN_MULT`), so hunger never stops recovery completely;
+//  - food is never a soft-lock: `Hunger.eat` accepts food whenever the stat is below its maximum, in every tier, so no tier carries
+//    an "eat" switch any more.
 
 export const HUNGER_ID_PATTERN = /^[a-z][a-z0-9_]{1,39}$/;
 export const TIER_ID_PATTERN = /^[a-z][a-z0-9_]{1,23}$/;
-/** Status ids are the names `StatusSystem` will know in H2 (for example "hungry"); `null` = no status. */
+/** Status ids are the names `StatusSystem` will know in H2b (for example "hungry"); `null` = no status. */
 export const STATUS_ID_PATTERN = /^[a-z][a-z0-9_]{1,23}$/;
 export const MAX_TIERS = 8;
 export const MIN_TIERS = 2;
@@ -22,11 +27,15 @@ export const MAX_DRAIN_SECONDS = 3600;
 /** Multiplier limits: a modifier may weaken or strengthen a rate, never turn it off or make it huge. */
 export const MIN_MULT = 0.1;
 export const MAX_MULT = 2;
-/** The hunger law: debuffs cap at -10% move speed. */
-export const MIN_MOVE_MULT = 0.9;
+/** The hunger law, per tier: a tier slows movement by at most 15% (R14). */
+export const MIN_MOVE_MULT = 0.85;
+/** The hunger law, in total: all hunger sources together (tier and statuses) never slow movement below 75% of normal (R14). The
+ *  modifier layer (row X1) applies this floor to the product; it is kept here with the rest of the law. */
+export const HUNGER_MOVE_FLOOR = 0.75;
 
 const KEYS = ["id", "max", "start", "drainSeconds", "tiers"];
-const TIER_KEYS = ["id", "min", "regenMult", "moveMult", "staminaRegenMult", "status", "canEat"];
+const TIER_KEYS = ["id", "min", "hpRegenMult", "manaRegenMult", "staminaRegenMult", "moveMult", "status"];
+const REGEN_KEYS = ["hpRegenMult", "manaRegenMult", "staminaRegenMult"];
 
 const isPlain = (v) => v !== null && typeof v === "object" && !Array.isArray(v) &&
   (Object.getPrototypeOf(v) === Object.prototype || Object.getPrototypeOf(v) === null);
@@ -34,8 +43,9 @@ const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 
 /**
  * Returns a list of problems (empty = valid). Never throws for any JSON-shaped input.
- * @param {unknown} def `{ id, max, start, drainSeconds, tiers: [{ id, min, regenMult, moveMult, staminaRegenMult, status, canEat }] }`
- *   `drainSeconds` = seconds of play for the stat to fall by 1. A tier covers `min` up to the next tier's `min` (the top tier up to `max`).
+ * @param {unknown} def `{ id, max, start, drainSeconds, tiers: [{ id, min, hpRegenMult, manaRegenMult, staminaRegenMult, moveMult, status }] }`
+ *   `max` and `start` are in hunger points; `drainSeconds` = seconds of play for the stat to fall by 1 point. A tier covers `min` up to
+ *   the next tier's `min` (the top tier up to `max`).
  * @returns {string[]}
  */
 export function validateHungerDef(def) {
@@ -61,7 +71,6 @@ function validateTiers(tiers, max, errs) {
   if (tiers.length < MIN_TIERS || tiers.length > MAX_TIERS) errs.push(`tiers must have ${MIN_TIERS} to ${MAX_TIERS} entries`);
   if (tiers.length > MAX_TIERS) return; // do not scan an oversized list
   const ids = new Set(), mins = new Set();
-  let lowest = null;
   tiers.forEach((t, i) => {
     const at = `tier ${i}`;
     if (!isPlain(t)) { errs.push(`${at} must be an object`); return; }
@@ -75,19 +84,17 @@ function validateTiers(tiers, max, errs) {
     if ("min" in t) {
       if (!Number.isInteger(t.min) || t.min < 0 || (max !== null && t.min >= max)) errs.push(`${at}: min must be an integer from 0 to below max`);
       else if (mins.has(t.min)) errs.push(`${at}: duplicate min ${t.min}`);
-      else { mins.add(t.min); if (lowest === null || t.min < lowest.min) lowest = t; }
+      else mins.add(t.min);
     }
-    for (const k of ["regenMult", "staminaRegenMult"]) {
+    for (const k of REGEN_KEYS) {
       if (k in t && (!isNum(t[k]) || t[k] < MIN_MULT || t[k] > MAX_MULT)) errs.push(`${at}: ${k} must be a number from ${MIN_MULT} to ${MAX_MULT}`);
     }
     if ("moveMult" in t && (!isNum(t.moveMult) || t.moveMult < MIN_MOVE_MULT || t.moveMult > MAX_MULT)) {
-      errs.push(`${at}: moveMult must be a number from ${MIN_MOVE_MULT} (hunger never slows more than 10%) to ${MAX_MULT}`);
+      errs.push(`${at}: moveMult must be a number from ${MIN_MOVE_MULT} (a tier never slows more than 15%) to ${MAX_MULT}`);
     }
     if ("status" in t && t.status !== null && (typeof t.status !== "string" || !STATUS_ID_PATTERN.test(t.status))) errs.push(`${at}: status must be null or match ${STATUS_ID_PATTERN}`);
-    if ("canEat" in t && typeof t.canEat !== "boolean") errs.push(`${at}: canEat must be true or false`);
   });
   if (!mins.has(0) && tiers.length >= MIN_TIERS) errs.push("one tier must start at min 0, so every value has a tier");
-  if (lowest && lowest.min === 0 && lowest.canEat === false) errs.push("the lowest tier must be able to eat (food is never a soft-lock)");
 }
 
 /**
@@ -99,7 +106,7 @@ export function normalizeHungerDef(def) {
   const errs = validateHungerDef(def);
   if (errs.length) throw new Error(`[hunger] invalid definition ${JSON.stringify(isPlain(def) ? String(def.id).slice(0, 40) : null)}: ${errs.join("; ")}`);
   const tiers = def.tiers.map((t) => Object.freeze({
-    id: t.id, min: t.min, regenMult: t.regenMult, moveMult: t.moveMult, staminaRegenMult: t.staminaRegenMult, status: t.status, canEat: t.canEat,
+    id: t.id, min: t.min, hpRegenMult: t.hpRegenMult, manaRegenMult: t.manaRegenMult, staminaRegenMult: t.staminaRegenMult, moveMult: t.moveMult, status: t.status,
   })).sort((a, b) => b.min - a.min);
   return Object.freeze({ id: def.id, max: def.max, start: def.start, drainSeconds: def.drainSeconds, tiers: Object.freeze(tiers) });
 }
