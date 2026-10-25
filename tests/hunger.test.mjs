@@ -1,8 +1,10 @@
-// H1: the pure hunger primitive (src/sim/hunger/). Not wired into the game, so these tests are the only proof it works.
+// H1 / H1b: the pure hunger primitive (src/sim/hunger/). Not wired into the game, so these tests are the only proof it works.
 //   node tests/hunger.test.mjs        (exit 0 = all passed)
-// Covers: the Primordia tier table of FOUNDER.md section 6, the validator and its guardrails (never more than -10% speed, regen never
-// off, the lowest tier can eat), the drain math (1 per 90 s, 100 to 0 in 9000 s), tier-change reports, frame-rate independence,
-// eating (cap, Stuffed refuses, bad amounts), serialize / restore through the storage adapter, and a Node import with no globals.
+// Covers: the Primordia tier table of FOUNDER.md section 6 in hunger points (1000 = 100%), the validator and its guardrails (a tier never
+// slows more than 15%, no regeneration is switched off, mana stays separate), the drain math (1 point per 9 s, 1000 to 0 in 9000 s),
+// every percentage edge of the design (0, 7, 8, 24, 25, 59, 60, 89, 90, 100), tier-change reports, frame-rate independence, eating
+// (any tier below the maximum, exact fill, overflow report, refusal at the maximum, bad amounts), serialize / restore through the storage
+// adapter contract, and a Node import with no globals.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
@@ -11,7 +13,7 @@ import { createMemoryStorage } from "../src/sim/storage.js";
 import { Hunger, tierFor, HUNGER_SAVE_VERSION } from "../src/sim/hunger/Hunger.js";
 import { PRIMORDIA_HUNGER } from "../src/sim/hunger/definition.js";
 import {
-  validateHungerDef, normalizeHungerDef, MIN_MOVE_MULT, MIN_MULT, MAX_TIERS, MAX_DRAIN_SECONDS,
+  validateHungerDef, normalizeHungerDef, MIN_MOVE_MULT, HUNGER_MOVE_FLOOR, MIN_MULT, MAX_TIERS, MAX_DRAIN_SECONDS,
 } from "../src/sim/hunger/validateHunger.js";
 
 let passed = 0;
@@ -21,26 +23,30 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const def = (over = {}) => ({ ...clone(PRIMORDIA_HUNGER), ...over });
 const withTier = (i, over) => { const d = def(); d.tiers[i] = { ...d.tiers[i], ...over }; return d; };
 const at = (value) => new Hunger(def(), { value });
+const pct = (p) => at(p * 10); // a Hunger at p percent
 
 // ---------------------------------------------------------------- the data
-test("the Primordia definition is valid and matches the FOUNDER.md tier table", () => {
+test("the Primordia definition is valid and matches the FOUNDER.md tier table (in points)", () => {
   assert.deepEqual(validateHungerDef(PRIMORDIA_HUNGER), []);
   const n = normalizeHungerDef(PRIMORDIA_HUNGER);
-  assert.equal(n.max, 100);
-  assert.equal(n.drainSeconds, 90);
-  assert.deepEqual(n.tiers.map((t) => [t.id, t.min]), [["stuffed", 90], ["full", 60], ["not_hungry", 25], ["hungry", 8], ["starving", 0]]);
+  assert.equal(n.max, 1000);
+  assert.equal(n.drainSeconds, 9);
+  assert.deepEqual(n.tiers.map((t) => [t.id, t.min]), [["stuffed", 900], ["full", 600], ["not_hungry", 250], ["hungry", 80], ["starving", 0]]);
   const row = (id) => n.tiers.find((t) => t.id === id);
-  assert.deepEqual([row("stuffed").regenMult, row("stuffed").moveMult, row("stuffed").staminaRegenMult, row("stuffed").canEat], [1.05, 0.9, 1.05, false]);
-  assert.deepEqual([row("full").regenMult, row("full").moveMult, row("full").staminaRegenMult], [1.05, 1, 1.05]);
-  assert.deepEqual([row("not_hungry").regenMult, row("not_hungry").moveMult, row("not_hungry").staminaRegenMult], [1, 1, 1]);
-  assert.deepEqual([row("hungry").regenMult, row("hungry").moveMult, row("hungry").staminaRegenMult, row("hungry").status], [0.75, 0.95, 0.75, "hungry"]);
-  assert.deepEqual([row("starving").regenMult, row("starving").moveMult, row("starving").staminaRegenMult, row("starving").status], [0.5, 0.9, 0.5, "starving"]);
-  assert.deepEqual([row("full").status, row("not_hungry").status, row("stuffed").status], [null, null, "stuffed"]);
+  const mults = (id) => { const t = row(id); return [t.hpRegenMult, t.manaRegenMult, t.staminaRegenMult, t.moveMult, t.status]; };
+  assert.deepEqual(mults("stuffed"), [1.05, 1, 1, 0.9, "stuffed"]);
+  assert.deepEqual(mults("full"), [1.05, 1, 1, 1, null]);
+  assert.deepEqual(mults("not_hungry"), [1, 1, 1, 1, null]);
+  assert.deepEqual(mults("hungry"), [0.75, 1, 0.75, 0.95, "hungry"]);
+  assert.deepEqual(mults("starving"), [0.5, 1, 0.5, 0.85, "starving"]);
+  for (const t of n.tiers) assert.equal(t.manaRegenMult, 1, "mana is unchanged in every tier until the owner sets values (R18)");
+  assert.ok(!("canEat" in n.tiers[0]) && !("regenMult" in n.tiers[0]), "the old per-tier eat switch and the shared regen multiplier are gone");
 });
 
-test("the default start is 85 (Full), so a new character is not born Stuffed", () => {
+test("the default start is 850 points (85%, Full), so a new character is not born Stuffed", () => {
   const h = new Hunger(PRIMORDIA_HUNGER);
-  assert.equal(h.value, 85);
+  assert.equal(h.value, 850);
+  assert.equal(h.percent, 85);
   assert.equal(h.tierId, "full");
   assert.equal(h.canEat, true);
 });
@@ -49,10 +55,10 @@ test("normalize: frozen, tiers sorted high to low whatever the listed order, a f
   const d = def();
   d.tiers.reverse();
   const n = normalizeHungerDef(d);
-  assert.deepEqual(n.tiers.map((t) => t.min), [90, 60, 25, 8, 0]);
+  assert.deepEqual(n.tiers.map((t) => t.min), [900, 600, 250, 80, 0]);
   assert.ok(Object.isFrozen(n) && Object.isFrozen(n.tiers) && Object.isFrozen(n.tiers[0]));
-  d.tiers[0].regenMult = 1.9;
-  assert.notEqual(n.tiers.find((t) => t.id === "starving").regenMult, 1.9, "later edits of the source do not leak in");
+  d.tiers[0].hpRegenMult = 1.9;
+  assert.notEqual(n.tiers.find((t) => t.id === "starving").hpRegenMult, 1.9, "later edits of the source do not leak in");
 });
 
 // ---------------------------------------------------------------- the validator
@@ -63,23 +69,25 @@ test("validator: every field is required and unknown fields are refused", () => 
     assert.ok(validateHungerDef(d).some((e) => e.includes(`missing field "${k}"`)), k);
   }
   assert.ok(validateHungerDef({ ...def(), hacks: 1 }).some((e) => e.includes('unknown field "hacks"')));
-  for (const k of ["id", "min", "regenMult", "moveMult", "staminaRegenMult", "status", "canEat"]) {
+  for (const k of ["id", "min", "hpRegenMult", "manaRegenMult", "staminaRegenMult", "moveMult", "status"]) {
     const d = def();
     delete d.tiers[1][k];
     assert.ok(validateHungerDef(d).some((e) => e.includes(`missing field "${k}"`)), k);
   }
-  assert.ok(validateHungerDef(withTier(1, { damage: 5 })).some((e) => e.includes('unknown field "damage"')), "a tier cannot carry damage");
+  for (const k of ["damage", "canEat", "regenMult"]) {
+    assert.ok(validateHungerDef(withTier(1, { [k]: 5 })).some((e) => e.includes(`unknown field "${k}"`)), "a tier cannot carry " + k);
+  }
 });
 
 test("validator: not an object, bad ids, max, start and drain", () => {
   for (const bad of [null, undefined, 5, "x", [], () => 1]) assert.deepEqual(validateHungerDef(bad), ["definition must be an object"]);
   for (const id of ["", "H", "1a", "has space", "x".repeat(41), 5, null]) assert.notEqual(validateHungerDef(def({ id })).length, 0, String(id));
-  for (const max of [0, -1, 1.5, 1001, "100", null, NaN]) assert.notEqual(validateHungerDef(def({ max })).length, 0, String(max));
-  for (const start of [-1, 101, NaN, Infinity, "50", null]) assert.notEqual(validateHungerDef(def({ start })).length, 0, String(start));
-  for (const drainSeconds of [0, 0.5, -90, MAX_DRAIN_SECONDS + 1, NaN, Infinity, "90", null]) assert.notEqual(validateHungerDef(def({ drainSeconds })).length, 0, String(drainSeconds));
+  for (const max of [0, -1, 1.5, 1001, "1000", null, NaN]) assert.notEqual(validateHungerDef(def({ max })).length, 0, String(max));
+  for (const start of [-1, 1001, NaN, Infinity, "500", null]) assert.notEqual(validateHungerDef(def({ start })).length, 0, String(start));
+  for (const drainSeconds of [0, 0.5, -9, MAX_DRAIN_SECONDS + 1, NaN, Infinity, "9", null]) assert.notEqual(validateHungerDef(def({ drainSeconds })).length, 0, String(drainSeconds));
 });
 
-test("validator: tier lists (size, duplicates, coverage from 0, ranges)", () => {
+test("validator: tier lists (size, duplicates, coverage from 0, ranges in points)", () => {
   assert.notEqual(validateHungerDef(def({ tiers: "x" })).length, 0);
   assert.notEqual(validateHungerDef(def({ tiers: [] })).length, 0);
   assert.notEqual(validateHungerDef(def({ tiers: [def().tiers[0]] })).length, 0, "needs at least two tiers");
@@ -87,146 +95,182 @@ test("validator: tier lists (size, duplicates, coverage from 0, ranges)", () => 
   assert.notEqual(validateHungerDef(def({ tiers: many })).length, 0);
   assert.ok(validateHungerDef(withTier(4, { min: 1 })).some((e) => e.includes("min 0")), "some tier must start at 0");
   assert.ok(validateHungerDef(withTier(3, { id: "starving" })).some((e) => e.includes("duplicate id")));
-  assert.ok(validateHungerDef(withTier(3, { min: 25 })).some((e) => e.includes("duplicate min")));
-  for (const min of [-1, 100, 101, 8.5, "8", null]) assert.notEqual(validateHungerDef(withTier(3, { min })).length, 0, String(min));
+  assert.ok(validateHungerDef(withTier(3, { min: 250 })).some((e) => e.includes("duplicate min")));
+  for (const min of [-1, 1000, 1001, 80.5, "80", null]) assert.notEqual(validateHungerDef(withTier(3, { min })).length, 0, String(min));
   assert.notEqual(validateHungerDef(def({ tiers: [def().tiers[0], null, def().tiers[4]] })).length, 0);
   assert.ok(validateHungerDef(withTier(1, { id: "Full" })).length > 0);
 });
 
-test("validator guardrails: never slower than -10%, regen never off, a status is a name, the lowest tier can eat", () => {
-  for (const moveMult of [0.89, 0.5, 0, -1, NaN, 2.5, "1"]) assert.notEqual(validateHungerDef(withTier(4, { moveMult })).length, 0, "moveMult " + moveMult);
-  assert.deepEqual(validateHungerDef(withTier(4, { moveMult: MIN_MOVE_MULT })), [], "exactly -10% is allowed");
-  for (const k of ["regenMult", "staminaRegenMult"]) {
+test("validator guardrails: a tier never slows more than 15%, no regeneration is off, a status is a name", () => {
+  assert.equal(MIN_MOVE_MULT, 0.85);
+  assert.equal(HUNGER_MOVE_FLOOR, 0.75, "the total floor of the hunger law is kept with the rest of the law");
+  assert.ok(HUNGER_MOVE_FLOOR < MIN_MOVE_MULT, "statuses can push a little further than one tier, never below the total floor");
+  for (const moveMult of [0.84, 0.5, 0, -1, NaN, 2.5, "1"]) assert.notEqual(validateHungerDef(withTier(4, { moveMult })).length, 0, "moveMult " + moveMult);
+  assert.deepEqual(validateHungerDef(withTier(4, { moveMult: MIN_MOVE_MULT })), [], "exactly -15% is allowed");
+  for (const k of ["hpRegenMult", "manaRegenMult", "staminaRegenMult"]) {
     for (const v of [0, 0.05, -1, NaN, Infinity, 2.01, "1"]) assert.notEqual(validateHungerDef(withTier(4, { [k]: v })).length, 0, k + " " + v);
     assert.deepEqual(validateHungerDef(withTier(4, { [k]: MIN_MULT })), []);
   }
+  assert.deepEqual(validateHungerDef(withTier(3, { manaRegenMult: 0.8 })), [], "mana may differ from health once the owner sets it (R18): separate fields");
   for (const status of ["Hungry", "", 5, undefined, {}, "x".repeat(25)]) assert.notEqual(validateHungerDef(withTier(3, { status })).length, 0, String(status));
-  assert.ok(validateHungerDef(withTier(4, { canEat: false })).some((e) => e.includes("lowest tier must be able to eat")));
-  assert.notEqual(validateHungerDef(withTier(4, { canEat: "yes" })).length, 0);
-  assert.deepEqual(validateHungerDef(withTier(0, { canEat: true })), [], "other tiers may allow eating");
 });
 
 test("validator: reports a hostile definition without throwing; the constructor throws with every problem", () => {
   const hostile = { __proto__: { id: "x" }, id: { toString() { throw new Error("boom"); } }, tiers: [{ __proto__: null }] };
   assert.doesNotThrow(() => validateHungerDef(hostile));
-  assert.doesNotThrow(() => validateHungerDef(JSON.parse('{"id":"hunger","max":100,"start":1,"drainSeconds":90,"tiers":[{"__proto__":{}}]}')));
+  assert.doesNotThrow(() => validateHungerDef(JSON.parse('{"id":"hunger","max":1000,"start":1,"drainSeconds":9,"tiers":[{"__proto__":{}}]}')));
   assert.throws(() => new Hunger(def({ max: 0, start: -1 })), /\[hunger\] invalid definition.*max must be.*start must be/s);
   assert.throws(() => new Hunger(null), /must be an object/);
 });
 
 // ---------------------------------------------------------------- tiers and drain
-test("tierFor: boundaries are exact (a tier starts AT its min) and the whole range is covered", () => {
+test("tierFor: boundaries are exact in points (a tier starts AT its min) and the whole range is covered", () => {
   const n = normalizeHungerDef(PRIMORDIA_HUNGER);
   const id = (v) => tierFor(n, v).id;
-  assert.deepEqual([id(100), id(90), id(89.999), id(60), id(59.999), id(25), id(24.999), id(8), id(7.999), id(0)],
+  assert.deepEqual([id(1000), id(900), id(899.999), id(600), id(599.999), id(250), id(249.999), id(80), id(79.999), id(0)],
     ["stuffed", "stuffed", "full", "full", "not_hungry", "not_hungry", "hungry", "hungry", "starving", "starving"]);
-  for (let v = 0; v <= 100; v += 0.25) assert.ok(tierFor(n, v), "a tier for " + v);
+  for (let v = 0; v <= 1000; v += 2.5) assert.ok(tierFor(n, v), "a tier for " + v);
 });
 
-test("drain: 1 point per 90 s, 100 to 0 in 9000 s, and it floors at 0", () => {
-  const h = at(100);
-  h.update(90);
-  assert.equal(h.value, 99);
-  h.update(8910);
+test("the ten percentage edges of the design: 0, 7, 8, 24, 25, 59, 60, 89, 90 and 100 percent land in the right tier", () => {
+  const edges = [[0, "starving"], [7, "starving"], [8, "hungry"], [24, "hungry"], [25, "not_hungry"], [59, "not_hungry"], [60, "full"], [89, "full"], [90, "stuffed"], [100, "stuffed"]];
+  for (const [p, tier] of edges) {
+    const h = pct(p);
+    assert.equal(h.tierId, tier, `${p}%`);
+    assert.equal(h.percent, p, `percent of ${p}%`);
+  }
+});
+
+test("percent for the HUD: rounded down, and 100 only when the stat really is at its maximum", () => {
+  assert.equal(at(999.9).percent, 99);
+  assert.equal(at(1000).percent, 100);
+  assert.equal(at(0).percent, 0);
+  assert.equal(at(9.99).percent, 0);
+  assert.equal(at(10).percent, 1);
+  assert.equal(new Hunger(def({ max: 200, start: 100, tiers: [{ ...def().tiers[4] }, { ...def().tiers[0], min: 150 }] })).percent, 50, "any maximum, not only 1000");
+});
+
+test("drain: 1 point per 9 s, 1000 to 0 in 9000 s, and it floors at 0", () => {
+  const h = at(1000);
+  h.update(9);
+  assert.equal(h.value, 999);
+  h.update(8991);
   assert.equal(h.value, 0);
   assert.equal(h.tierId, "starving");
   assert.equal(h.update(1e9), null);
   assert.equal(h.value, 0, "never negative, no spiral");
-  assert.equal(new Hunger(def({ drainSeconds: 10 }), { value: 5 }).update(30), null, "same tier, no report");
+  assert.equal(new Hunger(def({ drainSeconds: 10 }), { value: 50 }).update(30), null, "same tier, no report");
 });
 
 test("update reports the tier change it caused, once, with plain data", () => {
-  const h = at(100);
-  assert.equal(h.update(900), null, "exactly 90 is still Stuffed");
-  assert.equal(h.value, 90);
+  const h = at(1000);
+  assert.equal(h.update(900), null, "exactly 900 points is still Stuffed");
+  assert.equal(h.value, 900);
   assert.deepEqual(h.update(1), { from: "stuffed", to: "full" });
   assert.equal(h.update(1), null);
-  assert.deepEqual(h.update(30 * 90), { from: "full", to: "not_hungry" }, "from 89.98 down to 59.98: crosses 60");
-  const jump = at(100).update(9000);
+  assert.deepEqual(h.update(300 * 9), { from: "full", to: "not_hungry" }, "from about 899.8 down to about 599.8: crosses 600");
+  const jump = at(1000).update(9000);
   assert.deepEqual(jump, { from: "stuffed", to: "starving" }, "one big step skips tiers and reports the endpoints");
   assert.deepEqual(JSON.parse(JSON.stringify(jump)), jump);
 });
 
 test("update ignores a bad dt: not a number, NaN, infinite, zero, negative", () => {
-  const h = at(50);
+  const h = at(500);
   for (const dt of [NaN, Infinity, -Infinity, 0, -1, "5", null, undefined, {}, [5], 1n]) {
     assert.equal(h.update(dt), null, String(typeof dt === "bigint" ? "bigint" : dt));
-    assert.equal(h.value, 50);
+    assert.equal(h.value, 500);
   }
 });
 
 test("frame-rate independence (R10): the same sim time at 60, 30 and 1 steps per second gives the same value and tier", () => {
-  const run = (dt, seconds) => { const h = at(100); for (let i = 0, n = Math.round(seconds / dt); i < n; i++) h.update(dt); return h; }; // whole steps: no loop-clock drift
-  const a = run(1 / 60, 3500), b = run(1 / 30, 3500), c = run(1, 3500), d = at(100);
+  const run = (dt, seconds) => { const h = at(1000); for (let i = 0, n = Math.round(seconds / dt); i < n; i++) h.update(dt); return h; }; // whole steps: no loop-clock drift
+  const a = run(1 / 60, 3500), b = run(1 / 30, 3500), c = run(1, 3500), d = at(1000);
   d.update(3500);
   for (const x of [a, b, c]) {
     assert.ok(Math.abs(x.value - d.value) < 1e-6, `${x.value} vs ${d.value}`);
     assert.equal(x.tierId, d.tierId);
   }
-  assert.ok(Math.abs(d.value - (100 - 3500 / 90)) < 1e-9);
-  // Exactly ON a tier edge (3600 s = value 60) the last float bit may fall either side between frame rates: far less than a millisecond of play.
+  assert.ok(Math.abs(d.value - (1000 - 3500 / 9)) < 1e-9);
+  // Exactly ON a tier edge (3600 s = 400 points drained = value 600) the last float bit may fall either side between frame rates.
   const edge = run(1 / 60, 3600);
-  assert.ok(Math.abs(edge.value - 60) < 1e-6);
+  assert.ok(Math.abs(edge.value - 600) < 1e-6);
 });
 
-test("tier multipliers and status follow the tier; a sweep of every value respects the hunger-law guardrails", () => {
-  const cases = [[100, 1.05, 0.9, 1.05, "stuffed"], [75, 1.05, 1, 1.05, null], [40, 1, 1, 1, null], [10, 0.75, 0.95, 0.75, "hungry"], [0, 0.5, 0.9, 0.5, "starving"]];
-  for (const [v, regen, move, stam, status] of cases) {
+test("multipliers follow the tier, one per stat; a sweep of every value respects the hunger-law guardrails", () => {
+  const cases = [[1000, 1.05, 1, 1, 0.9, "stuffed"], [750, 1.05, 1, 1, 1, null], [400, 1, 1, 1, 1, null], [100, 0.75, 1, 0.75, 0.95, "hungry"], [0, 0.5, 1, 0.5, 0.85, "starving"]];
+  for (const [v, hp, mana, stam, move, status] of cases) {
     const h = at(v);
-    assert.deepEqual([h.regenMult, h.moveMult, h.staminaRegenMult, h.status], [regen, move, stam, status], "value " + v);
+    assert.deepEqual([h.hpRegenMult, h.manaRegenMult, h.staminaRegenMult, h.moveMult, h.status], [hp, mana, stam, move, status], "value " + v);
   }
-  for (let v = 0; v <= 100; v += 0.5) {
+  for (let v = 0; v <= 1000; v += 5) {
     const h = at(v);
-    assert.ok(h.moveMult >= 0.9, "never slower than -10% at " + v);
-    assert.ok(h.regenMult >= 0.5 && h.staminaRegenMult >= 0.5, "regen is never switched off at " + v);
+    assert.ok(h.moveMult >= MIN_MOVE_MULT, "never slower than -15% per tier at " + v);
+    assert.ok(h.hpRegenMult >= 0.5 && h.staminaRegenMult >= 0.5 && h.manaRegenMult >= 0.5, "regeneration is never switched off at " + v);
+    assert.ok(h.canEat === (v < 1000), "food is usable in every tier below the maximum at " + v);
   }
-  assert.ok(at(0).canEat, "food is always usable when starving");
 });
 
-test("hunger cannot hurt: the class has no damage, kill or health member", () => {
+test("the Hunger class has no damage, kill or health member (hunger damage will come from statuses, FOUNDER.md 6b)", () => {
   const names = Object.getOwnPropertyNames(Hunger.prototype).join(" ").toLowerCase();
-  assert.doesNotMatch(names, /damage|kill|hurt|hp|health|die|dead/);
+  assert.doesNotMatch(names, /damage|kill|hurt|hp(?!regen)|health|die|dead/);
   const h = at(0);
   for (const k of Object.keys(h)) assert.notEqual(typeof h[k], "function");
 });
 
 // ---------------------------------------------------------------- eating
-test("eat: adds the amount, caps at max, reports what was gained and any tier change", () => {
-  const h = at(30);
-  assert.deepEqual(h.eat(15), { ok: true, gained: 15, value: 45, change: null });
-  assert.deepEqual(h.eat(15), { ok: true, gained: 15, value: 60, change: { from: "not_hungry", to: "full" } });
-  const g = at(89);
-  assert.deepEqual(g.eat(45), { ok: true, gained: 11, value: 100, change: { from: "full", to: "stuffed" } }, "89 + 45 caps at 100, gained 11");
-  assert.deepEqual(at(55).eat(45), { ok: true, gained: 45, value: 100, change: { from: "not_hungry", to: "stuffed" } });
-  assert.equal(at(0).eat(15).value, 15, "starving can eat");
+test("eat: adds the points in any tier below the maximum and reports what was gained and any tier change", () => {
+  const h = at(300);
+  assert.deepEqual(h.eat(150), { ok: true, gained: 150, value: 450, overeat: false, excess: 0, change: null });
+  assert.deepEqual(h.eat(150), { ok: true, gained: 150, value: 600, overeat: false, excess: 0, change: { from: "not_hungry", to: "full" } });
+  assert.equal(at(0).eat(150).value, 150, "starving can eat");
+  assert.equal(at(100).eat(150).ok, true, "hungry can eat");
+  const stuffed = at(950);
+  assert.deepEqual(stuffed.eat(30), { ok: true, gained: 30, value: 980, overeat: false, excess: 0, change: null }, "Stuffed may eat: it is the risk (R13)");
 });
 
-test("eat is refused while Stuffed and changes nothing; eating two cooked meats quickly reaches Stuffed", () => {
-  const h = at(95);
-  assert.deepEqual(h.eat(15), { ok: false, reason: "cannot_eat" });
-  assert.equal(h.value, 95);
-  const two = at(10);
-  assert.equal(two.eat(45).ok, true);
-  assert.equal(two.tierId, "not_hungry");
-  assert.equal(two.eat(45).ok, true);
-  assert.equal(two.tierId, "stuffed", "10 + 45 + 45 = 100");
-  assert.equal(two.eat(45).reason, "cannot_eat");
-  two.update(900 + 1);
-  assert.equal(two.canEat, true, "after dropping below 90 it can eat again");
+test("eat: reaching the maximum exactly is not an overflow; one point more is", () => {
+  const exact = at(550).eat(450);
+  assert.deepEqual(exact, { ok: true, gained: 450, value: 1000, overeat: false, excess: 0, change: { from: "not_hungry", to: "stuffed" } });
+  const over = at(551).eat(450);
+  assert.deepEqual(over, { ok: true, gained: 449, value: 1000, overeat: true, excess: 1, change: { from: "not_hungry", to: "stuffed" } });
+  assert.deepEqual(at(950).eat(100), { ok: true, gained: 50, value: 1000, overeat: true, excess: 50, change: null }, "an overflow inside Stuffed has no tier change");
+  assert.equal(at(999.5).eat(1).overeat, true);
+});
+
+test("eat is refused at the maximum and changes nothing; after a little drain food fits again", () => {
+  const h = at(1000);
+  assert.deepEqual(h.eat(150), { ok: false, reason: "cannot_eat" });
+  assert.equal(h.value, 1000);
+  assert.equal(h.canEat, false);
+  h.update(9);
+  assert.equal(h.canEat, true, "below the maximum food is accepted again (HS1 blocks it while the Overeating status runs, R13)");
+  assert.deepEqual(h.eat(1), { ok: true, gained: 1, value: 1000, overeat: false, excess: 0, change: null });
 });
 
 test("eat: a bad amount is refused and changes nothing", () => {
-  const h = at(40);
-  for (const amount of [0, -5, NaN, Infinity, -Infinity, 100.0001, 1e9, "15", null, undefined, {}, [15]]) {
-    assert.deepEqual(h.eat(amount), { ok: false, reason: "invalid_amount" }, String(amount));
-    assert.equal(h.value, 40);
+  const h = at(400);
+  for (const points of [0, -5, NaN, Infinity, -Infinity, 1000.0001, 1e9, "150", null, undefined, {}, [150]]) {
+    assert.deepEqual(h.eat(points), { ok: false, reason: "invalid_amount" }, String(points));
+    assert.equal(h.value, 400);
   }
-  assert.equal(h.eat(100).ok, true, "an amount of exactly max is allowed");
+  assert.equal(h.eat(1000).ok, true, "an amount of exactly max is allowed");
+  assert.equal(h.value, 1000);
+});
+
+test("the design's meal sizes: Raw Meat 150 and Cooked Meat 450 points (provisional) move the stat as planned", () => {
+  const h = at(300);
+  h.eat(450);
+  assert.equal(h.percent, 75);
+  assert.equal(h.tierId, "full");
+  assert.equal(at(550).eat(450).change.to, "stuffed", "one Cooked Meat from 55% reaches Stuffed (FOUNDER.md decision 6)");
+  const raw = at(300);
+  raw.eat(150);
+  assert.equal(raw.percent, 45);
 });
 
 // ---------------------------------------------------------------- saves
 test("serialize / restore: a plain, versioned round trip through the storage adapter contract", () => {
-  const h = at(100);
+  const h = at(1000);
   h.update(1234.5);
   const raw = h.serialize();
   assert.deepEqual(Object.keys(raw).sort(), ["id", "v", "value"]);
@@ -244,12 +288,12 @@ test("serialize / restore: a plain, versioned round trip through the storage ada
 });
 
 test("restore refuses bad saves with a reason, touches nothing and never throws", () => {
-  const ok = at(50).serialize();
+  const ok = at(500).serialize();
   const cases = [
     ["corrupt", null], ["corrupt", undefined], ["corrupt", "x"], ["corrupt", []], ["corrupt", 5],
     ["corrupt", { ...ok, v: 0 }], ["corrupt", { ...ok, v: 1.5 }], ["corrupt", { ...ok, v: "1" }], ["corrupt", { id: ok.id, value: 5 }],
-    ["corrupt", { ...ok, id: 5 }], ["corrupt", { ...ok, value: "50" }], ["corrupt", { ...ok, value: NaN }], ["corrupt", { ...ok, value: Infinity }],
-    ["corrupt", { ...ok, value: -1 }], ["corrupt", { ...ok, value: 100.5 }], ["corrupt", { ...ok, value: null }],
+    ["corrupt", { ...ok, id: 5 }], ["corrupt", { ...ok, value: "500" }], ["corrupt", { ...ok, value: NaN }], ["corrupt", { ...ok, value: Infinity }],
+    ["corrupt", { ...ok, value: -1 }], ["corrupt", { ...ok, value: 1000.5 }], ["corrupt", { ...ok, value: null }],
     ["newer_version", { ...ok, v: HUNGER_SAVE_VERSION + 1 }], ["mismatch", { ...ok, id: "thirst" }],
   ];
   for (const [reason, raw] of cases) {
@@ -261,18 +305,18 @@ test("restore refuses bad saves with a reason, touches nothing and never throws"
   assert.equal(Hunger.restore(def(), frozen).ok, true, "a frozen save is fine");
   assert.throws(() => Hunger.restore(null, ok), /must be an object/, "a bad definition is a programming error and throws");
   assert.equal(Hunger.restore(def(), { ...ok, value: 0 }).ok, true, "the edges 0 and max are valid");
-  assert.equal(Hunger.restore(def(), { ...ok, value: 100 }).ok, true);
+  assert.equal(Hunger.restore(def(), { ...ok, value: 1000 }).ok, true);
 });
 
 test("constructor: starting value must be a number from 0 to max", () => {
-  for (const value of [-1, 101, NaN, Infinity, "5", null]) assert.throws(() => new Hunger(def(), { value }), /starting value/, String(value));
+  for (const value of [-1, 1001, NaN, Infinity, "5", null]) assert.throws(() => new Hunger(def(), { value }), /starting value/, String(value));
   assert.equal(new Hunger(def(), { value: 0 }).value, 0);
-  assert.equal(new Hunger(def(), {}).value, 85);
+  assert.equal(new Hunger(def(), {}).value, 850);
 });
 
 test("two Hungers with the same inputs stay identical and independent, and JSON.stringify of one holds no hidden members", () => {
   const a = new Hunger(def()), b = new Hunger(def());
-  for (const h of [a, b]) { h.update(500); h.eat(15); h.update(77); }
+  for (const h of [a, b]) { h.update(500); h.eat(150); h.update(77); }
   assert.deepEqual(a.serialize(), b.serialize());
   a.update(5000);
   assert.notEqual(a.value, b.value);
