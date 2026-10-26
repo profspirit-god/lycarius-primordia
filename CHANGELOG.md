@@ -2,6 +2,33 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.23.0.00 — H2a: hunger on the player and the HUD (feature)
+
+Third step of track H, and the first one you can see. The hunger primitive of V1.17.0.00 and V1.22.0.00 now runs on the player: your character has a hunger stat that falls while you play, a fourth bar under Stamina shows it as a percentage, and it is saved. **Hunger has no effect on gameplay yet**: the tier multipliers wait for the stat-modifier layer (X1) and H2b, and there is no food until H3.
+
+### Added
+
+- **`player.hunger`** (a `Hunger`, 0 to 1000 points, start 850 = 85%, Full). `Player.update` drains it by sim time (`dt`): 1 point per 9 s, so 100% to 0% takes 2.5 hours. It does **not** drain while the player is downed, while the game is paused (the world stops updating its entities) or while the game is closed. Hit-stop slows it with everything else on the sim clock.
+- **`HungerStore`** (`src/sim/hunger/HungerStore.js`): the versioned save of one character's hunger through a storage adapter, on its **own key `lycarius.primordia.hunger`** (`HUNGER_KEY`). Shape `{ v: 1, owners: { <characterId>: { v, id, value } } }`. It writes on every tier change, every **30 s of sim time**, after eating, after a respawn, after a Developer change and when you leave the world. A missing, corrupt or mismatched save gives a fresh 85%; a save from a **newer game is never overwritten** (the store locks and plays from memory); other characters' entries are kept.
+- **Respawn floor (R20):** `HUNGER_RESPAWN_FLOOR` = 250 points (25%) in `definition.js`. Death never lowers hunger; a respawn raises it to at least 25% and never lowers it.
+- **Fourth HUD bar** after HP, Mana and Stamina: an amber bar with a percentage (`84%`) and a tooltip with the tier (`Hunger: Full (84%)`). Its content comes from the pure `hungerBarModel(hunger)` in `src/ui/hungerBar.js`.
+- **Developer hunger tools** in the in-game Settings, Developer section (next to the XP tools, applied at once, not part of Save): a status line, an amount box in percent, **Set hunger to amount** and **Eat amount**. Eating is refused at 100%; an overflow past 100% is only reported ("wasted") until HS1 adds Overeating.
+- **`hunger:tier` event** `{ target, from, to, percent }` on every tier change (including set, eat and respawn). Nothing subscribes yet; H2b and the status icons will.
+- **`Hunger.setValue(points)`** on the primitive (respawn floor, Developer tool, tests): sets the value, returns the tier change or null, ignores bad values.
+- **`tests/hunger-player.test.mjs`** (28 tests) and one more test in `tests/hunger.test.mjs` (29): drain math and frame-rate independence, no drain while downed or paused, the respawn floor, tier events, the store (autosave timing, restore, corrupt, mismatch and newer saves, other owners, a storage that throws), **no modifier is applied** (a starving player moves, regenerates and has stats exactly like a full one), the Developer tools, the bar model and its place after Stamina, Node import with no globals.
+
+### Changed
+
+- `Player` takes an optional third constructor argument `{ hungerStore }`; without it (tests, dry runs) it gets a fresh unsaved `Hunger`. `Player.respawn(world?)` raises hunger before it restores vitals.
+- `WorldScene` creates the `HungerStore` and saves it on `exit()`; the in-game `SettingsPanel` gets the `hunger` option for the Developer tools.
+- `npm test` now runs 24 test files (new: `hunger-player`). README, ROADMAP (H2a done, the default is now X1), `FOUNDER.md`, `docs/ENGINES_AND_SYSTEMS.md`, `docs/proposals/Hunger-statuses.md` and the `Claude.md` code map updated. `VERSION` 1.22.0.00 to 1.23.0.00.
+
+### Notes
+
+- **Defaults taken, flagged:** the bar is amber; its tooltip names the tier; the percentage is `floor(value / max * 100)` (the HUD never shows 100% before the stat is really full). The save is keyed by the class id like the inventory and job saves. A browser closed between two writes loses at most 30 s of drain, which never hurts the player.
+- **Not done on purpose:** no regeneration, speed or stamina change, no Hungry or Starving icons (H2b, after X1), no food, no Overeating, no damage. Hunger still cannot hurt or kill.
+- **Server-ready:** yes. `HungerStore` and `hungerBar` have zero audit hits; `Player.js` hit counts are unchanged and the totals did not rise. No rng is used.
+
 ## V1.22.0.00 — H1b: the hunger primitive follows the settled design (feature, primitive only, nothing user-visible)
 
 Second step of track H. The pure hunger primitive of V1.17.0.00 is brought in line with `FOUNDER.md` section 6 and the owner resolutions R12 to R20, before H2a saves and shows it. It is still **not wired into the game**: nothing creates a `Hunger` until H2a, so there is no change to play.
