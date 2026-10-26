@@ -9,6 +9,8 @@ export const INVENTORY_KEY = "lycarius.primordia.inventory";
 export const JOBS_KEY = "lycarius.primordia.jobs";
 /** localStorage key of the stat training save (sim/stats/StatTraining.js): which stat tickets a character has used. Its own key and shape. */
 export const TRAINING_KEY = "lycarius.primordia.training";
+/** localStorage key of the hunger save (sim/hunger/HungerStore.js): the hunger points of a character. Its own key and shape. */
+export const HUNGER_KEY = "lycarius.primordia.hunger";
 
 /**
  * @param {string} key

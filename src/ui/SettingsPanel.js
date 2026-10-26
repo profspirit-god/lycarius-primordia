@@ -67,9 +67,11 @@ export class SettingsPanel {
    * @param {(keys:string[]) => void} [o.onSaved]  keys that changed on Save (the world rebuilds the dummy from this)
    * @param {object} [o.progression]      a Progression (game context): enables the XP tools
    * @param {() => void} [o.onProgression] called after an XP tool ran (the world re-syncs the player)
+   * @param {{ status: () => string, set: (percent: number) => string, eat: (percent: number) => string }} [o.hunger] game context (H2a): the
+   *   Developer hunger tools. `status()` is the line shown above them; `set` and `eat` act on the player and return a short result line
    */
-  constructor({ parent, context, onExit, onSaved, progression, onProgression }) {
-    Object.assign(this, { parent, context, onExit, onSaved, progression, onProgression });
+  constructor({ parent, context, onExit, onSaved, progression, onProgression, hunger }) {
+    Object.assign(this, { parent, context, onExit, onSaved, progression, onProgression, hunger });
     this.sections = SECTIONS.filter((s) => !s.ctx || s.ctx === context);
     this.keys = this.sections.flatMap((s) => s.rows.map((r) => r.k));
     this.saved = Settings.snapshot(); // what is in storage now; Discard returns here
@@ -105,6 +107,7 @@ export class SettingsPanel {
     this.stateEl = el.querySelector("[data-state]");
     this.parent.appendChild(el);
     if (this.progression) this.refreshDevStatus();
+    if (this.hunger) this.refreshHungerStatus();
   }
 
   sectionHtml(s) {
@@ -122,7 +125,16 @@ export class SettingsPanel {
            <button class="btn sm danger" tabindex="-1" data-a="resetProg">Reset progression</button>
          </div>`
       : "";
-    return `<section class="st-sec${s.dev ? " dev" : ""}" data-sec="${s.id}"><h3>${s.title}</h3>${s.blurb ? `<div class="st-blurb">${s.blurb}</div>` : ""}${rows}${tools}</section>`;
+    const hungerTools = s.dev && this.hunger
+      ? `<div class="st-sub">Hunger tools <small>(apply immediately, not part of Save)</small></div>
+         <div class="devstatus" data-hungerstatus></div>
+         <div class="row"><label>Hunger amount (%)</label><input type="number" min="0" max="100" step="1" value="50" data-hungeramount></div>
+         <div class="devgrid">
+           <button class="btn sm" tabindex="-1" data-a="hungerSet">Set hunger to amount</button>
+           <button class="btn sm" tabindex="-1" data-a="hungerEat">Eat amount</button>
+         </div>`
+      : "";
+    return `<section class="st-sec${s.dev ? " dev" : ""}" data-sec="${s.id}"><h3>${s.title}</h3>${s.blurb ? `<div class="st-blurb">${s.blurb}</div>` : ""}${rows}${tools}${hungerTools}</section>`;
   }
 
   // ---- state --------------------------------------------------------------
@@ -171,6 +183,7 @@ export class SettingsPanel {
     else if (a === "reset") this.reset();
     else if (a === "save") this.save();
     else if (a === "back") this.requestBack();
+    else if (a === "hungerSet" || a === "hungerEat") this.hungerAction(a);
     else if (this.progression) this.devAction(a);
   }
 
@@ -244,6 +257,18 @@ export class SettingsPanel {
     else return;
     this.refreshDevStatus();
     this.onProgression?.();
+  }
+  /** Hunger percentage typed in the Developer tools: a whole number 0 to 100 (anything else counts as 0 or 100). */
+  hungerAmount() {
+    return Math.min(100, Math.max(0, Math.round(Number(this.el.querySelector("[data-hungeramount]")?.value) || 0)));
+  }
+  refreshHungerStatus(result = "") {
+    const s = this.el.querySelector("[data-hungerstatus]");
+    if (s) s.textContent = `${this.hunger.status()}${result ? `  ·  ${result}` : ""}`;
+  }
+  hungerAction(a) {
+    const result = a === "hungerSet" ? this.hunger.set(this.hungerAmount()) : this.hunger.eat(this.hungerAmount());
+    this.refreshHungerStatus(result);
   }
   confirmResetProgression() {
     const m = openModal(this.parent, {

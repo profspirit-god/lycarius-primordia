@@ -12,19 +12,29 @@ import { TAU } from "../core/math.js";
 import { Settings } from "../core/Settings.js";
 import { UNIVERSAL } from "../classes/Universal.js";
 import { idleCommand, sanitizeCommand } from "../sim/InputCommand.js";
+import { Hunger } from "../sim/hunger/Hunger.js";
+import { PRIMORDIA_HUNGER, HUNGER_RESPAWN_FLOOR } from "../sim/hunger/definition.js";
 
 const RESPAWN_TIME = 3; // seconds spent downed
 
 /**
  * The local or remote player. It never reads input: each tick it is given an InputCommand (`applyCommand`, see sim/InputCommand.js).
  * Replicated fields (S1e): cmd { seq mx my aim btn } plus the existing x y vx vy knock aim dodge stunT downed, and toolId (J1: the job tool carried).
+ * H2a adds `hunger` (a Hunger: value in hunger points, shown as a percentage; the tier and its multipliers are derived from it). It drains in
+ * `update` by sim time and only changes tiers; it affects nothing else until H2b applies the multipliers through X1.
  */
 export class Player extends Entity {
-  /** @param {import('../progression/Progression.js').Progression} [prog] specialization state; without it the player owns every class skill */
-  constructor(cls, prog = null) {
+  /**
+   * @param {import('../progression/Progression.js').Progression} [prog] specialization state; without it the player owns every class skill
+   * @param {{ hungerStore?: import('../sim/hunger/HungerStore.js').HungerStore }} [opts] H2a: the saved hunger of this character; without it
+   *   the player gets a fresh, unsaved Hunger at the start value (tests, the loading dry run)
+   */
+  constructor(cls, prog = null, { hungerStore = null } = {}) {
     super();
     this.cls = cls;
     this.prog = prog;
+    this.hungerStore = hungerStore; // saves `hunger` (tier change, every 30 s of sim time, eat, respawn); null = nothing is saved
+    this.hunger = hungerStore ? hungerStore.hunger : new Hunger(PRIMORDIA_HUNGER);
     this.training = {}; // permanent stat bonus from used stat tickets (sim/stats/StatTraining.js `bonus`), set by the world
     this.stats = { ...cls.stats }; // base stats + specialization bonuses
     this.mods = null; // specialization modifiers (castTimeMult, cooldownMult, elementDamage, skillDamage)
@@ -182,7 +192,35 @@ export class Player extends Entity {
     this.vx = 0;
     this.vy = 0;
   }
-  respawn() {
+  /** Drain hunger by `dt` of sim time (not while downed: `update` returns before it) and announce a tier change. */
+  updateHunger(dt, world) {
+    const change = this.hunger.update(dt);
+    this.announceHunger(change, world);
+    this.hungerStore?.tick(dt, !!change);
+  }
+  /** Emit `hunger:tier` { target, from, to, percent } for a tier change (plain data; later HUD, audio and status code subscribe). */
+  announceHunger(change, world) {
+    if (change) world?.events?.emit("hunger:tier", { target: this, from: change.from, to: change.to, percent: this.hunger.percent });
+  }
+  /** Eat food worth `points` (H4 calls this; today the Developer tool does). Returns the `Hunger.eat` result; a success is saved at once. */
+  eatHunger(points, world = null) {
+    const r = this.hunger.eat(points);
+    if (r.ok) {
+      this.announceHunger(r.change, world);
+      this.hungerStore?.save();
+    }
+    return r;
+  }
+  /** Set the hunger value in points (Developer tool, tests). Saved at once. Returns the tier change or null. */
+  setHunger(points, world = null) {
+    const change = this.hunger.setValue(points);
+    this.announceHunger(change, world);
+    this.hungerStore?.save();
+    return change;
+  }
+
+  respawn(world = null) {
+    this.setHunger(Math.max(this.hunger.value, HUNGER_RESPAWN_FLOOR), world); // R20: death never lowers hunger, respawn raises it to at least 25%
     this.vitals.configure(this.stats);
     this.x = this.home.x;
     this.y = this.home.y;
@@ -201,10 +239,11 @@ export class Player extends Entity {
     this.btnNow = this.cmd.btn;
     if (this.downed) {
       this.downedTimer -= dt;
-      if (this.downedTimer <= 0) this.respawn();
+      if (this.downedTimer <= 0) this.respawn(world);
       return;
     }
     this.vitals.update(dt);
+    this.updateHunger(dt, world);
 
     const { mx, my } = this.cmd;
     const dodging = this.stepDodge(dt),

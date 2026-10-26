@@ -1,4 +1,4 @@
-// H1 / H1b: the pure hunger primitive (src/sim/hunger/). Not wired into the game, so these tests are the only proof it works.
+// H1 / H1b: the pure hunger primitive (src/sim/hunger/). Since H2a it is wired into the player (tests/hunger-player.test.mjs covers that).
 //   node tests/hunger.test.mjs        (exit 0 = all passed)
 // Covers: the Primordia tier table of FOUNDER.md section 6 in hunger points (1000 = 100%), the validator and its guardrails (a tier never
 // slows more than 15%, no regeneration is switched off, mana stays separate), the drain math (1 point per 9 s, 1000 to 0 in 9000 s),
@@ -345,10 +345,25 @@ test("Node import with no browser globals (R12): a child process imports the fol
 test("source rule check: no browser, clock, Math.random or rng in src/sim/hunger (the audit counts the same)", () => {
   const dir = new URL("../src/sim/hunger/", import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith(".js"));
-  assert.deepEqual(files.sort(), ["Hunger.js", "definition.js", "validateHunger.js"]);
+  assert.deepEqual(files.sort(), ["Hunger.js", "HungerStore.js", "definition.js", "validateHunger.js"]);
   for (const f of files) {
     const code = readFileSync(new URL(f, dir), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
     assert.doesNotMatch(code, /\bMath\.random\b|\brand\(|\brng\b|\bperformance\b|\bDate\b|\bsetTimeout\b|\bwindow\b|\bdocument\b|\blocalStorage\b|\bworld\.(?:player|input|game|camera)\b/, f);
+  }
+});
+
+test("setValue (H2a, for the respawn floor and the Developer tool): sets points, reports the tier change, ignores bad values", () => {
+  const h = at(850);
+  assert.deepEqual(h.setValue(70), { from: "full", to: "starving" }); // 7%
+  assert.equal(h.value, 70);
+  assert.equal(h.setValue(70), null, "no tier change, no report");
+  assert.deepEqual(h.setValue(100), { from: "starving", to: "hungry" });
+  assert.deepEqual(h.setValue(1000), { from: "hungry", to: "stuffed" });
+  assert.deepEqual(h.setValue(0), { from: "stuffed", to: "starving" });
+  for (const bad of [-1, 1000.5, NaN, Infinity, "5", null, undefined, {}]) {
+    const before = h.value;
+    assert.equal(h.setValue(bad), null, String(bad));
+    assert.equal(h.value, before, `${String(bad)} changes nothing`);
   }
 });
 

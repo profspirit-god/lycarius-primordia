@@ -233,6 +233,7 @@ html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); font-
 .hud-bar.hp i { background:linear-gradient(180deg,#ef5656,#c22f2f); }
 .hud-bar.mp i { background:linear-gradient(180deg,#5b9bff,#2f6fe0); }
 .hud-bar.st i { background:linear-gradient(180deg,#6fd882,#3fa655); }
+.hud-bar.hg i { background:linear-gradient(180deg,#e6b04f,#b8791f); }
 .hud-bar u { position:absolute; top:0; bottom:0; display:none; background:rgba(255,255,255,.45); text-decoration:none; }
 .hud-bar b { position:absolute; right:4px; top:50%; transform:translateY(-50%); font-size:8px; font-weight:600; line-height:1; letter-spacing:.04em; color:#fff; text-shadow:0 0 2px #000,0 0 2px #000; }
 .hud-bar.boost { border-color:#5ab4ff; box-shadow:0 0 8px #5ab4ff; }
