@@ -121,7 +121,7 @@ Owner rule (R19): when a status needs a system that does not exist, the **system
 
 | Item | Disposition |
 | ---- | ----------- |
-| Fourth bar order HP, Mana, Stamina, Hunger; icons in the existing status area | Accept (H2a, H2b) |
+| Fourth bar order HP, Mana, Stamina, Hunger; icons in the existing status area | Accept (the bar is built in H2a, V1.23.0.00; the icons come with H2b) |
 | Tier direct effects, separate HP, mana and stamina regen | Accept, mana unchanged until set (R18) |
 | Hunger can damage but never kill | Accept (R12), law rewritten |
 | Overeating at 100% | Revise: deterministic overflow rule (R13) |
