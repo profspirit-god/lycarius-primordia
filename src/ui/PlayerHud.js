@@ -1,6 +1,7 @@
 import { icon } from "./icons.js";
 import { SkillRegistry } from "../skills/SkillRegistry.js";
 import { PROFILE } from "../lobby/lobbyData.js";
+import { hungerBarModel } from "./hungerBar.js";
 
 const RING_R = 26; // skill ring radius (px, in the 60 x 60 ring svg)
 const RING_C = 2 * Math.PI * RING_R;
@@ -9,7 +10,7 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /**
  * In-game HUD (DOM, drawn over the canvas):
  *  - top-left card: profile circle (click = character panel) with the character level under it, the player name and,
- *    tight beside the circle, the health / mana / stamina bars (long and thin). Status-effect icons sit to the right of
+ *    tight beside the circle, the health / mana / stamina / hunger bars (long and thin; hunger shows a percentage, H2a). Status-effect icons sit to the right of
  *    the card, outside its padding.
  *  - bottom-left: the skill circles (SVG icons, cooldown sweep, charge / shield / ward ring, key hint).
  * Reads the world every frame but only touches the DOM when a value changed. Nothing here changes gameplay.
@@ -33,7 +34,7 @@ export class PlayerHud {
             </div>
             <div class="hud-main">
               <div class="hud-name">${this.name}</div>
-              <div class="hud-bars">${bar("hp", "Health")}${bar("mp", "Mana")}${bar("st", "Stamina")}</div>
+              <div class="hud-bars">${bar("hp", "Health")}${bar("mp", "Mana")}${bar("st", "Stamina")}${bar("hg", "Hunger")}</div>
             </div>
           </div>
           <div class="hud-xp" data-xp></div>
@@ -47,7 +48,7 @@ export class PlayerHud {
     this.fxBox = root.querySelector("[data-fx]");
     this.skillBox = root.querySelector("[data-skills]");
     this.bars = {};
-    for (const id of ["hp", "mp", "st"]) {
+    for (const id of ["hp", "mp", "st", "hg"]) {
       const el = root.querySelector(`.hud-bar.${id}`);
       this.bars[id] = { el, f: el.querySelector("[data-f]"), prev: el.querySelector("[data-prev]"), t: el.querySelector("[data-t]"), w: -1, txt: "" };
     }
@@ -90,6 +91,10 @@ export class PlayerHud {
     this.bars.mp.el.classList.toggle("flash", p.lowManaFlash > 0);
     this.bars.mp.el.classList.toggle("boost", !!p.manaBuff); // Mana Regen running
     this.bars.st.el.classList.toggle("flash", p.lowStaminaFlash > 0);
+    const hg = hungerBarModel(p.hunger), hb = this.bars.hg; // the fourth bar: a percentage after HP, Mana and Stamina
+    this.setBar("hg", hg.frac, hg.text);
+    if (hb.title !== hg.title) { hb.title = hg.title; hb.el.title = hg.title; }
+    if (hb.tier !== hg.tier) { hb.tier = hg.tier; hb.el.dataset.tier = hg.tier; }
 
     // level, pending-pick pip, xp gain flash
     if (prog) {

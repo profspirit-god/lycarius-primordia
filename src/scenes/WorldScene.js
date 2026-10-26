@@ -3,7 +3,7 @@ import { EventBus } from "../core/EventBus.js";
 import { Rng } from "../sim/rng.js";
 import { PlayerController } from "../input/PlayerController.js";
 import { Settings } from "../core/Settings.js";
-import { createLocalStorageAdapter, PROGRESS_KEY, JOBS_KEY } from "../core/LocalStorageAdapter.js";
+import { createLocalStorageAdapter, PROGRESS_KEY, JOBS_KEY, HUNGER_KEY } from "../core/LocalStorageAdapter.js";
 import { SettingsPanel } from "../ui/SettingsPanel.js";
 import { ClassRegistry } from "../classes/ClassRegistry.js";
 import { Player } from "../entities/Player.js";
@@ -11,6 +11,9 @@ import { TrainingDummy } from "../entities/TrainingDummy.js";
 import { Velthorn } from "../entities/Velthorn.js";
 import { TRAINING_TREES } from "../sim/jobs/cover.js";
 import { JobProgress } from "../progression/JobProgress.js";
+import { HungerStore } from "../sim/hunger/HungerStore.js";
+import { PRIMORDIA_HUNGER } from "../sim/hunger/definition.js";
+import { HUNGER_TIER_NAMES } from "../ui/hungerBar.js";
 import { Merchant } from "../entities/Merchant.js";
 import { Camera } from "../systems/Camera.js";
 import { ParticleSystem } from "../systems/ParticleSystem.js";
@@ -76,7 +79,8 @@ export class WorldScene extends Scene {
     const cls = ClassRegistry.get(this.classId);
     this.cls = cls;
     this.progression = new Progression(cls, createLocalStorageAdapter(PROGRESS_KEY)); // the client owns the browser storage; the sim only sees the adapter
-    this.player = this.spawn(new Player(cls, this.progression));
+    this.hungerStore = new HungerStore(this.classId, PRIMORDIA_HUNGER, createLocalStorageAdapter(HUNGER_KEY)); // the character's saved hunger (H2a)
+    this.player = this.spawn(new Player(cls, this.progression, { hungerStore: this.hungerStore }));
     this.player.setTraining(this.training?.bonus(this.classId) ?? {}); // permanent stat bonus from used stat tickets
     this.controller = new PlayerController(this);
     this.progression.onEvent = (e) => this.onProgress(e);
@@ -120,6 +124,7 @@ export class WorldScene extends Scene {
 
   exit() {
     this.settingsPanel?.discard(); // leaving with unsaved previews: put the saved values back
+    this.hungerStore?.save(); // the drain since the last autosave
     this.audio.dispose();
     disposeSystems(this, VIEW_SYSTEMS);
     disposeSystems(this, SIM_SYSTEMS);
@@ -290,6 +295,14 @@ export class WorldScene extends Scene {
       context: "game",
       progression: this.progression,
       onProgression: () => this.player.syncProgression(),
+      hunger: {
+        status: () => {
+          const h = this.player.hunger;
+          return `Hunger ${h.percent}% (${Math.floor(h.value)} / ${h.max} points), ${HUNGER_TIER_NAMES[h.tierId] ?? h.tierId}`;
+        },
+        set: (pct) => this.devSetHunger(pct),
+        eat: (pct) => this.devEatHunger(pct),
+      },
       onSaved: (keys) => {
         // The dummy reads its settings when it is built: rebuild it so a saved change shows up now (during a raid it comes back with the raid's end).
         if (keys.some((k) => k.startsWith("dummy")) && this.dummy) {
@@ -303,6 +316,21 @@ export class WorldScene extends Scene {
       },
     });
   }
+  /** Developer tool (Settings, game context): set the hunger to `percent` of the maximum. Returns a short result line. */
+  devSetHunger(percent) {
+    const h = this.player.hunger;
+    this.player.setHunger((percent / 100) * h.max, this);
+    return `set to ${h.percent}%`;
+  }
+  /** Developer tool: eat food worth `percent` of the maximum (refused at 100%; an overflow is only reported until HS1). */
+  devEatHunger(percent) {
+    const h = this.player.hunger;
+    if (percent <= 0) return "nothing to eat";
+    const r = this.player.eatHunger((percent / 100) * h.max, this);
+    if (!r.ok) return r.reason === "cannot_eat" ? "refused: hunger is full" : "refused: bad amount";
+    return `ate +${Math.round((r.gained / h.max) * 100)}%${r.overeat ? ` (overflow ${Math.round((r.excess / h.max) * 100)}%, wasted)` : ""}`;
+  }
+
   setPaused(p) {
     this.paused = p;
     this.pauseEl.style.display = p ? "" : "none";

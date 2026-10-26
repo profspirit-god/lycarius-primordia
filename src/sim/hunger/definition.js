@@ -1,5 +1,5 @@
 // The Primordia hunger definition as DATA (FOUNDER.md section 6, owner resolutions R11 to R20 in FOUNDER.md section 12).
-// Tuning lives here and nowhere else: change a number in this file, never in Hunger.js. Not wired into the game yet (H2a does that).
+// Tuning lives here and nowhere else: change a number in this file, never in Hunger.js. Wired into the player by H2a (V1.23.0.00).
 //
 // The stat is counted in HUNGER POINTS, 0 to 1000, and shown as a percentage (R16): 10 points are 1%. A tier starts at `min` and runs
 // up to the next tier's `min`; the top tier runs up to `max`. The stat is a real number, so "Hungry 8% to 24%" means the tier changes the
@@ -9,6 +9,9 @@
 //
 // DEFAULT TAKEN, flagged for the owner (R11): `start` is 850 (85%, the Full tier), not the maximum. At 100% a new character would begin
 // Stuffed (-10% move speed) for its first 15 minutes, which contradicts the "start with nothing" fantasy. One number to change.
+
+/** On respawn the stat is raised to at least this many points (R20: 25%, the start of the \"not hungry\" tier). Death never lowers it. */
+export const HUNGER_RESPAWN_FLOOR = 250;
 
 /** Validated by `validateHungerDef` (see validateHunger.js for every field and limit). */
 export const PRIMORDIA_HUNGER = {

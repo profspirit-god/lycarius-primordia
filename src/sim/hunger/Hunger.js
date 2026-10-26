@@ -1,5 +1,5 @@
 // The hunger primitive (H1, aligned by H1b with FOUNDER.md section 6): one stat of hunger POINTS that falls with sim time and is raised
-// by eating, and the tier it is in. Pure and not wired into the game yet: nothing creates a Hunger until H2a (player) wires it.
+// by eating, and the tier it is in. Pure. Wired into the game by H2a (V1.23.0.00): `Player` owns one (`player.hunger`), `HungerStore` saves it.
 // Sim code: no browser, no clock, no randomness (Claude.md 5b). The only time it knows is the `dt` the caller passes (R2, R10), so it
 // never drains while the game is closed and gives the same result at any frame rate. It has no rng: hunger is deterministic.
 //
@@ -7,7 +7,7 @@
 //  - The Hunger class deals no damage and cannot kill. Hunger may damage but never kill (FOUNDER.md 6b, R12), and only through
 //    statuses, non-lethal (never below 1 HP): that is later work (track HS), never this class.
 //  - It does not touch Vitals, StatusSystem, items, the HUD or storage. It reports a tier (`tier.status`, the multipliers) and the
-//    caller applies it. The save is plain data; the caller writes it through the storage adapter.
+//    caller applies it (H2b). The save is plain data; `HungerStore` writes it through the storage adapter.
 //  - It does not know about the Overeating status or the Bag draws (HS1, HS2): `eat` only REPORTS an overflow (`overeat`, `excess`);
 //    the caller starts the status, and refuses food while that status runs (R13).
 //
@@ -97,6 +97,18 @@ export class Hunger {
       overeat = points > room;
     const change = this.#set(overeat ? this.#def.max : before + points);
     return { ok: true, gained: this.#value - before, value: this.#value, overeat, excess: overeat ? points - room : 0, change };
+  }
+
+  /**
+   * Set the value directly, in points. Gameplay raises hunger only through `eat`; this exists for the respawn floor (R20, `Player.respawn`),
+   * the Developer tool and tests. A bad value (not a finite number from 0 to max) changes nothing and returns null, like a call that
+   * caused no tier change.
+   * @param {number} points
+   * @returns {{ from: string, to: string } | null} the tier change this call caused, or null
+   */
+  setValue(points) {
+    if (typeof points !== "number" || !Number.isFinite(points) || points < 0 || points > this.#def.max) return null;
+    return this.#set(points);
   }
 
   /**
