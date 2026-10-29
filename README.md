@@ -1,6 +1,6 @@
 # Lycarius MMORPG: Primordia
 
-> **Current version: V1.23.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
+> **Current version: V1.24.0.00** · 2D · Adventure / RPG / Management · HTML5 Canvas + vanilla JavaScript (ES modules)
 
 **Primordia** is the first edition of _Lycarius MMORPG_, a 2D open-world MMORPG built around a deep lore, branching storylines, co-op progression and (eventually) faction, guild and territory wars. A later edition, **Proto**, will be a more refined second game built on what Primordia teaches us.
 
@@ -8,7 +8,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 
 ---
 
-## 1. What is in V1.23.0.00
+## 1. What is in V1.24.0.00
 
 | Area           | Included                                                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,6 +18,7 @@ This repository currently holds the **combat MVP**: one class with three skills 
 | Character Inventory | Press `I` in the Training Grounds (the game pauses): the items your character carries, in 30 slots, with your **gold** at the top. Gold is the first item. It is separate from the Home Account Inventory and from the Home wallet. Nothing in the world gives gold yet; with Settings, Developer, Show debug on, the panel has +100, +1,000, -100 and -1,000 gold buttons for testing. Saved in the inventory save, so gold is still there after a reload. **Weight:** each gold weighs 31.10 g and the panel shows what you carry against a capacity of 30 Theryn (30 kg), in the game's own units (Veyt, Kirel, Draum, Velkar, Theryn, Korvath, Maelor, Dravon, Aethron, Graveth, Taurak, Orynth, Vaelthar, Kharvorn). Going over capacity turns the bar red; nothing slows or stops you yet. Click an item to see it; a stat ticket has a **Use ticket** button |
 | Gold and John | Every Graugr you defeat drops **1 to 10 gold** and every cleared mock raid pays **20 + 10 x the raid number**, straight into your inventory (a full inventory loses it). **John the Merchant** stands left of the start point: walk up and press `T` to buy **stat tickets** with gold, one per stat (Max Health 150, Health Regen 200, Max Mana 100, Mana Regen 120, Max Stamina 100, Stamina Regen 100, Move Speed 250). Press `I`, select a ticket and use it: the stat rises for good (up to 10 tickets per stat), and stays after a reload (its own save, `lycarius.primordia.training`) |
 | Bags           | The Marble Bag primitive (`src/sim/bag/`, stage M1 of `docs/proposals/Marble-bag-engine.md`): a pool of outcome tokens, for example 4 NORMAL and 2 CRIT, dealt as one shuffled cycle and drawn without replacement, so every complete cycle holds exactly the configured counts. Refill policy `refill_shuffle` or `no_refill`, versioned `serialize` / `restore`, a validator. **Not used by any skill yet**: Fireball crits still roll the old way until stage M2, so nothing about play changed |
+| Temporary modifiers | `player.modifiers` (X1, `src/sim/modifiers/`): named multiplier sets that scale HP, mana and stamina regeneration, walking speed (never below 75%), stamina cost and skill damage; the same key replaces, different keys multiply, totals are capped. Nothing adds one yet (hunger effects come in H2b), so play is unchanged. |
 | Hunger         | The hunger primitive (`src/sim/hunger/`, stages H1 and H1b of `ROADMAP.md`, design in `FOUNDER.md` section 6): a stat of 0 to 1000 hunger points shown as a percentage, falling 1 point per 9 s of sim time and raised by eating (food has a point value; an overflow past the maximum is reported as overeating), five tiers (Stuffed, Full, Not hungry, Hungry, Starving) as data with separate health, mana and stamina regeneration and a move-speed multiplier, versioned save. Hunger may damage but never kill (through statuses, planned). **On your character since V1.23.0.00 (stage H2a):** you start at 85%, it falls while you play (1 point per 9 s, 2.5 hours from full to empty), it stops while you are downed or the game is paused, and it is saved in `localStorage` under `lycarius.primordia.hunger`. A fourth HUD bar under Stamina shows the percentage; hover it for the tier. Death never lowers it and a respawn raises it to at least 25%. **It has no effect on gameplay yet** (the tier multipliers come with X1 and H2b) and there is no food yet (H3) |
 | Lumberjack job | The first job (`C` to chop): 12 Velthorn trees stand in the Training Ground. A Basic Axe (you get one for free) fells a tree in 5 swings for 10 to 15 Velwood and job XP; fire ruins a tree. Job XP is shown in the character panel. See "Lumberjack job" below |
 | Character      | One playable character (a cylinder) with smooth WASD movement and mouse aiming                                                         |
@@ -529,6 +530,7 @@ src/
 | `node tools/sec.mjs <file> [id]` | Prints one section of a markdown doc (no id lists the headings). Ids: `5b`, `S1f`, `M2`, `V1.9.0.00` or any heading text. Saves reading whole docs |
 | `node tools/check-docs.mjs` | Checks that every markdown doc has a title, `##` sections, consistent line endings, no oversized leaf section, and that every file in the `Claude.md` doc map exists. `--strict` also fails on warnings |
 | `node tests/hunger-player.test.mjs` | Hunger on the player (H2a): drain by sim time at any frame rate, no drain while downed, the 25% respawn floor, `hunger:tier` events, the `HungerStore` save (autosave, restore, corrupt, mismatched and newer saves, other characters kept), no gameplay modifier yet, the Developer tools, the HUD bar model, Node import with no globals (28 tests). Exit 0 = pass |
+| `node tests/modifiers.test.mjs` | Temporary stat modifiers (X1): set, replace, remove, validation, product and caps, speed floor 75%, order independence, regeneration, speed, stamina cost and damage on the player, stat tickets untouched, Mana Regen composing |
 | `npm test` (all 24 test files), `npm run audit`, `npm run sec -- <file> [id]`, `npm run docs` | Shortcuts for the commands above |
 
 ### Design proposals (not built)

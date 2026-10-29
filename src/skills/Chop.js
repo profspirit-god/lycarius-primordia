@@ -31,12 +31,12 @@ export const Chop = {
   },
   canUse(owner) {
     const tool = TOOLS[owner.toolId];
-    return !!tool && !owner.dodge && owner.vitals.stamina >= tool.staminaCost;
+    return !!tool && !owner.dodge && owner.vitals.stamina >= owner.vitals.staminaCost(tool.staminaCost);
   },
   /** Refused: no stamina flashes the bar (no tool shows as the greyed button). */
   onDenied(owner) {
     const tool = TOOLS[owner.toolId];
-    if (tool && owner.vitals.stamina < tool.staminaCost) owner.lowStaminaFlash = 0.4;
+    if (tool && owner.vitals.stamina < owner.vitals.staminaCost(tool.staminaCost)) owner.lowStaminaFlash = 0.4;
   },
   isActive() {
     return false;
