@@ -2,6 +2,28 @@
 
 Format: `V<MAJOR>.<MINOR>.<FIX>.<CLEANUP>` (see README → Versioning). Newest first.
 
+## V1.24.0.00 — X1: temporary stat-modifier layer (feature)
+
+First system of track HS. A player can now carry **temporary multipliers** on top of their stats: later a hunger tier, a status or a buff will add one, and removing it gives back exactly what the player had. Nothing in the game adds one yet, so playing feels exactly the same as V1.23.0.00; this is the layer H2b (hunger effects) builds on.
+
+### Added
+
+- **`StatModifiers`** (`src/sim/modifiers/StatModifiers.js`): named sets of multipliers on one owner. A set has an owner key (`"hunger"`, a buff id) and multiplies `hpRegen`, `manaRegen`, `staminaRegen`, `speed`, `staminaCost` or `damage`; the same key replaces its set, different keys multiply. The total per stat is clamped (`STAT_CAPS`): **speed never below 75%** (the hunger-law floor), the others inside a fixed range. Input is validated (R11): unknown stat, non-finite or out-of-range multiplier, bad key, more than 32 sets are refused and change nothing. Order independent (R9), not saved, Node-importable.
+- **`player.modifiers`**, `player.addModifier(key, mult)`, `player.removeModifier(key)`, `player.applyModifiers()`.
+- **`Vitals.temp`** (regeneration and cost multipliers) and `Vitals.staminaCost(n)`.
+- `tests/modifiers.test.mjs` (15 tests), added to `npm test`.
+
+### Changed
+
+- `Vitals.update` multiplies the three regenerations by the temporary multipliers; `ManaRegenEffect` still owns `manaRegenMult`, and the two multiply together.
+- `Player.update` multiplies walking speed by the speed product. `skillMult` (used by Fireball, Fire Blast and explosions) multiplies by the damage product.
+- `Vitals.spendStamina(n)` spends the scaled cost, and Dodge and Chop check the same scaled cost, so a check can never pass and then fail to pay.
+- `player.stats` is **not** touched: it stays the permanent value (class, specialization, stat tickets).
+
+### Not included
+
+Nothing adds a modifier yet (H2b does), no HUD display, no maximum-HP modifiers (X2), no status registry (X3).
+
 ## V1.23.0.00 — H2a: hunger on the player and the HUD (feature)
 
 Third step of track H, and the first one you can see. The hunger primitive of V1.17.0.00 and V1.22.0.00 now runs on the player: your character has a hunger stat that falls while you play, a fourth bar under Stamina shows it as a percentage, and it is saved. **Hunger has no effect on gameplay yet**: the tier multipliers wait for the stat-modifier layer (X1) and H2b, and there is no food until H3.

@@ -33,11 +33,11 @@ export const Dodge = {
     return true;
   },
   canUse(owner) {
-    return !owner.dodge && owner.vitals.stamina >= STAMINA_COST;
+    return !owner.dodge && owner.vitals.stamina >= owner.vitals.staminaCost(STAMINA_COST);
   },
   /** Refused for lack of stamina: flash the bar. */
   onDenied(owner) {
-    if (!owner.dodge && owner.vitals.stamina < STAMINA_COST) owner.lowStaminaFlash = 0.4;
+    if (!owner.dodge && owner.vitals.stamina < owner.vitals.staminaCost(STAMINA_COST)) owner.lowStaminaFlash = 0.4;
   },
   isActive(owner) {
     return !!owner.dodge;
