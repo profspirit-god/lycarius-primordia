@@ -13,6 +13,7 @@ import { Settings } from "../core/Settings.js";
 import { UNIVERSAL } from "../classes/Universal.js";
 import { idleCommand, sanitizeCommand } from "../sim/InputCommand.js";
 import { Hunger } from "../sim/hunger/Hunger.js";
+import { StatModifiers } from "../sim/modifiers/StatModifiers.js";
 import { PRIMORDIA_HUNGER, HUNGER_RESPAWN_FLOOR } from "../sim/hunger/definition.js";
 
 const RESPAWN_TIME = 3; // seconds spent downed
@@ -35,6 +36,7 @@ export class Player extends Entity {
     this.prog = prog;
     this.hungerStore = hungerStore; // saves `hunger` (tier change, every 30 s of sim time, eat, respawn); null = nothing is saved
     this.hunger = hungerStore ? hungerStore.hunger : new Hunger(PRIMORDIA_HUNGER);
+    this.modifiers = new StatModifiers(); // X1: temporary multipliers (hunger tiers, statuses, buffs); never saved, never mixed into the permanent `stats`
     this.training = {}; // permanent stat bonus from used stat tickets (sim/stats/StatTraining.js `bonus`), set by the world
     this.stats = { ...cls.stats }; // base stats + specialization bonuses
     this.mods = null; // specialization modifiers (castTimeMult, cooldownMult, elementDamage, skillDamage)
@@ -66,6 +68,27 @@ export class Player extends Entity {
     this.downed = false;
     this.downedTimer = 0;
     this.syncProgression();
+  }
+
+  /** X1: add or replace the temporary modifier set `key` (`{ speed: 0.9, hpRegen: 0.5 }`) and apply it. Returns `{ok}` or `{ok:false,reason}`. */
+  addModifier(key, mult) {
+    const r = this.modifiers.set(key, mult);
+    if (r.ok) this.applyModifiers();
+    return r;
+  }
+  /** X1: remove the temporary modifier set `key`. Returns true if it existed. */
+  removeModifier(key) {
+    const had = this.modifiers.remove(key);
+    if (had) this.applyModifiers();
+    return had;
+  }
+  /** X1: copy the regeneration and cost products to the vitals (speed and damage are read live). */
+  applyModifiers() {
+    const t = this.vitals.temp, m = this.modifiers;
+    t.hpRegen = m.mult("hpRegen");
+    t.manaRegen = m.mult("manaRegen");
+    t.staminaRegen = m.mult("staminaRegen");
+    t.staminaCost = m.mult("staminaCost");
   }
 
   /** Set the permanent stat bonus from used stat tickets (`{ maxHp: 10, speed: 5, ... }`) and apply it. Unknown keys are ignored. */
@@ -249,7 +272,7 @@ export class Player extends Entity {
     const dodging = this.stepDodge(dt),
       len = Math.max(1, Math.hypot(mx, my)), // a command is already within the unit circle; this keeps a weaker stick slower
       free = this.stunT > 0 || dodging ? 0 : 1; // stunned or dodging: no steering, no casting
-    const sp = this.stats.speed * (this.caster.charging ? 0.55 : 1);
+    const sp = this.stats.speed * this.modifiers.mult("speed") * (this.caster.charging ? 0.55 : 1);
     const k = 1 - Math.exp(-14 * dt);
     this.vx += ((mx / len) * sp * free - this.vx) * k;
     this.vy += ((my / len) * sp * free - this.vy) * k;
